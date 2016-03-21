@@ -23,16 +23,10 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler" xmlns:t="/lib/hudson">
     <l:layout title="${it.displayName}">
         <l:header />
-        <l:side-panel>
-            <l:tasks>
-                <l:task icon="images/24x24/up.png" href="${rootURL}/manage" title="${%Manage Jenkins}" permission="${app.ADMINISTER}" />
-                <l:task icon="images/24x24/setting.png" href="${rootURL}/configure" title="${%Configure}" permission="${app.ADMINISTER}" />
-            </l:tasks>
-            <!--<t:executors computers="${h.singletonList(it)}" />-->
-        </l:side-panel>
+        <st:include page="sidepanel" it="${app}"/>
 
         <l:main-panel>
             <h1>${it.displayName}</h1>

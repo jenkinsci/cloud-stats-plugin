@@ -34,12 +34,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 public class CloudStatistics extends ManagementLink {
 
     public String getDisplayName() {
-        return "Cloud Statistics";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Report of current and past provisioning activities";
+        return isActive() ? "Cloud Statistics" : null ;
     }
 
     @Override
@@ -51,6 +46,11 @@ public class CloudStatistics extends ManagementLink {
     @Override
     public String getUrlName() {
         return "cloud-stats";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Report of current and past provisioning activities";
     }
 
     public boolean isActive() {
