@@ -29,6 +29,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Circular Threadsafe Collection.
@@ -98,7 +99,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
      */
     @Override
     public Iterator<E> iterator() {
-        return toCollection().iterator();
+        return toList().iterator();
     }
 
     /**
@@ -118,18 +119,18 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
 
     @Override
     public boolean contains(Object o) {
-        return toCollection().contains(o);
+        return toList().contains(o);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return toCollection().containsAll(c);
+        return toList().containsAll(c);
     }
 
     /**
      * Get elements in separate collection.
      */
-    public Collection<E> toCollection() {
+    public List<E> toList() {
         return Arrays.asList(toArray());
     }
 
