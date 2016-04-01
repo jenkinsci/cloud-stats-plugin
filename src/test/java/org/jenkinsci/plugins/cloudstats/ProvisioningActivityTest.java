@@ -28,22 +28,30 @@ import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.*;
-import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.PhaseStatus.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
+import static org.junit.Assert.*;
 
 /**
  * @author ogondza.
  */
 public class ProvisioningActivityTest {
 
-    public static final List<ProvisioningActivity.Attachment> NO_ATTACHMENTS = Collections.<ProvisioningActivity.Attachment>emptyList();
+    private static final List<PhaseExecutionAttachment> NO_ATTACHMENTS = Collections.<PhaseExecutionAttachment>emptyList();
+
+    @Test
+    public void phaseExecutionTrivia() {
+        long before = System.currentTimeMillis();
+        ProvisioningActivity.PhaseExecution pe = new ProvisioningActivity.PhaseExecution();
+        long after = System.currentTimeMillis();
+
+        long started = pe.getStarted().getTime();
+        assertThat(before, Matchers.lessThanOrEqualTo(started));
+        assertThat(after, Matchers.greaterThanOrEqualTo(started));
+    }
 
     @Test
     public void trivia() {
@@ -61,61 +69,64 @@ public class ProvisioningActivityTest {
     @Test
     public void phasing() {
         ProvisioningActivity activity = new ProvisioningActivity("cloud-name", "slave-name", 0);
-        assertEquals(PROVISIONING, activity.getPhase());
+        assertNotNull(activity.getPhaseExecution(PROVISIONING));
+        assertNull(activity.getPhaseExecution(LAUNCHING));
 
-        activity.complete(PROVISIONING, OK, NO_ATTACHMENTS);
-        assertEquals(LAUNCHING, activity.getPhase());
+        activity.enter(LAUNCHING);
+        assertNotNull(activity.getPhaseExecution(LAUNCHING));
+        assertNull(activity.getPhaseExecution(OPERATING));
 
-        activity.complete(LAUNCHING, OK, NO_ATTACHMENTS);
-        assertEquals(OPERATING, activity.getPhase());
+        activity.enter(OPERATING);
+        assertNotNull(activity.getPhaseExecution(OPERATING));
+        assertNull(activity.getPhaseExecution(COMPLETED));
 
-        activity.complete(OPERATING, OK, NO_ATTACHMENTS);
-        assertEquals(COMPLETED, activity.getPhase());
+        activity.enter(COMPLETED);
+        assertNotNull(activity.getPhaseExecution(COMPLETED));
 
         activity = new ProvisioningActivity("cloud-name", "slave-name", 0);
-        activity.complete(PROVISIONING, OK, NO_ATTACHMENTS);
 
         try {
-            activity.complete(PROVISIONING, OK, NO_ATTACHMENTS);
-            fail("This phase was completed entered");
-        } catch (IllegalArgumentException ex) {
-            // expected
-        }
-
-        // It is ok to skip phases - there is no use-case for that but plugin should be able o deal with the fact that some event just have not arrived.
-        activity.complete(OPERATING, OK, NO_ATTACHMENTS);
-
-        try {
-            activity.complete(PROVISIONING, OK, NO_ATTACHMENTS);
-            fail("Unable to go back in phases");
-        } catch (IllegalArgumentException ex) {
+            activity.enter(PROVISIONING);
+            fail("This phase was already entered");
+        } catch (IllegalStateException ex) {
             // expected
         }
 
         try {
-            activity.complete(COMPLETED, OK, NO_ATTACHMENTS);
-            fail("Unable to complete COMPLETED phase");
-        } catch (IllegalArgumentException ex) {
+            activity.enter(OPERATING);
+            fail("This phase was already entered");
+        } catch (IllegalStateException ex) {
             // expected
         }
     }
 
     @Test
-    public void states() {
+    public void attachmentsAndStates() {
         ProvisioningActivity activity = new ProvisioningActivity("cloud-name", "slave-name", 0);
-        assertEquals(OK, activity.getStatus());
+        ProvisioningActivity.PhaseExecution pe = activity.getPhaseExecution(PROVISIONING);
 
-        activity.complete(PROVISIONING, WARN, NO_ATTACHMENTS);
-        assertEquals(WARN, activity.getStatus());
+        PhaseExecutionAttachment ok = new PhaseExecutionAttachment(OK, "It is all fine");
+        pe.attach(ok);
+        List<PhaseExecutionAttachment> attachments = pe.getAttachments();
+        assertEquals(1, attachments.size());
+        assertEquals(ok, attachments.get(0));
+        assertEquals(OK, pe.getStatus());
 
-        activity.complete(LAUNCHING, OK, NO_ATTACHMENTS);
-        assertEquals(WARN, activity.getStatus()); // Status is not going to get any better
+        PhaseExecutionAttachment warn = new PhaseExecutionAttachment(WARN, "Check this out");
+        pe.attach(warn);
+        attachments = pe.getAttachments();
+        assertEquals(2, attachments.size());
+        assertEquals(warn, attachments.get(1));
+        assertEquals(WARN, pe.getStatus());
 
-        activity.complete(OPERATING, FAIL, NO_ATTACHMENTS);
-        assertEquals(FAIL, activity.getStatus());
-
-        activity = new ProvisioningActivity("cloud-name", "slave-name", 1);
-        activity.complete(PROVISIONING, FAIL, NO_ATTACHMENTS);
-        assertEquals(COMPLETED, activity.getPhase()); // Activity is completed once failed
+        activity.enter(LAUNCHING);
+        activity.enter(OPERATING);
+        pe = activity.getPhaseExecution(OPERATING);
+        PhaseExecutionAttachment fail = new PhaseExecutionAttachment(FAIL, "Broken");
+        pe.attach(fail);
+        attachments = pe.getAttachments();
+        assertEquals(1, attachments.size());
+        assertEquals(fail, attachments.get(0));
+        assertEquals(FAIL, pe.getStatus());
     }
 }

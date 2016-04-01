@@ -25,19 +25,17 @@ package org.jenkinsci.plugins.cloudstats;
 
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
-import org.jvnet.localizer.Localizable;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Record of one provisioning attempt's lifecycle.
@@ -66,12 +64,12 @@ public final class ProvisioningActivity {
         /**
          * The resources (if any) as well as the computer should be gone.
          *
-         * This phase is never completed.
+         * This phase is never started.
          */
         COMPLETED
     }
 
-    public enum PhaseStatus {
+    public enum Status {
         /**
          * All went well.
          */
@@ -91,41 +89,46 @@ public final class ProvisioningActivity {
     }
 
     /**
-     * Additional information attached to the phase.
+     * Phase execution record.
+     *
+     * While the phases starts in declared order, they might not complete in that order. Much less previous phase will
+     * be completed before next one starts.
+     *
+     * There are several reasons for that: provisioning listener is called when the results are picked up, the slave
+     * might have started launching agent in the meantime. There are plugin that in fact enforce the launch to complete,
+     * before completing the {@link hudson.slaves.NodeProvisioner.PlannedNode#future}. To avoid any problems this can cause,
+     * The execution of phases is expected to occur in order, the execution will receive attachments regardless if the
+     * next phase started or not. For the time tracking purposes, the phase is considered completed as soon as the next
+     * phase completes. IOW, despite the fact the slave already started launching, plugin can still append provisioning log.
      */
-    public static class Attachment {
-
-        private final @Nonnull Localizable title;
-
-        public Attachment(@Nonnull Localizable title) {
-            this.title = title;
-        }
-    }
-
     public static class PhaseExecution {
-        private final @Nonnull PhaseStatus status;
-        private final @Nonnull List<Attachment> attachments;
-        private final @Nonnull long completed;
+        private final @Nonnull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
+        private final @Nonnull long started;
 
-        public PhaseExecution(@Nonnull PhaseStatus status, @CheckForNull List<Attachment> attachments) {
-            this.status = status;
-            this.completed = System.currentTimeMillis();
-            this.attachments = attachments != null
-                    ? Collections.unmodifiableList(new ArrayList<>(attachments))
-                    : Collections.<Attachment>emptyList()
-            ;
+        public PhaseExecution() {
+            this.started = System.currentTimeMillis();
         }
 
-        public @Nonnull List<Attachment> getAttachments() {
-            return attachments;
+        public @Nonnull List<PhaseExecutionAttachment> getAttachments() {
+            return Collections.unmodifiableList(attachments);
         }
 
-        public @Nonnull PhaseStatus getStatus() {
+        public @Nonnull Status getStatus() {
+            Status status = Status.OK;
+            for (PhaseExecutionAttachment a : attachments) {
+                if (a.getStatus().ordinal() > status.ordinal()) {
+                    status = a.getStatus();
+                }
+            }
             return status;
         }
 
-        public @Nonnull Date getCompleted() {
-            return new Date(completed);
+        public @Nonnull Date getStarted() {
+            return new Date(started);
+        }
+
+        public void attach(PhaseExecutionAttachment phaseExecutionAttachment) {
+            attachments.add(phaseExecutionAttachment);
         }
     }
 
@@ -147,12 +150,7 @@ public final class ProvisioningActivity {
     private final int fingerprint;
 
     /**
-     * The time when the activity has stared.
-     */
-    private final long started;
-
-    /**
-     * All phases the activity has completed so far.
+     * All phases the activity has started so far.
      */
     private final Map<Phase, PhaseExecution> progress;
     {
@@ -160,6 +158,7 @@ public final class ProvisioningActivity {
         progress.put(Phase.PROVISIONING, null);
         progress.put(Phase.LAUNCHING, null);
         progress.put(Phase.OPERATING, null);
+        progress.put(Phase.COMPLETED, null);
     }
 
     public ProvisioningActivity(Cloud cloud, NodeProvisioner.PlannedNode node) {
@@ -173,8 +172,8 @@ public final class ProvisioningActivity {
     /*package for testing*/ ProvisioningActivity(String cloud, String node, int fingerprint) {
         this.cloudName = cloud;
         this.nodeName = node;
-        this.started = System.currentTimeMillis();
         this.fingerprint = fingerprint;
+        enter(Phase.PROVISIONING);
     }
 
     public @Nonnull String getCloudName() {
@@ -186,24 +185,18 @@ public final class ProvisioningActivity {
     }
 
     public @Nonnull Date getStarted() {
-        return new Date(started);
-    }
-
-    public @Nonnull Phase getPhase() {
-        if (getStatus() == PhaseStatus.FAIL) return Phase.COMPLETED;
-
         synchronized (progress) {
-            for (Phase phase : Phase.values()) {
-                if (progress.get(phase) == null) return phase;
-            }
+            return progress.get(Phase.PROVISIONING).getStarted();
         }
-
-        assert false: "Unreachable";
-        return null;
     }
 
-    /*package for testing*/ boolean hasReached(@Nonnull Phase phase) {
-        return getPhase().ordinal() >= phase.ordinal();
+    /**
+     * {@link PhaseExecution} or null in case it is/was not executed.
+     */
+    public @CheckForNull PhaseExecution getPhaseExecution(@Nonnull Phase phase) {
+        synchronized (progress) {
+            return progress.get(phase);
+        }
     }
 
     /**
@@ -211,12 +204,12 @@ public final class ProvisioningActivity {
      *
      * It is the works status of any of the phases, OK by default.
      */
-    public @Nonnull PhaseStatus getStatus() {
+    public @Nonnull Status getStatus() {
         synchronized (progress) {
-            PhaseStatus status = PhaseStatus.OK;
+            Status status = Status.OK;
             for (PhaseExecution e : progress.values()) {
                 if (e == null) continue;
-                PhaseStatus s = e.getStatus();
+                Status s = e.getStatus();
                 if (status.ordinal() < s.ordinal()) {
                     status = s;
                 }
@@ -225,27 +218,24 @@ public final class ProvisioningActivity {
         }
     }
 
-    public void complete(@Nonnull Phase phase, @Nonnull PhaseStatus status, @CheckForNull List<Attachment> attachments) {
+    /**
+     * Make the phase of this activity entered.
+     *
+     * @throws IllegalArgumentException In case phases are not entered in declared order or entered repeatedly.
+     */
+    public void enter(@Nonnull Phase phase) {
         synchronized (progress) {
-            checkNextPhaseIsValid(phase);
-            progress.put(phase, new PhaseExecution(
-                    status, attachments
-            ));
+            if (progress.get(phase) != null) throw new IllegalStateException("The phase is already executing");
+
+            for (Phase p: Phase.values()) {
+                if (p == phase) break;
+                if (progress.get(p) == null) throw new IllegalStateException(
+                        "Unable to enter phase " + phase + " since previous phase " + p + " have not started yet"
+                );
+            }
+
+            progress.put(phase, new PhaseExecution());
         }
-    }
-
-    private void checkNextPhaseIsValid(@Nonnull Phase desired) {
-        Phase current = getPhase();
-
-        if (current == desired) return; // completing current
-
-        if (desired.ordinal() < current.ordinal()) throw new IllegalArgumentException(
-                "The phase " + desired + " was already completed. Now in " + current
-        );
-
-        if (desired == Phase.COMPLETED) throw new IllegalArgumentException(
-                "The phase COMPLETED is never considered completed"
-        );
     }
 
     /**
@@ -257,7 +247,7 @@ public final class ProvisioningActivity {
 
     @Override
     public String toString() {
-        return String.format("Provisioning %s/%s is %s (status: %s)", cloudName, nodeName, getPhase(), getStatus());
+        return String.format("Provisioning %s/%s", cloudName, nodeName);
     }
 
     @Override

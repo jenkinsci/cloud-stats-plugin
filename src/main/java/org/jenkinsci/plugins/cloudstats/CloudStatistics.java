@@ -29,19 +29,22 @@ import hudson.model.Computer;
 import hudson.model.Label;
 import hudson.model.ManagementLink;
 import hudson.model.Node;
+import hudson.model.PeriodicWork;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
 import hudson.slaves.ComputerListener;
+import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
@@ -55,17 +58,22 @@ public class CloudStatistics extends ManagementLink {
 
     @Extension @Restricted(NoExternalUse.class)
     public static final CloudStatistics stats = new CloudStatistics();
-    @Extension @Restricted(DoNotUse.class)
+    @Extension @Restricted(NoExternalUse.class)
     public static final ProvisioningListener pl = new ProvisioningListener(stats);
-    @Extension @Restricted(DoNotUse.class)
+    @Extension @Restricted(NoExternalUse.class)
     public static final OperationListener ol = new OperationListener(stats);
+    @Extension @Restricted(NoExternalUse.class)
+    public static final SlaveCompletionDetector scd = new SlaveCompletionDetector(stats);
 
     /*
      * The log itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
      */
     private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(100);
 
-    public static final CloudStatistics get() {
+    /**
+     * Get the singleton instance.
+     */
+    public static final @Nonnull CloudStatistics get() {
         return stats;
     }
 
@@ -123,6 +131,7 @@ public class CloudStatistics extends ManagementLink {
         @Override
         public void onStarted(Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
             for (NodeProvisioner.PlannedNode plannedNode : plannedNodes) {
+                System.out.println("PROVISIONING STARTED " + plannedNode.displayName);
                 ProvisioningActivity activity = new ProvisioningActivity(cloud, plannedNode);
                 stats.log.add(activity);
             }
@@ -130,11 +139,12 @@ public class CloudStatistics extends ManagementLink {
 
         @Override
         public void onComplete(NodeProvisioner.PlannedNode plannedNode, Node node) {
-            System.out.println("COMPLETED");
+            System.out.println("PROVISIONING COMPLETED " + plannedNode.displayName);
             ProvisioningActivity activity = stats.forNode(plannedNode);
             if (activity != null) {
-                activity.complete(ProvisioningActivity.Phase.PROVISIONING, ProvisioningActivity.PhaseStatus.OK, null); // TODO add cloud attachments
-                assert activity.getPhase() == ProvisioningActivity.Phase.LAUNCHING;
+                //activity.complete(ProvisioningActivity.Phase.PROVISIONING, ProvisioningActivity.Status.OK, null); // TODO add cloud attachments
+
+
             }
 
             // TODO mark the node as provisioned by certain cloud so we can group running slaves by cloud/category later
@@ -142,9 +152,10 @@ public class CloudStatistics extends ManagementLink {
 
         @Override
         public void onFailure(NodeProvisioner.PlannedNode plannedNode, Throwable t) {
+            System.out.println("PROVISIONING FAILED " + plannedNode.displayName);
             ProvisioningActivity activity = stats.forNode(plannedNode);
             if (activity != null) {
-                activity.complete(ProvisioningActivity.Phase.PROVISIONING, ProvisioningActivity.PhaseStatus.FAIL, null); // TODO attach cause
+                //activity.complete(ProvisioningActivity.Phase.PROVISIONING, ProvisioningActivity.Status.FAIL, null); // TODO attach cause
             }
         }
     }
@@ -159,7 +170,13 @@ public class CloudStatistics extends ManagementLink {
         }
 
         @Override
+        public void preLaunch(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
+            System.out.println("LAUNCH STARTED " + c.getName());
+        }
+
+        @Override
         public void onLaunchFailure(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
+            System.out.println("LAUNCH FAILED " + c.getName());
 //            ProvisioningActivity activity = stats.forNode(plannedNode);
 //            if (activity != null) {
 //                if (activity.getPhase() == ProvisioningActivity.Phase.OPERATING) return;
@@ -168,7 +185,46 @@ public class CloudStatistics extends ManagementLink {
 
         @Override
         public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
-            super.onOnline(c, listener);
+            System.out.println("LAUNCH COMPLETED " + c.getName());
+            System.out.println("OPERATION STARTED " + c.getName());
         }
+    }
+
+    // TODO Replace with real extension point https://issues.jenkins-ci.org/browse/JENKINS-33780
+    @Restricted(NoExternalUse.class)
+    private static class SlaveCompletionDetector extends PeriodicWork {
+
+        // TODO better to detect operational activities its slave does not exists and report those as completed
+        private volatile List<Computer> last = null;
+
+        private final CloudStatistics stats;
+
+        public SlaveCompletionDetector(@Nonnull CloudStatistics stats) {
+            this.stats = stats;
+        }
+
+        @Override
+        public long getRecurrencePeriod() {
+            return MIN * 10;
+        }
+
+        @Override
+        protected void doRun() throws Exception {
+            if (last == null) return;
+
+            List<Computer> current = Arrays.asList(Jenkins.getInstance().getComputers());
+            List<Computer> deleted = last;
+            last.removeAll(current);
+
+            for (Computer c : deleted) {
+                System.out.println("OPERATION Completed " + c.getName());
+            }
+
+            last = new ArrayList<>(current);
+        }
+    }
+
+    private static final class CloudIdProperty extends NodeProperty {
+
     }
 }
