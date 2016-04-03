@@ -113,6 +113,14 @@ public final class ProvisioningActivity {
             return Collections.unmodifiableList(attachments);
         }
 
+        public @CheckForNull <T extends PhaseExecutionAttachment> T getAttachment(@Nonnull Class<T> type) {
+            for (PhaseExecutionAttachment attachment : attachments) {
+                // TODO fail if there is more;
+                if (type.isAssignableFrom(attachment.getClass())) return (T) attachment;
+            }
+            return null;
+        }
+
         public @Nonnull Status getStatus() {
             Status status = Status.OK;
             for (PhaseExecutionAttachment a : attachments) {

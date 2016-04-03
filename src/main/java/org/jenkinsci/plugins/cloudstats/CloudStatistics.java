@@ -142,9 +142,7 @@ public class CloudStatistics extends ManagementLink {
             System.out.println("PROVISIONING COMPLETED " + plannedNode.displayName);
             ProvisioningActivity activity = stats.forNode(plannedNode);
             if (activity != null) {
-                //activity.complete(ProvisioningActivity.Phase.PROVISIONING, ProvisioningActivity.Status.OK, null); // TODO add cloud attachments
-
-
+                // TODO attach listener logs
             }
 
             // TODO mark the node as provisioned by certain cloud so we can group running slaves by cloud/category later
@@ -155,7 +153,10 @@ public class CloudStatistics extends ManagementLink {
             System.out.println("PROVISIONING FAILED " + plannedNode.displayName);
             ProvisioningActivity activity = stats.forNode(plannedNode);
             if (activity != null) {
-                //activity.complete(ProvisioningActivity.Phase.PROVISIONING, ProvisioningActivity.Status.FAIL, null); // TODO attach cause
+                // TODO attach listener logs
+                activity.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING).attach(new PhaseExecutionAttachment.ExceptionAttachement(
+                        ProvisioningActivity.Status.FAIL, "Provisioning failed", t
+                ));
             }
         }
     }

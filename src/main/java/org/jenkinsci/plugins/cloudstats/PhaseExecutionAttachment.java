@@ -67,4 +67,18 @@ public class PhaseExecutionAttachment {
     public @CheckForNull String getUrl() {
         return null;
     }
+
+    public static final class ExceptionAttachement extends PhaseExecutionAttachment {
+
+        private final @Nonnull Throwable throwable;
+
+        public ExceptionAttachement(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
+            super(status, title);
+            this.throwable = throwable;
+        }
+
+        public Throwable getCause() {
+            return throwable;
+        }
+    }
 }

@@ -32,6 +32,7 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.*;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import hudson.EnvVars;
@@ -39,9 +40,12 @@ import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
 import hudson.model.Label;
 import hudson.model.LoadStatistics;
 import hudson.model.Node;
+import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import org.junit.Before;
@@ -72,8 +76,6 @@ public class CloudStatisticsTest {
         // Pretend we are out of slaves
         j.jenkins.setNumExecutors(0);
         j.jenkins.setNodes(Collections.<Node>emptyList());
-
-
 
         // Do not provision when not expected
         ExtensionList<NodeProvisioner.NodeProvisionerInvoker> extensionList = j.jenkins.getExtensionList(NodeProvisioner.NodeProvisionerInvoker.class);
@@ -108,20 +110,34 @@ public class CloudStatisticsTest {
 
         j.jenkins.clouds.add(new TestCloud("dummy", j, new ThrowException()));
 
-        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
-        for (ProvisioningActivity a : activities) {
-            assertEquals("dummy", a.getCloudName());
-            assertThat(a.getNodeName(), startsWith("dummy-slave-"));
+        List<ProvisioningActivity> activities = null;
+        for (;;) {
+            Thread.sleep(1000);
+            System.out.println(".");
+            activities = CloudStatistics.get().getActivities();
+            if (activities.size() != 0) {
+                ProvisioningActivity.PhaseExecution execution = activities.get(0).getPhaseExecution(PROVISIONING);
+                if (execution.getAttachment(PhaseExecutionAttachment.ExceptionAttachement.class) != null) {
+                    break;
+                }
+            }
         }
 
         ProvisioningActivity activity = activities.get(0);
+        ProvisioningActivity.PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
+        PhaseExecutionAttachment.ExceptionAttachement attachment = prov.getAttachment(PhaseExecutionAttachment.ExceptionAttachement.class);
+        assertEquals(ThrowException.EXCEPTION, attachment.getCause());
+        assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
-        //assertEquals(COMPLETED, activity.getPhase()); TODO
+        // TODO check the phasing as well
+        //assertNotNull(activity.getPhaseExecution(COMPLETED));
     }
 
     @Test
     public void provisionAndLaunch() throws Exception {
-        j.createFreeStyleProject().scheduleBuild2(0);
+        FreeStyleProject p = j.createFreeStyleProject();
+        p.setAssignedLabel(Label.get("label"));
+        QueueTaskFuture<FreeStyleBuild> build = p.scheduleBuild2(0);
 
         j.jenkins.clouds.add(new TestCloud("dummy", j, new LaunchSuccessfully()));
 
@@ -134,37 +150,40 @@ public class CloudStatisticsTest {
         }
 
         ProvisioningActivity activity = activities.get(0);
-        // assertEquals(PROVISIONING, activity.getPhase()); TODO
-        assertEquals(OK, activity.getStatus());
+        assertNotNull(activity.getPhaseExecution(PROVISIONING));
+        assertEquals(activity.getPhaseExecution(PROVISIONING).getAttachments().toString(), OK, activity.getStatus());
 
         // It can take a bit
         while (j.jenkins.getComputer(activity.getNodeName()) == null) {
             System.out.println("Waiting for node");
             Thread.sleep(100);
         }
+        Computer computer = j.jenkins.getComputer(activity.getNodeName());
+        assertNotNull(computer);
 
-        // TODO
-//        while (!activity.hasReached(LAUNCHING)) {
-//            System.out.println("Waiting for launch to start");
-//            System.out.println(CloudStatistics.get().getActivities());
-//            Thread.sleep(100);
-//        }
-        System.out.println("LAUNCHING " + CloudStatistics.get().getActivities());
+        while (activity.getPhaseExecution(LAUNCHING) != null) {
+            System.out.println("Waiting for launch to start");
+            Thread.sleep(100);
+        }
+
+        while (activity.getPhaseExecution(OPERATING) != null) {
+            System.out.println("Waiting for slave to launch");
+            Thread.sleep(100);
+        }
+
+        System.out.println("Waiting for slave to launch");
+        computer.waitUntilOnline();
+        assertNull(activity.getPhaseExecution(COMPLETED));
+
+        System.out.println("Waiting for build to complete");
+        Computer builtOn = build.get().getBuiltOn().toComputer();
+        assertEquals(computer, builtOn);
+
+        computer.doDoDelete();
+
         assertEquals(OK, activity.getStatus());
-        assertNotNull(j.jenkins.getComputer(activity.getNodeName()));
-
-// TODO
-//        while (!activity.hasReached(OPERATING)) {
-//            System.out.println("Waiting for slave to launch");
-//            System.out.println(CloudStatistics.get().getActivities());
-//            Thread.sleep(100);
-//        }
-
-        assertTrue(j.jenkins.getComputer(activity.getNodeName()).isOnline());
-
-        //TODO
-
-        //assertEquals(COMPLETED, activity.getPhase());
+        // TODO check phasing
+        // assertNotNull(activity.getPhaseExecution(COMPLETED));
     }
 
     public static final class TestCloud extends Cloud {
@@ -218,9 +237,11 @@ public class CloudStatisticsTest {
     }
 
     private static class ThrowException extends Launcher {
+        public static final NullPointerException EXCEPTION = new NullPointerException("Whoops");
+
         @Override
         public Node call() throws Exception {
-            throw new NullPointerException("Whoops");
+            throw EXCEPTION;
         }
     }
 
@@ -228,7 +249,7 @@ public class CloudStatisticsTest {
 
         @Override
         public Node call() throws Exception {
-            return j.createSlave(slaveName, "", new EnvVars());
+            return j.createSlave(slaveName, "label", new EnvVars());
         }
     }
 }
