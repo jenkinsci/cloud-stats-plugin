@@ -174,6 +174,8 @@ public class CyclicThreadSafeCollectionTest {
                     for (Integer d : data) {
                         assert d != null;
                     }
+
+                    if (Thread.interrupted()) break;
                 }
             }
         };
@@ -183,6 +185,8 @@ public class CyclicThreadSafeCollectionTest {
             public void run() {
                 for (;;) {
                     assert data.add(data.size() + 42);
+
+                    if (Thread.interrupted()) break;
                 }
             }
         };
@@ -194,6 +198,8 @@ public class CyclicThreadSafeCollectionTest {
                 for (;;) {
                     // Pretend we use the result not to be optimized away
                     last = data.containsAll(Arrays.asList(17, 39, last ? 315 : 316));
+
+                    if (Thread.interrupted()) break;
                 }
             }
         };
