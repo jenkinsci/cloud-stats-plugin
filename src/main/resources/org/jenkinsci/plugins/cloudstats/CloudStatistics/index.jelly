@@ -26,6 +26,10 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
     <l:layout title="${it.displayName}">
         <style>
+            cloud-stat-grid {
+                border: 1px. solid #BBB;
+            }
+
             td.status-WARN {
                 background-color: #FFBA93;
             }
@@ -52,7 +56,7 @@ THE SOFTWARE.
         <l:main-panel>
             <h1>${it.displayName}</h1>
 
-            <table class="pane sortable bigtable" width="100%">
+            <table class="pane sortable bigtable" width="100%" id="cloud-stat-grid">
                 <tr>
                     <th>Cloud / template</th><th>Name</th><th>Provisioning</th><th>Launch</th><th>Operation</th><th>Completion</th>
                 </tr>
