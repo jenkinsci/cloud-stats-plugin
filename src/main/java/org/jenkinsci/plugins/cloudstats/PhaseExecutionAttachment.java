@@ -23,6 +23,8 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import hudson.Functions;
+
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
@@ -68,17 +70,21 @@ public class PhaseExecutionAttachment {
         return null;
     }
 
-    public static final class ExceptionAttachement extends PhaseExecutionAttachment {
+    public static final class ExceptionAttachment extends PhaseExecutionAttachment {
 
         private final @Nonnull Throwable throwable;
 
-        public ExceptionAttachement(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
+        public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
             super(status, title);
             this.throwable = throwable;
         }
 
         public Throwable getCause() {
             return throwable;
+        }
+
+        public String toString() {
+            return Functions.printThrowable(throwable);
         }
     }
 }

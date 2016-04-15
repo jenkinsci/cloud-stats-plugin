@@ -23,13 +23,62 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler" xmlns:t="/lib/hudson">
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
     <l:layout title="${it.displayName}">
+        <style>
+            td.status-WARN {
+                background-color: #FFBA93;
+            }
+
+            tr.status-WARN {
+                background-color: #FFD4BC;
+            }
+
+            td.status-FAIL {
+                background-color: #FF8B8F;
+            }
+
+            tr.status-FAIL {
+                background-color: #FFB4B1;
+            }
+
+            .status-OK {
+                background-color: #B2F5A8;
+            }
+        </style>
         <l:header />
         <st:include page="sidepanel" it="${app}"/>
 
         <l:main-panel>
             <h1>${it.displayName}</h1>
+
+            <table class="pane sortable bigtable" width="100%">
+                <tr>
+                    <th>Cloud / template</th><th>Name</th><th>Provisioning</th><th>Launch</th><th>Operation</th><th>Completion</th>
+                </tr>
+                <j:forEach var="activity" items="${it.activities}">
+                    <j:set var="activityStatus" value="${activity.status}"/>
+                    <tr class="status-${activityStatus}">
+                        <td>${activity.id.cloudName}/${activity.id.templateName}</td>
+                        <td>${activity.it.nodeName}</td>
+                        <j:forEach var="phase" items="${activity.phaseExecutions.values()}">
+                            <j:set var="status" value="${(phase == null || phase.status.ordinal() &lt; activityStatus.ordinal()) ? null : phase.status}"/>
+                            <td class="status-${status}">
+                                ${phase.started}
+                                <j:if test="${!phase.attachments.isEmpty()}">
+                                    <ul>
+                                        <j:forEach var="attachment" items="${phase.attachments}">
+                                            <li>
+                                                ${attachment.title}
+                                            </li>
+                                        </j:forEach>
+                                    </ul>
+                                </j:if>
+                            </td>
+                        </j:forEach>
+                    </tr>
+                </j:forEach>
+            </table>
             <j:choose>
                 <j:when test="${!it.active}">
                     <st:statusCode value="404"/>

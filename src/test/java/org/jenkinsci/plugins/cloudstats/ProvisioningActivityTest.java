@@ -40,6 +40,7 @@ import static org.junit.Assert.*;
  */
 public class ProvisioningActivityTest {
 
+    private static final ProvisioningActivity.Id DUMMY_ID = new ProvisioningActivity.Id("Fake cloud", 42);
     private static final List<PhaseExecutionAttachment> NO_ATTACHMENTS = Collections.<PhaseExecutionAttachment>emptyList();
 
     @Test
@@ -56,11 +57,10 @@ public class ProvisioningActivityTest {
     @Test
     public void trivia() {
         long before = System.currentTimeMillis();
-        ProvisioningActivity activity = new ProvisioningActivity("cloud-name", "slave-name", 0);
+        ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
         long after = System.currentTimeMillis();
 
-        assertEquals("cloud-name", activity.getCloudName());
-        assertEquals("slave-name", activity.getNodeName());
+        assertEquals(DUMMY_ID.getCloudName(), activity.getId().getCloudName());
         long started = activity.getStarted().getTime();
         assertThat(before, Matchers.lessThanOrEqualTo(started));
         assertThat(after, Matchers.greaterThanOrEqualTo(started));
@@ -68,7 +68,7 @@ public class ProvisioningActivityTest {
 
     @Test
     public void phasing() {
-        ProvisioningActivity activity = new ProvisioningActivity("cloud-name", "slave-name", 0);
+        ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
         assertNotNull(activity.getPhaseExecution(PROVISIONING));
         assertNull(activity.getPhaseExecution(LAUNCHING));
 
@@ -83,17 +83,10 @@ public class ProvisioningActivityTest {
         activity.enter(COMPLETED);
         assertNotNull(activity.getPhaseExecution(COMPLETED));
 
-        activity = new ProvisioningActivity("cloud-name", "slave-name", 0);
+        activity = new ProvisioningActivity(DUMMY_ID);
 
         try {
             activity.enter(PROVISIONING);
-            fail("This phase was already entered");
-        } catch (IllegalStateException ex) {
-            // expected
-        }
-
-        try {
-            activity.enter(OPERATING);
             fail("This phase was already entered");
         } catch (IllegalStateException ex) {
             // expected
@@ -102,18 +95,18 @@ public class ProvisioningActivityTest {
 
     @Test
     public void attachmentsAndStates() {
-        ProvisioningActivity activity = new ProvisioningActivity("cloud-name", "slave-name", 0);
+        ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
         ProvisioningActivity.PhaseExecution pe = activity.getPhaseExecution(PROVISIONING);
 
         PhaseExecutionAttachment ok = new PhaseExecutionAttachment(OK, "It is all fine");
-        pe.attach(ok);
+        activity.attach(PROVISIONING, ok);
         List<PhaseExecutionAttachment> attachments = pe.getAttachments();
         assertEquals(1, attachments.size());
         assertEquals(ok, attachments.get(0));
         assertEquals(OK, pe.getStatus());
 
         PhaseExecutionAttachment warn = new PhaseExecutionAttachment(WARN, "Check this out");
-        pe.attach(warn);
+        activity.attach(PROVISIONING, warn);
         attachments = pe.getAttachments();
         assertEquals(2, attachments.size());
         assertEquals(warn, attachments.get(1));
@@ -123,7 +116,7 @@ public class ProvisioningActivityTest {
         activity.enter(OPERATING);
         pe = activity.getPhaseExecution(OPERATING);
         PhaseExecutionAttachment fail = new PhaseExecutionAttachment(FAIL, "Broken");
-        pe.attach(fail);
+        activity.attach(OPERATING, fail);
         attachments = pe.getAttachments();
         assertEquals(1, attachments.size());
         assertEquals(fail, attachments.get(0));

@@ -23,7 +23,6 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -35,10 +34,11 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Record of one provisioning attempt's lifecycle.
+ * Record of provisioning attempt lifecycle.
  *
  * @author ogondza.
  */
@@ -85,7 +85,16 @@ public final class ProvisioningActivity {
          *
          * The identification of the cause should be in attachment.
          */
-        FAIL
+        FAIL;
+
+        public Status worseOf(@CheckForNull Status status) {
+            if (status == null) return this;
+
+            return ordinal() > status.ordinal()
+                    ? this
+                    : status
+            ;
+        }
     }
 
     /**
@@ -97,11 +106,11 @@ public final class ProvisioningActivity {
      * There are several reasons for that: provisioning listener is called when the results are picked up, the slave
      * might have started launching agent in the meantime. There are plugin that in fact enforce the launch to complete,
      * before completing the {@link hudson.slaves.NodeProvisioner.PlannedNode#future}. To avoid any problems this can cause,
-     * The execution of phases is expected to occur in order, the execution will receive attachments regardless if the
+     * the execution of phases is expected to occur in order, the execution will accept attachments regardless if the
      * next phase started or not. For the time tracking purposes, the phase is considered completed as soon as the next
      * phase completes. IOW, despite the fact the slave already started launching, plugin can still append provisioning log.
      */
-    public static class PhaseExecution {
+    public static final class PhaseExecution {
         private final @Nonnull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
         private final @Nonnull long started;
 
@@ -135,27 +144,113 @@ public final class ProvisioningActivity {
             return new Date(started);
         }
 
-        public void attach(PhaseExecutionAttachment phaseExecutionAttachment) {
+        private void attach(PhaseExecutionAttachment phaseExecutionAttachment) {
             attachments.add(phaseExecutionAttachment);
         }
     }
 
     /**
-     * Name of the cloud that is provisioning this.
-     */
-    private final @Nonnull String cloudName;
-
-    /**
-     * Name of the node being provisioned.
-     */
-    private final @Nonnull String nodeName;
-
-    /**
-     * Unique identifier of the activity.
+     * Activity identifier.
      *
-     * As cloud name or node name do not have to be unique (in time).
+     * Used to a) uniquely identify the activity throughout the lifecycle and b) map computer to its cloud/template.
      */
-    private final int fingerprint;
+    public static final class Id {
+        private final @Nonnull String cloudName;
+
+
+        private final @CheckForNull String templateName;
+
+        private @Nonnull String nodeName;
+
+        /**
+         * Unique identifier of the activity.
+         */
+        private final int fingerprint;
+
+        /**
+         * @param cloudName Name of the cloud that initiated this activity.
+         * @param fingerprint Unique id of this activity.
+         * @param templateName Name of the template that initiated this activity.
+         * @param displayName Name of the slave to be provisioned. Of the name of the slave is not known ahead, it can
+         *                    be <tt>null</tt> cloud stats plugin will update it once it will be known.
+         */
+        public Id(@Nonnull String cloudName, int fingerprint, @CheckForNull String templateName, @CheckForNull String displayName) {
+            this.cloudName = cloudName;
+            this.templateName = templateName;
+            this.nodeName = displayName;
+            this.fingerprint = fingerprint;
+        }
+
+        public Id(@Nonnull String cloudName, int fingerprint, @CheckForNull String templateName) {
+            this.cloudName = cloudName;
+            this.templateName = templateName;
+            this.nodeName = templateName; // Use template name as the best guess - correct it later
+            this.fingerprint = fingerprint;
+        }
+
+        public Id(@Nonnull String cloudName, int fingerprint) {
+            this(cloudName, fingerprint, null);
+        }
+
+        /*package*/ Id(String cloudName, String templateName, TrackedPlannedNode trackedPlannedNode) {
+            this(cloudName, getFingerprint(trackedPlannedNode), templateName);
+        }
+
+        /**
+         * Name of the cloud that initiated this activity.
+         */
+        public @Nonnull String getCloudName() {
+            return cloudName;
+        }
+
+        /**
+         * Name of the template used to provision this slave. <tt>null</tt> if no further distinction is needed except for cloud name.
+         */
+        public @CheckForNull String getTemplateName() {
+            return templateName;
+        }
+
+        /**
+         * Name of the node being provisioned.
+         */
+        // The neme gets fixed/updated in CloudProvisioningListener#onComplete.
+        public @Nonnull String getNodeName() {
+            return nodeName;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Id id = (Id) o;
+            return fingerprint == id.fingerprint;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fingerprint);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("ProvisioningActivity for %s/%s tracking %s (%d)", cloudName, templateName, nodeName, fingerprint);
+        }
+
+        private static int getFingerprint(TrackedPlannedNode node) {
+            return System.identityHashCode(node);
+        }
+
+        /**
+         * Used when slave gets renamed and Node gets created with different named than planned.
+         */
+        @Restricted(NoExternalUse.class)
+        /*package*/ void rename(@Nonnull String newName) {
+            if (newName == null) throw new IllegalArgumentException();
+            nodeName = newName;
+        }
+    }
+
+    private final @Nonnull Id id;
 
     /**
      * All phases the activity has started so far.
@@ -169,27 +264,17 @@ public final class ProvisioningActivity {
         progress.put(Phase.COMPLETED, null);
     }
 
-    public ProvisioningActivity(Cloud cloud, NodeProvisioner.PlannedNode node) {
-        this(cloud.name, node.displayName, getFingerprint(node));
+    public ProvisioningActivity(@Nonnull TrackedPlannedNode node) {
+        this(node.getId());
     }
 
-    private static int getFingerprint(NodeProvisioner.PlannedNode node) {
-        return System.identityHashCode(node);
-    }
-
-    /*package for testing*/ ProvisioningActivity(String cloud, String node, int fingerprint) {
-        this.cloudName = cloud;
-        this.nodeName = node;
-        this.fingerprint = fingerprint;
+    public ProvisioningActivity(Id id) {
+        this.id = id;
         enter(Phase.PROVISIONING);
     }
 
-    public @Nonnull String getCloudName() {
-        return cloudName;
-    }
-
-    public @Nonnull String getNodeName() {
-        return nodeName;
+    public @Nonnull Id getId() {
+        return id;
     }
 
     public @Nonnull Date getStarted() {
@@ -206,6 +291,23 @@ public final class ProvisioningActivity {
             return progress.get(phase);
         }
     }
+
+    /**
+     * Get sorted mapping of all phase executions.
+     *
+     * @return Map of {@link Phase} and nullable {@link PhaseExecution}.
+     */
+    public @Nonnull Map<Phase, PhaseExecution> getPhaseExecutions() {
+        Map<Phase, PhaseExecution> ret = new LinkedHashMap<>(4);
+        synchronized (progress) {
+            ret.put(Phase.PROVISIONING, progress.get(Phase.PROVISIONING));
+            ret.put(Phase.LAUNCHING, progress.get(Phase.LAUNCHING));
+            ret.put(Phase.OPERATING, progress.get(Phase.OPERATING));
+            ret.put(Phase.COMPLETED, progress.get(Phase.COMPLETED));
+        }
+        return ret;
+    }
+
 
     /**
      * Status of the activity as a whole.
@@ -235,27 +337,30 @@ public final class ProvisioningActivity {
         synchronized (progress) {
             if (progress.get(phase) != null) throw new IllegalStateException("The phase is already executing");
 
-            for (Phase p: Phase.values()) {
-                if (p == phase) break;
-                if (progress.get(p) == null) throw new IllegalStateException(
-                        "Unable to enter phase " + phase + " since previous phase " + p + " have not started yet"
-                );
-            }
-
             progress.put(phase, new PhaseExecution());
         }
     }
 
-    /**
-     * @return true if this activity tracks <tt>node</tt>'s progress.
-     */
-    public boolean isFor(NodeProvisioner.PlannedNode node) {
-        return getFingerprint(node) == fingerprint;
+    public void attach(Phase phase, PhaseExecutionAttachment attachment) {
+        getPhaseExecution(phase).attach(attachment);
+
+        // Complete the activity upon first failure
+        if (attachment.getStatus() == Status.FAIL) {
+            synchronized (progress) {
+                if (getPhaseExecution(Phase.COMPLETED) == null) {
+                    enter(Phase.COMPLETED);
+                }
+            }
+        }
+    }
+
+    public boolean isFor(Id id) {
+        return id.fingerprint == this.id.fingerprint;
     }
 
     @Override
     public String toString() {
-        return String.format("Provisioning %s/%s", cloudName, nodeName);
+        return id.toString();
     }
 
     @Override
@@ -264,11 +369,11 @@ public final class ProvisioningActivity {
         if (o == this) return true;
         if (!o.getClass().equals(getClass())) return false;
         ProvisioningActivity rhs = (ProvisioningActivity) o;
-        return fingerprint == rhs.fingerprint;
+        return id == rhs.id;
     }
 
     @Override
     public int hashCode() {
-        return fingerprint;
+        return id.hashCode() * 31;
     }
 }

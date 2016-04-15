@@ -34,10 +34,10 @@ import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
 import hudson.slaves.ComputerListener;
-import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
@@ -46,7 +46,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -73,7 +76,7 @@ public class CloudStatistics extends ManagementLink {
     /**
      * Get the singleton instance.
      */
-    public static final @Nonnull CloudStatistics get() {
+    public static @Nonnull CloudStatistics get() {
         return stats;
     }
 
@@ -83,8 +86,7 @@ public class CloudStatistics extends ManagementLink {
 
     @Override
     public String getIconFileName() {
-        // TODO find an icon
-        return isActive() ? "/plugin/implied-labels/icons/48x48/attribute.png" : null;
+        return isActive() ? "graph.png" : null;
     }
 
     @Override
@@ -105,22 +107,7 @@ public class CloudStatistics extends ManagementLink {
         return log.toList();
     }
 
-    private @CheckForNull ProvisioningActivity forNode(NodeProvisioner.PlannedNode plannedNode) {
-        for (ProvisioningActivity activity : log.toList()) {
-            if (activity.isFor(plannedNode)) {
-                return activity;
-            }
-        }
-
-        LOGGER.warning("No activity tracked for planned node " + plannedNode.displayName);
-        System.out.println(log.toList());
-
-        // Either a bug or already rotated/cleared. TODO log this
-        return null;
-    }
-
-    @Restricted(NoExternalUse.class)
-    private static class ProvisioningListener extends CloudProvisioningListener {
+    public static class ProvisioningListener extends CloudProvisioningListener {
 
         private final CloudStatistics stats;
 
@@ -128,36 +115,68 @@ public class CloudStatistics extends ManagementLink {
             this.stats = stats;
         }
 
-        @Override
+        @Override @Restricted(DoNotUse.class)
         public void onStarted(Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
             for (NodeProvisioner.PlannedNode plannedNode : plannedNodes) {
-                System.out.println("PROVISIONING STARTED " + plannedNode.displayName);
-                ProvisioningActivity activity = new ProvisioningActivity(cloud, plannedNode);
-                stats.log.add(activity);
+                ProvisioningActivity.Id id = getIdFor(plannedNode);
+                if (id != null) {
+                    onStarted(id);
+                }
             }
         }
 
-        @Override
+        /**
+         * Inform plugin provisioning has started. This is only needed when provisioned outside {@link NodeProvisioner}.
+         */
+        public @Nonnull ProvisioningActivity onStarted(@Nonnull ProvisioningActivity.Id id) {
+            ProvisioningActivity activity = new ProvisioningActivity(id);
+            stats.log.add(activity);
+            return activity;
+        }
+
+        @Override @Restricted(DoNotUse.class)
         public void onComplete(NodeProvisioner.PlannedNode plannedNode, Node node) {
-            System.out.println("PROVISIONING COMPLETED " + plannedNode.displayName);
-            ProvisioningActivity activity = stats.forNode(plannedNode);
-            if (activity != null) {
-                // TODO attach listener logs
+            ProvisioningActivity.Id id = getIdFor(plannedNode);
+            if (id != null) {
+                onComplete(id, node);
             }
-
-            // TODO mark the node as provisioned by certain cloud so we can group running slaves by cloud/category later
         }
 
-        @Override
-        public void onFailure(NodeProvisioner.PlannedNode plannedNode, Throwable t) {
-            System.out.println("PROVISIONING FAILED " + plannedNode.displayName);
-            ProvisioningActivity activity = stats.forNode(plannedNode);
+        /**
+         * Inform plugin provisioning has started. This is only needed when provisioned outside {@link NodeProvisioner}.
+         */
+        public @CheckForNull ProvisioningActivity onComplete(@Nonnull ProvisioningActivity.Id id, @Nonnull Node node) {
+            ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
-                // TODO attach listener logs
-                activity.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING).attach(new PhaseExecutionAttachment.ExceptionAttachement(
-                        ProvisioningActivity.Status.FAIL, "Provisioning failed", t
+                // TODO do we want this in ID anyway?
+                activity.getId().rename(node.getDisplayName());
+            }
+            return activity;
+        }
+
+        @Override @Restricted(DoNotUse.class)
+        public void onFailure(NodeProvisioner.PlannedNode plannedNode, Throwable t) {
+            ProvisioningActivity.Id id = getIdFor(plannedNode);
+            if (id != null) {
+                onFailure(id, t);
+            }
+        }
+
+        /**
+         * Inform plugin provisioning has started. This is only needed when provisioned outside {@link NodeProvisioner}.
+         */
+        public @CheckForNull ProvisioningActivity onFailure(@Nonnull ProvisioningActivity.Id id, @Nonnull Throwable throwable) {
+            ProvisioningActivity activity = stats.getActivityFor(id);
+            if (activity != null) {
+                activity.attach(ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
+                        ProvisioningActivity.Status.FAIL, "Provisioning failed", throwable
                 ));
             }
+            return activity;
+        }
+
+        public static ProvisioningListener get() {
+            return Jenkins.getInstance().getExtensionList(ProvisioningListener.class).get(0);
         }
     }
 
@@ -172,31 +191,52 @@ public class CloudStatistics extends ManagementLink {
 
         @Override
         public void preLaunch(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
-            System.out.println("LAUNCH STARTED " + c.getName());
+            System.out.println("LAUNCHING " + c.getDisplayName());
+            ProvisioningActivity.Id id = getIdFor(c);
+            if (id == null) return;
+            ProvisioningActivity activity = stats.getActivityFor(id);
+            if (activity == null) return;
+
+            // TODO it can be launched several times
+            activity.enter(ProvisioningActivity.Phase.LAUNCHING);
         }
 
         @Override
         public void onLaunchFailure(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
-            System.out.println("LAUNCH FAILED " + c.getName());
-//            ProvisioningActivity activity = stats.forNode(plannedNode);
-//            if (activity != null) {
-//                if (activity.getPhase() == ProvisioningActivity.Phase.OPERATING) return;
-//            }
+            ProvisioningActivity.Id id = getIdFor(c);
+            if (id == null) return;
+            ProvisioningActivity activity = stats.getActivityFor(id);
+            if (activity == null) return;
+
+            // TODO attach details
         }
 
-        @Override
-        public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
-            System.out.println("LAUNCH COMPLETED " + c.getName());
-            System.out.println("OPERATION STARTED " + c.getName());
+        @Override public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
+            ProvisioningActivity.Id id = getIdFor(c);
+            if (id == null) return;
+            ProvisioningActivity activity = stats.getActivityFor(id);
+            if (activity == null) return;
+
+            // TODO it can happen several times
+            activity.enter(ProvisioningActivity.Phase.OPERATING);
         }
     }
 
-    // TODO Replace with real extension point https://issues.jenkins-ci.org/browse/JENKINS-33780
+    // TODO Replace with better extension point https://issues.jenkins-ci.org/browse/JENKINS-33780
+    // TODO does not support slave rename at all. I tried to mark the node with property but ComputerListener#preLaunch might not have access to Node instance:
+    //    at hudson.slaves.SlaveComputer._connect(SlaveComputer.java:219)
+    //    at hudson.model.Computer.connect(Computer.java:339)
+    //    at hudson.slaves.RetentionStrategy$1.start(RetentionStrategy.java:108)
+    //    at hudson.model.AbstractCIBase.updateComputer(AbstractCIBase.java:129)
+    //    at hudson.model.AbstractCIBase.updateComputerList(AbstractCIBase.java:180)
+    //            - locked <0x13cf> (a java.lang.Object)
+    //    at jenkins.model.Jenkins.updateComputerList(Jenkins.java:1200)
+    //    at jenkins.model.Jenkins.setNodes(Jenkins.java:1696)
+    //    at jenkins.model.Jenkins.addNode(Jenkins.java:1678)
+    //            - locked <0x13a6> (a hudson.model.Hudson)
+    //    at org.jvnet.hudson.test.JenkinsRule.createSlave(JenkinsRule.java:814)
     @Restricted(NoExternalUse.class)
-    private static class SlaveCompletionDetector extends PeriodicWork {
-
-        // TODO better to detect operational activities its slave does not exists and report those as completed
-        private volatile List<Computer> last = null;
+    /*package*/ static class SlaveCompletionDetector extends PeriodicWork {
 
         private final CloudStatistics stats;
 
@@ -211,21 +251,49 @@ public class CloudStatistics extends ManagementLink {
 
         @Override
         protected void doRun() throws Exception {
-            if (last == null) return;
-
-            List<Computer> current = Arrays.asList(Jenkins.getInstance().getComputers());
-            List<Computer> deleted = last;
-            last.removeAll(current);
-
-            for (Computer c : deleted) {
-                System.out.println("OPERATION Completed " + c.getName());
+            List<ProvisioningActivity.Id> trackedExisting = new ArrayList<>();
+            for (Computer computer : Jenkins.getInstance().getComputers()) {
+                if (computer instanceof TrackedItem) {
+                    trackedExisting.add(((TrackedItem) computer).getId());
+                }
             }
 
-            last = new ArrayList<>(current);
+            for (ProvisioningActivity activity: stats.log) {
+                Map<ProvisioningActivity.Phase, ProvisioningActivity.PhaseExecution> executions = activity.getPhaseExecutions();
+                if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) continue; // Completed already
+                if (trackedExisting.contains(activity.getId())) continue; // Still running
+
+                activity.enter(ProvisioningActivity.Phase.COMPLETED);
+            }
         }
     }
 
-    private static final class CloudIdProperty extends NodeProperty {
+    private static @CheckForNull ProvisioningActivity.Id getIdFor(NodeProvisioner.PlannedNode plannedNode) {
+        if (!(plannedNode instanceof TrackedItem)) {
+            LOGGER.info("No support for cloud-stats-plugin by " + plannedNode.getClass());
+            return null;
+        }
 
+        return ((TrackedItem) plannedNode).getId();
+    }
+
+    private static @CheckForNull ProvisioningActivity.Id getIdFor(Computer computer) {
+        if (!(computer instanceof TrackedItem)) {
+            LOGGER.info("No support for cloud-stats-plugin by " + computer.getClass());
+            return null;
+        }
+
+        return ((TrackedItem) computer).getId();
+    }
+
+    private @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
+        for (ProvisioningActivity activity : log.toList()) {
+            if (activity.isFor(id)) {
+                return activity;
+            }
+        }
+
+        LOGGER.log(Level.WARNING, "No activity tracked for " + id, new Exception());
+        return null;
     }
 }
