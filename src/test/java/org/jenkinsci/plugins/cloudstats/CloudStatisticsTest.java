@@ -24,18 +24,6 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.startsWith;
-import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.*;
-import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -46,18 +34,15 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Label;
 import hudson.model.LoadStatistics;
 import hudson.model.Node;
-import hudson.model.Slave;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.DumbSlave;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
-import hudson.slaves.SlaveComputer;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -69,10 +54,23 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.LAUNCHING;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERATING;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.PROVISIONING;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.FAIL;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.OK;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.WARN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author ogondza.
@@ -125,28 +123,24 @@ public class CloudStatisticsTest {
         j.createFreeStyleProject().scheduleBuild2(0);
 
         j.jenkins.clouds.add(new TestCloud("dummy", j, new ThrowException()));
+        triggerProvisioning();
 
-        List<ProvisioningActivity> activities = null;
-        for (;;) {
-            Thread.sleep(1000);
-            System.out.println(".");
-            activities = CloudStatistics.get().getActivities();
-            if (activities.size() != 0) {
-                ProvisioningActivity.PhaseExecution execution = activities.get(0).getPhaseExecution(PROVISIONING);
-                if (execution.getAttachment(PhaseExecutionAttachment.ExceptionAttachment.class) != null) {
-                    break;
-                }
-            }
-        }
-
-        ProvisioningActivity activity = activities.get(0);
+        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+        // As it still fails many will be provisioned. Take the last one as the most recent is being updated
+        ProvisioningActivity activity = activities.get(activities.size() - 1);
         ProvisioningActivity.PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
+
+        while (activity.getStatus() != FAIL) {
+            Thread.sleep(100);
+        }
+        assertEquals(FAIL, activity.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachment(PhaseExecutionAttachment.ExceptionAttachment.class);
         assertEquals(ThrowException.EXCEPTION, attachment.getCause());
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
-        // TODO check the phasing as well
-        //assertNotNull(activity.getPhaseExecution(COMPLETED));
+
+        detectCompletionNow();
+        assertNotNull(activity.getPhaseExecution(COMPLETED));
     }
 
     @Test
@@ -156,13 +150,12 @@ public class CloudStatisticsTest {
         QueueTaskFuture<FreeStyleBuild> build = p.scheduleBuild2(0);
 
         j.jenkins.clouds.add(new TestCloud("dummy", j, new LaunchSuccessfully()));
-
         triggerProvisioning();
 
         List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
         for (ProvisioningActivity a : activities) {
-            assertEquals("dummy", a.getId().getCloudName());
-            assertThat(a.getId().getNodeName(), startsWith("dummy-slave-"));
+            assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
+            assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-slave-"));
         }
 
         ProvisioningActivity activity = activities.get(0);
@@ -177,12 +170,12 @@ public class CloudStatisticsTest {
         Computer computer = j.jenkins.getComputer(activity.getId().getNodeName());
         assertNotNull(computer);
 
-        while (activity.getPhaseExecution(LAUNCHING) != null) {
+        while (activity.getPhaseExecution(LAUNCHING) == null) {
             System.out.println("Waiting for launch to start");
             Thread.sleep(100);
         }
 
-        while (activity.getPhaseExecution(OPERATING) != null) {
+        while (activity.getPhaseExecution(OPERATING) == null) {
             System.out.println("Waiting for slave to launch");
             Thread.sleep(100);
         }
@@ -199,7 +192,7 @@ public class CloudStatisticsTest {
 
         assertEquals(OK, activity.getStatus());
 
-        // TODO check phasing
+        detectCompletionNow();
         assertNotNull(activity.getPhaseExecution(COMPLETED));
     }
 
@@ -214,26 +207,28 @@ public class CloudStatisticsTest {
         provisioningListener.onStarted(provisionId);
         provisioningListener.onFailure(provisionId, new Exception("Something bad happened"));
 
+
+
+        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", 1, null, "slave");
+        provisioningListener.onStarted(warnId);
+        Node slave = createTrackedSlave(warnId, j);
+        ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
+        a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, "I do not quite like this"));
+
+        slave.toComputer().waitUntilOnline();
+        Thread.sleep(500);
+        slave.toComputer().doDoDelete();
+        detectCompletionNow(); // Force completion detection
+
         ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", 1, "working-template", "future-slave");
         provisioningListener.onStarted(okId);
-        Node slave = createTrackedSlave(okId, j);
+        slave = createTrackedSlave(okId, j);
         provisioningListener.onComplete(okId, slave);
         slave.toComputer().waitUntilOnline();
         Thread.sleep(500);
         slave.toComputer().doDoDelete();
-        j.jenkins.getExtensionList(CloudStatistics.SlaveCompletionDetector.class).get(0).doRun(); // Force completion detection
-        Thread.sleep(500);
+        detectCompletionNow(); // Force completion detection
 
-        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", 1, null, "slave");
-        provisioningListener.onStarted(warnId);
-        slave = createTrackedSlave(warnId, j);
-        ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
-        a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, "I do not quite like this"));
-        slave.toComputer().waitUntilOnline();
-
-        Thread.sleep(500);
-        slave.toComputer().doDoDelete();
-        j.jenkins.getExtensionList(CloudStatistics.SlaveCompletionDetector.class).get(0).doRun(); // Force completion detection
         Thread.sleep(500);
 
         // Then
@@ -272,15 +267,18 @@ public class CloudStatisticsTest {
         // j.interactiveBreak();
     }
 
+    private void detectCompletionNow() throws Exception {
+        j.jenkins.getExtensionList(CloudStatistics.SlaveCompletionDetector.class).get(0).doRun();
+    }
+
     @Nonnull
     private static Node createTrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws IOException, Descriptor.FormException, URISyntaxException {
-        synchronized (j.jenkins) {
-            LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(
-                    id.getNodeName(), "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList(), id
-            );
-            j.jenkins.addNode(slave);
-            return slave;
-        }
+        LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(
+                id.getNodeName(), "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList(), id
+        );
+        j.jenkins.addNode(slave);
+        slave.toComputer().connect(true);
+        return slave;
     }
 
     public static final class TestCloud extends Cloud {

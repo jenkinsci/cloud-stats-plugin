@@ -23,21 +23,24 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import hudson.model.Label;
 import hudson.model.Node;
-import hudson.slaves.NodeProvisioner;
+import hudson.slaves.Cloud;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.concurrent.Future;
 
+import static hudson.slaves.NodeProvisioner.*;
+
 /**
- * {@NodeProvisioner.PlannedNode} that keeps track of owning cloud and fingerprint to track the activity.
+ * {@link PlannedNode} that keeps track of owning cloud and fingerprint to track the activity.
  *
- * {@Cloud#provision()} needs to return this subtype to have the provisioning activity tracked.
+ * {@link Cloud#provision(Label, int)} needs to return this subtype to have the provisioning activity tracked.
  *
  * @author ogondza.
  */
-public class TrackedPlannedNode extends NodeProvisioner.PlannedNode implements TrackedItem {
+public class TrackedPlannedNode extends PlannedNode implements TrackedItem {
 
     private final @Nonnull ProvisioningActivity.Id id;
 

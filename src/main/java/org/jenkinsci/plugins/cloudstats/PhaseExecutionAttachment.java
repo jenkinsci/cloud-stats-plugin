@@ -28,7 +28,7 @@ import hudson.Functions;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
 
 /**
  * Additional information attached to the {@link org.jenkinsci.plugins.cloudstats.ProvisioningActivity.PhaseExecution}.
@@ -46,8 +46,8 @@ public class PhaseExecutionAttachment {
     /**
      * Status the execution entered once this got attached.
      *
-     * @return {@link OK} in case of informative attachment, {@link WARN} in case provisioning continued, but there is
-     * something worth attention on this attachment anyway or {@link FAIL} in case provisioning failed with this attachment
+     * @return {@link Status#OK} in case of informative attachment, {@link Status#WARN} in case provisioning continued, but there is
+     * something worth attention on this attachment anyway or {@link Status#FAIL} in case provisioning failed with this attachment
      * explaining the cause.
      */
     public @Nonnull ProvisioningActivity.Status getStatus() {

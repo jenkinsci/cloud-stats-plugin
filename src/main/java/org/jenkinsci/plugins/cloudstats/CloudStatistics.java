@@ -55,18 +55,19 @@ import java.util.logging.Logger;
 /**
  * Statistics of past cloud activities.
  */
+@Extension
 public class CloudStatistics extends ManagementLink {
 
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
-
-    @Extension @Restricted(NoExternalUse.class)
-    public static final CloudStatistics stats = new CloudStatistics();
-    @Extension @Restricted(NoExternalUse.class)
-    public static final ProvisioningListener pl = new ProvisioningListener(stats);
-    @Extension @Restricted(NoExternalUse.class)
-    public static final OperationListener ol = new OperationListener(stats);
-    @Extension @Restricted(NoExternalUse.class)
-    public static final SlaveCompletionDetector scd = new SlaveCompletionDetector(stats);
+//
+//    @Extension @Restricted(NoExternalUse.class)
+//    public static final CloudStatistics stats = new CloudStatistics();
+//    @Extension @Restricted(NoExternalUse.class)
+//    public static final ProvisioningListener pl = new ProvisioningListener(stats);
+//    @Extension @Restricted(NoExternalUse.class)
+//    public static final OperationListener ol = new OperationListener(stats);
+//    @Extension @Restricted(NoExternalUse.class)
+//    public static final SlaveCompletionDetector scd = new SlaveCompletionDetector(stats);
 
     /*
      * The log itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
@@ -77,7 +78,7 @@ public class CloudStatistics extends ManagementLink {
      * Get the singleton instance.
      */
     public static @Nonnull CloudStatistics get() {
-        return stats;
+        return Jenkins.getInstance().getExtensionList(CloudStatistics.class).get(0);
     }
 
     public String getDisplayName() {
@@ -107,13 +108,16 @@ public class CloudStatistics extends ManagementLink {
         return log.toList();
     }
 
+    /**
+     * Listen to ongoing provisioning activities.
+     *
+     * All activities that are triggered by Jenkins queue load (those that goes through {@link NodeProvisioner}) are
+     * reported by Jenkins core. This api needs to be called by plugin if and only if the slaves are provisioned differently.
+     */
+    @Extension
     public static class ProvisioningListener extends CloudProvisioningListener {
 
-        private final CloudStatistics stats;
-
-        public ProvisioningListener(@Nonnull CloudStatistics stats) {
-            this.stats = stats;
-        }
+        private final CloudStatistics stats = CloudStatistics.get();
 
         @Override @Restricted(DoNotUse.class)
         public void onStarted(Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
@@ -127,6 +131,9 @@ public class CloudStatistics extends ManagementLink {
 
         /**
          * Inform plugin provisioning has started. This is only needed when provisioned outside {@link NodeProvisioner}.
+         *
+         * @param id Unique identifier of the activity. The plugin is responsible for this to be unique and all subsequent
+         *           calls are identified by the same Id instance.
          */
         public @Nonnull ProvisioningActivity onStarted(@Nonnull ProvisioningActivity.Id id) {
             ProvisioningActivity activity = new ProvisioningActivity(id);
@@ -180,14 +187,10 @@ public class CloudStatistics extends ManagementLink {
         }
     }
 
-    @Restricted(NoExternalUse.class)
-    private static class OperationListener extends ComputerListener {
+    @Extension @Restricted(NoExternalUse.class)
+    public static class OperationListener extends ComputerListener {
 
-        private final CloudStatistics stats;
-
-        public OperationListener(@Nonnull CloudStatistics stats) {
-            this.stats = stats;
-        }
+        private final CloudStatistics stats = CloudStatistics.get();
 
         @Override
         public void preLaunch(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
@@ -235,14 +238,10 @@ public class CloudStatistics extends ManagementLink {
     //    at jenkins.model.Jenkins.addNode(Jenkins.java:1678)
     //            - locked <0x13a6> (a hudson.model.Hudson)
     //    at org.jvnet.hudson.test.JenkinsRule.createSlave(JenkinsRule.java:814)
-    @Restricted(NoExternalUse.class)
-    /*package*/ static class SlaveCompletionDetector extends PeriodicWork {
+    @Restricted(NoExternalUse.class) @Extension
+    public static class SlaveCompletionDetector extends PeriodicWork {
 
-        private final CloudStatistics stats;
-
-        public SlaveCompletionDetector(@Nonnull CloudStatistics stats) {
-            this.stats = stats;
-        }
+        private final CloudStatistics stats = CloudStatistics.get();
 
         @Override
         public long getRecurrencePeriod() {
