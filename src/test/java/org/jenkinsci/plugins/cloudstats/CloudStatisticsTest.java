@@ -27,6 +27,7 @@ package org.jenkinsci.plugins.cloudstats;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
+import hudson.Functions;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleBuild;
@@ -55,6 +56,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -203,13 +206,11 @@ public class CloudStatisticsTest {
 
         // When
 
-        ProvisioningActivity.Id provisionId = new ProvisioningActivity.Id("MyCloud", 2, "broken-template");
+        ProvisioningActivity.Id provisionId = new ProvisioningActivity.Id("MyCloud", 1, "broken-template");
         provisioningListener.onStarted(provisionId);
         provisioningListener.onFailure(provisionId, new Exception("Something bad happened"));
 
-
-
-        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", 1, null, "slave");
+        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", 2, null, "slave");
         provisioningListener.onStarted(warnId);
         Node slave = createTrackedSlave(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
@@ -218,9 +219,8 @@ public class CloudStatisticsTest {
         slave.toComputer().waitUntilOnline();
         Thread.sleep(500);
         slave.toComputer().doDoDelete();
-        detectCompletionNow(); // Force completion detection
 
-        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", 1, "working-template", "future-slave");
+        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", 3, "working-template", "future-slave");
         provisioningListener.onStarted(okId);
         slave = createTrackedSlave(okId, j);
         provisioningListener.onComplete(okId, slave);
@@ -245,26 +245,27 @@ public class CloudStatisticsTest {
         assertEquals(FAIL, failedProvisioning.getStatus());
         assertEquals("Something bad happened", ((PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0)).getCause().getMessage());
 
-        ProvisioningActivity ok = all.get(1);
-        assertEquals(okId, ok.getId());
-        assertEquals(OK, ok.getStatus());
-        assertNotNull(null, ok.getPhaseExecution(PROVISIONING));
-        assertNotNull(null, ok.getPhaseExecution(LAUNCHING));
-        assertNotNull(null, ok.getPhaseExecution(OPERATING));
-        assertNotNull(null, ok.getPhaseExecution(COMPLETED));
-
         ProvisioningActivity warn = all.get(1);
         assertEquals(warnId, warn.getId());
         assertEquals(WARN, warn.getStatus());
-        assertNotNull(null, warn.getPhaseExecution(PROVISIONING));
-        assertNotNull(null, warn.getPhaseExecution(LAUNCHING));
-        assertNotNull(null, warn.getPhaseExecution(OPERATING));
-        assertNotNull(null, warn.getPhaseExecution(COMPLETED));
+        assertNotNull(warn.getPhaseExecution(PROVISIONING));
+        assertNotNull(warn.getPhaseExecution(LAUNCHING));
+        assertNotNull(warn.getPhaseExecution(OPERATING));
+        assertNotNull(warn.getPhaseExecution(COMPLETED));
         ProvisioningActivity.PhaseExecution warnedLaunch = warn.getPhaseExecution(LAUNCHING);
         assertEquals(WARN, warnedLaunch.getStatus());
         assertEquals("I do not quite like this", warnedLaunch.getAttachments().get(0).getTitle());
 
-        // j.interactiveBreak();
+        ProvisioningActivity ok = all.get(2);
+        assertEquals(okId, ok.getId());
+        assertEquals(OK, ok.getStatus());
+        System.err.println(ok.getPhaseExecutions());
+        assertNotNull(ok.getPhaseExecution(PROVISIONING));
+        assertNotNull(ok.getPhaseExecution(LAUNCHING));
+        assertNotNull(ok.getPhaseExecution(OPERATING));
+        assertNotNull(ok.getPhaseExecution(COMPLETED));
+
+        //j.interactiveBreak();
     }
 
     private void detectCompletionNow() throws Exception {
@@ -272,12 +273,11 @@ public class CloudStatisticsTest {
     }
 
     @Nonnull
-    private static Node createTrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws IOException, Descriptor.FormException, URISyntaxException {
+    private static LaunchSuccessfully.TrackedSlave createTrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws IOException, Descriptor.FormException, URISyntaxException {
         LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(
                 id.getNodeName(), "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList(), id
         );
         j.jenkins.addNode(slave);
-        slave.toComputer().connect(true);
         return slave;
     }
 

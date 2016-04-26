@@ -59,15 +59,6 @@ import java.util.logging.Logger;
 public class CloudStatistics extends ManagementLink {
 
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
-//
-//    @Extension @Restricted(NoExternalUse.class)
-//    public static final CloudStatistics stats = new CloudStatistics();
-//    @Extension @Restricted(NoExternalUse.class)
-//    public static final ProvisioningListener pl = new ProvisioningListener(stats);
-//    @Extension @Restricted(NoExternalUse.class)
-//    public static final OperationListener ol = new OperationListener(stats);
-//    @Extension @Restricted(NoExternalUse.class)
-//    public static final SlaveCompletionDetector scd = new SlaveCompletionDetector(stats);
 
     /*
      * The log itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
@@ -155,7 +146,7 @@ public class CloudStatistics extends ManagementLink {
         public @CheckForNull ProvisioningActivity onComplete(@Nonnull ProvisioningActivity.Id id, @Nonnull Node node) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
-                // TODO do we want this in ID anyway?
+                // TODO move the mutable field to ProvisioningActivity
                 activity.getId().rename(node.getDisplayName());
             }
             return activity;
@@ -200,8 +191,8 @@ public class CloudStatistics extends ManagementLink {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity == null) return;
 
-            // TODO it can be launched several times
-            activity.enter(ProvisioningActivity.Phase.LAUNCHING);
+            // Do not enter second time on relaunch
+            activity.enterIfNotAlready(ProvisioningActivity.Phase.LAUNCHING);
         }
 
         @Override
@@ -220,13 +211,14 @@ public class CloudStatistics extends ManagementLink {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity == null) return;
 
-            // TODO it can happen several times
-            activity.enter(ProvisioningActivity.Phase.OPERATING);
+            // Do not enter second time on relaunch
+            activity.enterIfNotAlready(ProvisioningActivity.Phase.OPERATING);
         }
     }
 
     // TODO Replace with better extension point https://issues.jenkins-ci.org/browse/JENKINS-33780
-    // TODO does not support slave rename at all. I tried to mark the node with property but ComputerListener#preLaunch might not have access to Node instance:
+    // TODO does not support slave rename at all.
+    // TODO: ComputerListener#preLaunch might not have access to Node instance:
     //    at hudson.slaves.SlaveComputer._connect(SlaveComputer.java:219)
     //    at hudson.model.Computer.connect(Computer.java:339)
     //    at hudson.slaves.RetentionStrategy$1.start(RetentionStrategy.java:108)
@@ -259,8 +251,14 @@ public class CloudStatistics extends ManagementLink {
 
             for (ProvisioningActivity activity: stats.log) {
                 Map<ProvisioningActivity.Phase, ProvisioningActivity.PhaseExecution> executions = activity.getPhaseExecutions();
+
                 if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) continue; // Completed already
-                if (trackedExisting.contains(activity.getId())) continue; // Still running
+                assert activity.getStatus() != ProvisioningActivity.Status.FAIL; // Should be completed already if failed
+
+                // TODO there is still a chance some activity will never be recognised as completed when provisioning completes without error and launching never starts for some reason
+                if (executions.get(ProvisioningActivity.Phase.LAUNCHING) == null) continue; // Still provisioning
+
+                if (trackedExisting.contains(activity.getId())) continue; // Still operating
 
                 activity.enter(ProvisioningActivity.Phase.COMPLETED);
             }

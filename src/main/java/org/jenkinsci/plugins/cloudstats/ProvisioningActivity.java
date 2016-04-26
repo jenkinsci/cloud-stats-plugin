@@ -112,7 +112,7 @@ public final class ProvisioningActivity {
      */
     public static final class PhaseExecution {
         private final @Nonnull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
-        private final @Nonnull long started;
+        private final long started;
 
         public PhaseExecution() {
             this.started = System.currentTimeMillis();
@@ -124,8 +124,8 @@ public final class ProvisioningActivity {
 
         public @CheckForNull <T extends PhaseExecutionAttachment> T getAttachment(@Nonnull Class<T> type) {
             for (PhaseExecutionAttachment attachment : attachments) {
-                // TODO fail if there is more;
-                if (type.isAssignableFrom(attachment.getClass())) return (T) attachment;
+                // TODO fail if there is more
+                if (type.isInstance(attachment)) return type.cast(attachment);
             }
             return null;
         }
@@ -160,7 +160,7 @@ public final class ProvisioningActivity {
 
         private final @CheckForNull String templateName;
 
-        private @Nonnull String nodeName;
+        private @CheckForNull String nodeName;
 
         /**
          * Unique identifier of the activity.
@@ -257,7 +257,7 @@ public final class ProvisioningActivity {
      */
     private final Map<Phase, PhaseExecution> progress;
     {
-        progress = new LinkedHashMap(Phase.values().length);
+        progress = new LinkedHashMap<>(Phase.values().length);
         progress.put(Phase.PROVISIONING, null);
         progress.put(Phase.LAUNCHING, null);
         progress.put(Phase.OPERATING, null);
@@ -331,12 +331,25 @@ public final class ProvisioningActivity {
     /**
      * Make the phase of this activity entered.
      *
-     * @throws IllegalArgumentException In case phases are not entered in declared order or entered repeatedly.
+     * @throws IllegalArgumentException In case phases are entered repeatedly.
      */
     public void enter(@Nonnull Phase phase) {
         synchronized (progress) {
-            if (progress.get(phase) != null) throw new IllegalStateException("The phase is already executing");
+            if (progress.get(phase) != null) throw new IllegalStateException("The phase " + phase + " has already started");
 
+            progress.put(phase, new PhaseExecution());
+        }
+    }
+
+    /**
+     * Make sure the phase of this activity is entered.
+     *
+     * Exposed for convenience of clients that can be invoked repeatedly and have no easier way to tell if phase was
+     * entered already, such as launch listener.
+     */
+    public void enterIfNotAlready(@Nonnull Phase phase) {
+        synchronized (progress) {
+            if (progress.get(phase) != null) return;
             progress.put(phase, new PhaseExecution());
         }
     }
