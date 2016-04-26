@@ -23,12 +23,14 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import hudson.Util;
 import hudson.slaves.NodeProvisioner;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -36,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Record of provisioning attempt lifecycle.
@@ -160,7 +163,7 @@ public final class ProvisioningActivity {
 
         private final @CheckForNull String templateName;
 
-        private @CheckForNull String nodeName;
+        private final @CheckForNull String nodeName;
 
         /**
          * Unique identifier of the activity.
@@ -171,20 +174,20 @@ public final class ProvisioningActivity {
          * @param cloudName Name of the cloud that initiated this activity.
          * @param fingerprint Unique id of this activity.
          * @param templateName Name of the template that initiated this activity.
-         * @param displayName Name of the slave to be provisioned. Of the name of the slave is not known ahead, it can
+         * @param nodeName Name of the slave to be provisioned. Of the name of the slave is not known ahead, it can
          *                    be <tt>null</tt> cloud stats plugin will update it once it will be known.
          */
-        public Id(@Nonnull String cloudName, int fingerprint, @CheckForNull String templateName, @CheckForNull String displayName) {
+        public Id(@Nonnull String cloudName, int fingerprint, @CheckForNull String templateName, @CheckForNull String nodeName) {
             this.cloudName = cloudName;
             this.templateName = templateName;
-            this.nodeName = displayName;
+            this.nodeName = nodeName;
             this.fingerprint = fingerprint;
         }
 
         public Id(@Nonnull String cloudName, int fingerprint, @CheckForNull String templateName) {
             this.cloudName = cloudName;
             this.templateName = templateName;
-            this.nodeName = templateName; // Use template name as the best guess - correct it later
+            this.nodeName = null;
             this.fingerprint = fingerprint;
         }
 
@@ -211,11 +214,10 @@ public final class ProvisioningActivity {
         }
 
         /**
-         * Name of the node being provisioned.
+         * Name of the slave to be provisioned by this activity. <tt>null</tt> if not known ahead.
          */
-        // The neme gets fixed/updated in CloudProvisioningListener#onComplete.
-        public @Nonnull String getNodeName() {
-            return nodeName;
+        public @CheckForNull String getNodeName() {
+            return  nodeName;
         }
 
         @Override
@@ -233,24 +235,18 @@ public final class ProvisioningActivity {
 
         @Override
         public String toString() {
-            return String.format("ProvisioningActivity for %s/%s tracking %s (%d)", cloudName, templateName, nodeName, fingerprint);
+            return String.format("ProvisioningActivity for %s/%s/%s (%d)", cloudName, templateName, nodeName, fingerprint);
         }
 
         private static int getFingerprint(TrackedPlannedNode node) {
             return System.identityHashCode(node);
         }
-
-        /**
-         * Used when slave gets renamed and Node gets created with different named than planned.
-         */
-        @Restricted(NoExternalUse.class)
-        /*package*/ void rename(@Nonnull String newName) {
-            if (newName == null) throw new IllegalArgumentException();
-            nodeName = newName;
-        }
     }
 
     private final @Nonnull Id id;
+
+    @GuardedBy("id")
+    private @Nonnull String name;
 
     /**
      * All phases the activity has started so far.
@@ -271,6 +267,15 @@ public final class ProvisioningActivity {
     public ProvisioningActivity(Id id) {
         this.id = id;
         enter(Phase.PROVISIONING);
+
+        // No need to synchronize since in constructor
+        name = id.nodeName;
+        if (name == null) {
+            name = id.templateName;
+        }
+        if (name == null) {
+            name = id.cloudName;
+        }
     }
 
     public @Nonnull Id getId() {
@@ -359,11 +364,24 @@ public final class ProvisioningActivity {
 
         // Complete the activity upon first failure
         if (attachment.getStatus() == Status.FAIL) {
-            synchronized (progress) {
-                if (getPhaseExecution(Phase.COMPLETED) == null) {
-                    enter(Phase.COMPLETED);
-                }
-            }
+            enterIfNotAlready(Phase.COMPLETED);
+        }
+    }
+
+    public @Nonnull String getDisplayName() {
+        synchronized (id) {
+            return name;
+        }
+    }
+
+    /**
+     * Attach the name once we know what it is.
+     */
+    @Restricted(NoExternalUse.class)
+    /*package*/ void rename(@Nonnull String newName) {
+        if (Util.fixEmptyAndTrim(newName) == null) throw new IllegalArgumentException();
+        synchronized (id) {
+            name = newName;
         }
     }
 

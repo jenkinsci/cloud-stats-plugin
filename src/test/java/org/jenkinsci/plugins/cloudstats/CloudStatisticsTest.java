@@ -41,6 +41,7 @@ import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.DumbSlave;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
@@ -96,7 +97,6 @@ public class CloudStatisticsTest {
         // Do not provision when not expected
         ExtensionList<NodeProvisioner.NodeProvisionerInvoker> extensionList = j.jenkins.getExtensionList(NodeProvisioner.NodeProvisionerInvoker.class);
         provisionerInvoker = extensionList.get(0);
-        //extensionList.remove(provisionerInvoker);
     }
 
     private void triggerProvisioning() {
@@ -259,7 +259,6 @@ public class CloudStatisticsTest {
         ProvisioningActivity ok = all.get(2);
         assertEquals(okId, ok.getId());
         assertEquals(OK, ok.getStatus());
-        System.err.println(ok.getPhaseExecutions());
         assertNotNull(ok.getPhaseExecution(PROVISIONING));
         assertNotNull(ok.getPhaseExecution(LAUNCHING));
         assertNotNull(ok.getPhaseExecution(OPERATING));
@@ -268,15 +267,34 @@ public class CloudStatisticsTest {
         //j.interactiveBreak();
     }
 
+    @Test
+    public void renameActivity() throws Exception {
+        CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
+        ProvisioningActivity.Id fixup = new ProvisioningActivity.Id("Cloud", 1, "template", "incorrectName");
+        ProvisioningActivity.Id assign = new ProvisioningActivity.Id("Cloud", 2, "template");
+        ProvisioningActivity fActivity = l.onStarted(fixup);
+        ProvisioningActivity aActivity = l.onStarted(assign);
+
+        assertEquals("incorrectName", fActivity.getDisplayName());
+        assertEquals("template", aActivity.getDisplayName());
+
+        LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 1, "template", "correct-name"), j);
+        LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 2, "template", "Some Name"), j);
+
+        l.onComplete(fixup, fSlave);
+        l.onComplete(assign, aSlave);
+
+        assertEquals(fSlave.getDisplayName(), fActivity.getDisplayName());
+        assertEquals(aSlave.getDisplayName(), aActivity.getDisplayName());
+    }
+
     private void detectCompletionNow() throws Exception {
         j.jenkins.getExtensionList(CloudStatistics.SlaveCompletionDetector.class).get(0).doRun();
     }
 
     @Nonnull
-    private static LaunchSuccessfully.TrackedSlave createTrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws IOException, Descriptor.FormException, URISyntaxException {
-        LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(
-                id.getNodeName(), "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList(), id
-        );
+    private static LaunchSuccessfully.TrackedSlave createTrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws Exception {
+        LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(id, j);
         j.jenkins.addNode(slave);
         return slave;
     }
@@ -352,6 +370,11 @@ public class CloudStatisticsTest {
 
         private static final class TrackedSlave extends AbstractCloudSlave implements TrackedItem {
             private final ProvisioningActivity.Id id;
+
+            public TrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws Exception {
+                super(id.getNodeName(), "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+                this.id = id;
+            }
 
             public TrackedSlave(
                     String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, ProvisioningActivity.Id id

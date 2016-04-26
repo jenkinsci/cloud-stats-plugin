@@ -35,7 +35,7 @@ THE SOFTWARE.
             }
 
             tr.status-WARN {
-                background-color: #FFD4BC;
+                background-color: #B2F5A8;
             }
 
             td.status-FAIL {
@@ -64,7 +64,7 @@ THE SOFTWARE.
                     <j:set var="activityStatus" value="${activity.status}"/>
                     <tr class="status-${activityStatus}">
                         <td>${activity.id.cloudName}/${activity.id.templateName}</td>
-                        <td>${activity.it.nodeName}</td>
+                        <td>${activity.displayName}</td>
                         <j:forEach var="phase" items="${activity.phaseExecutions.values()}">
                             <j:set var="status" value="${(phase == null || phase.status.ordinal() &lt; activityStatus.ordinal()) ? null : phase.status}"/>
                             <td class="status-${status}">

@@ -146,8 +146,7 @@ public class CloudStatistics extends ManagementLink {
         public @CheckForNull ProvisioningActivity onComplete(@Nonnull ProvisioningActivity.Id id, @Nonnull Node node) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
-                // TODO move the mutable field to ProvisioningActivity
-                activity.getId().rename(node.getDisplayName());
+                activity.rename(node.getDisplayName());
             }
             return activity;
         }
@@ -185,7 +184,6 @@ public class CloudStatistics extends ManagementLink {
 
         @Override
         public void preLaunch(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
-            System.out.println("LAUNCHING " + c.getDisplayName());
             ProvisioningActivity.Id id = getIdFor(c);
             if (id == null) return;
             ProvisioningActivity activity = stats.getActivityFor(id);
