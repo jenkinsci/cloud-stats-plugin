@@ -269,13 +269,14 @@ public final class ProvisioningActivity {
         enter(Phase.PROVISIONING);
 
         // No need to synchronize since in constructor
-        name = id.nodeName;
+        String name = id.nodeName;
         if (name == null) {
             name = id.templateName;
         }
         if (name == null) {
             name = id.cloudName;
         }
+        this.name = name;
     }
 
     public @Nonnull Id getId() {
@@ -360,7 +361,9 @@ public final class ProvisioningActivity {
     }
 
     public void attach(Phase phase, PhaseExecutionAttachment attachment) {
-        getPhaseExecution(phase).attach(attachment);
+        PhaseExecution execution = getPhaseExecution(phase);
+        if (execution == null) throw new IllegalArgumentException("Phase " + phase + " not entered yet");
+        execution.attach(attachment);
 
         // Complete the activity upon first failure
         if (attachment.getStatus() == Status.FAIL) {

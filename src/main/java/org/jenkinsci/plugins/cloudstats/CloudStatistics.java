@@ -69,7 +69,7 @@ public class CloudStatistics extends ManagementLink {
      * Get the singleton instance.
      */
     public static @Nonnull CloudStatistics get() {
-        return Jenkins.getInstance().getExtensionList(CloudStatistics.class).get(0);
+        return jenkins().getExtensionList(CloudStatistics.class).get(0);
     }
 
     public String getDisplayName() {
@@ -92,7 +92,7 @@ public class CloudStatistics extends ManagementLink {
     }
 
     public boolean isActive() {
-        return !Jenkins.getInstance().clouds.isEmpty();
+        return !jenkins().clouds.isEmpty();
     }
 
     public List<ProvisioningActivity> getActivities() {
@@ -173,8 +173,13 @@ public class CloudStatistics extends ManagementLink {
         }
 
         public static ProvisioningListener get() {
-            return Jenkins.getInstance().getExtensionList(ProvisioningListener.class).get(0);
+            return jenkins().getExtensionList(ProvisioningListener.class).get(0);
         }
+    }
+
+    @SuppressWarnings("null") // Suppress findbugs until getInstance is @Nonnull again
+    private static @Nonnull Jenkins jenkins() {
+        return Jenkins.getInstance();
     }
 
     @Extension @Restricted(NoExternalUse.class)
@@ -241,7 +246,7 @@ public class CloudStatistics extends ManagementLink {
         @Override
         protected void doRun() throws Exception {
             List<ProvisioningActivity.Id> trackedExisting = new ArrayList<>();
-            for (Computer computer : Jenkins.getInstance().getComputers()) {
+            for (Computer computer : jenkins().getComputers()) {
                 if (computer instanceof TrackedItem) {
                     trackedExisting.add(((TrackedItem) computer).getId());
                 }
