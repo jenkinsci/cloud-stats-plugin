@@ -177,9 +177,10 @@ public class CloudStatistics extends ManagementLink {
         }
     }
 
-    @SuppressWarnings("null") // Suppress findbugs until getInstance is @Nonnull again
     private static @Nonnull Jenkins jenkins() {
-        return Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) throw new IllegalStateException();
+        return jenkins;
     }
 
     @Extension @Restricted(NoExternalUse.class)
