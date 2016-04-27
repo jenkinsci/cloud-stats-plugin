@@ -214,7 +214,7 @@ public class CloudStatisticsTest {
         provisioningListener.onStarted(warnId);
         Node slave = createTrackedSlave(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
-        a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, "I do not quite like this"));
+        a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, "There is something attention worthy"));
 
         slave.toComputer().waitUntilOnline();
         Thread.sleep(500);
@@ -254,7 +254,7 @@ public class CloudStatisticsTest {
         assertNotNull(warn.getPhaseExecution(COMPLETED));
         ProvisioningActivity.PhaseExecution warnedLaunch = warn.getPhaseExecution(LAUNCHING);
         assertEquals(WARN, warnedLaunch.getStatus());
-        assertEquals("I do not quite like this", warnedLaunch.getAttachments().get(0).getTitle());
+        assertEquals("There is something attention worthy", warnedLaunch.getAttachments().get(0).getTitle());
 
         ProvisioningActivity ok = all.get(2);
         assertEquals(okId, ok.getId());
