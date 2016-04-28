@@ -24,10 +24,10 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
+import com.gargoylesoftware.htmlunit.Page;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
-import hudson.Functions;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleBuild;
@@ -41,10 +41,10 @@ import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
-import hudson.slaves.DumbSlave;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,13 +52,10 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -137,7 +134,7 @@ public class CloudStatisticsTest {
             Thread.sleep(100);
         }
         assertEquals(FAIL, activity.getStatus());
-        PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachment(PhaseExecutionAttachment.ExceptionAttachment.class);
+        PhaseExecutionAttachment.Exception attachment = prov.getAttachments(PhaseExecutionAttachment.Exception.class).get(0);
         assertEquals(ThrowException.EXCEPTION, attachment.getCause());
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
@@ -243,7 +240,11 @@ public class CloudStatisticsTest {
         assertNotNull(failedToProvision.getPhaseExecution(COMPLETED));
         ProvisioningActivity.PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
-        assertEquals("Something bad happened", ((PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0)).getCause().getMessage());
+        PhaseExecutionAttachment.Exception exception = (PhaseExecutionAttachment.Exception) failedProvisioning.getAttachments().get(0);
+        assertEquals("Something bad happened", exception.getCause().getMessage());
+        JenkinsRule.WebClient wc = j.createWebClient();
+        Page page = wc.goTo("cloud-stats").getAnchorByText(exception.getTitle()).click();
+        assertThat(page.getWebResponse().getContentAsString(), containsString("Something bad happened"));
 
         ProvisioningActivity warn = all.get(1);
         assertEquals(warnId, warn.getId());

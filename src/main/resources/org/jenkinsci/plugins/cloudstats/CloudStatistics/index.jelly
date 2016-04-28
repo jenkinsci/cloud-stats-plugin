@@ -1,7 +1,7 @@
 <!--
 The MIT License
 
-Copyright (c) 2014 Red Hat, Inc.
+Copyright (c) 2016 Red Hat, Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -65,15 +65,23 @@ THE SOFTWARE.
                     <tr class="status-${activityStatus}">
                         <td>${activity.id.cloudName}/${activity.id.templateName}</td>
                         <td>${activity.displayName}</td>
-                        <j:forEach var="phase" items="${activity.phaseExecutions.values()}">
-                            <j:set var="status" value="${(phase == null || phase.status.ordinal() &lt; activityStatus.ordinal()) ? null : phase.status}"/>
+                        <j:forEach var="execution" items="${activity.phaseExecutions.values()}">
+                            <j:set var="status" value="${(execution == null || execution.status.ordinal() &lt; activityStatus.ordinal()) ? null : execution.status}"/>
                             <td class="status-${status}">
-                                ${phase.started}
-                                <j:if test="${!phase.attachments.isEmpty()}">
+                                ${execution.started}
+                                <j:if test="${!execution.attachments.isEmpty()}">
                                     <ul>
-                                        <j:forEach var="attachment" items="${phase.attachments}">
+                                        <j:forEach var="attachment" items="${execution.attachments}">
                                             <li>
-                                                ${attachment.title}
+                                                <j:set var="url" value="${it.getUrl(activity, execution, attachment)}"/>
+                                                <j:choose>
+                                                    <j:when test="${url != null}">
+                                                        <a href="${url}">${attachment.title}</a>
+                                                    </j:when>
+                                                    <j:otherwise>
+                                                        ${attachment.title}
+                                                    </j:otherwise>
+                                                </j:choose>
                                             </li>
                                         </j:forEach>
                                     </ul>
@@ -83,17 +91,6 @@ THE SOFTWARE.
                     </tr>
                 </j:forEach>
             </table>
-            <j:choose>
-                <j:when test="${!it.active}">
-                    <st:statusCode value="404"/>
-                    <i>No clouds configured.</i>
-                </j:when>
-                <j:otherwise>
-                    <j:forEach var="cloud" items="${app.clouds}">
-                        <h2>${cloud.name} <small>${cloud.descriptor.displayName}</small></h2>
-                    </j:forEach>
-                </j:otherwise>
-            </j:choose>
         </l:main-panel>
     </l:layout>
 </j:jelly>

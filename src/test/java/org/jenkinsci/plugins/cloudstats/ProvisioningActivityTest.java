@@ -46,7 +46,7 @@ public class ProvisioningActivityTest {
     @Test
     public void phaseExecutionTrivia() {
         long before = System.currentTimeMillis();
-        ProvisioningActivity.PhaseExecution pe = new ProvisioningActivity.PhaseExecution();
+        ProvisioningActivity.PhaseExecution pe = new ProvisioningActivity.PhaseExecution(PROVISIONING);
         long after = System.currentTimeMillis();
 
         long started = pe.getStarted().getTime();

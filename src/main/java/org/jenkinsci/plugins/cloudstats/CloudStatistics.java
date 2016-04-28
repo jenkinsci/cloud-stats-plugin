@@ -44,9 +44,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -73,12 +71,12 @@ public class CloudStatistics extends ManagementLink {
     }
 
     public String getDisplayName() {
-        return isActive() ? "Cloud Statistics" : null ;
+        return "Cloud Statistics";
     }
 
     @Override
     public String getIconFileName() {
-        return isActive() ? "graph.png" : null;
+        return "graph.png";
     }
 
     @Override
@@ -91,12 +89,44 @@ public class CloudStatistics extends ManagementLink {
         return "Report of current and past provisioning activities";
     }
 
-    public boolean isActive() {
-        return !jenkins().clouds.isEmpty();
-    }
-
     public List<ProvisioningActivity> getActivities() {
         return log.toList();
+    }
+
+    @Restricted(NoExternalUse.class) // view only
+    public ProvisioningActivity getActivity(@Nonnull String hashString) {
+        int hash;
+        try {
+            hash = Integer.valueOf(hashString);
+        } catch (NumberFormatException nan) {
+            return null;
+        }
+
+        for (ProvisioningActivity activity : log) {
+            if (activity.getId().getFingerprint() == hash) {
+                return activity;
+            }
+        }
+
+        return null;
+    }
+
+    @Restricted(NoExternalUse.class) // view only
+    public @CheckForNull String getUrl(
+            @Nonnull ProvisioningActivity activity,
+            @Nonnull ProvisioningActivity.PhaseExecution phaseExecution,
+            @Nonnull PhaseExecutionAttachment attachment
+    ) {
+        activity.getClass(); phaseExecution.getClass(); attachment.getClass();
+
+        // No UI
+        if (attachment.getUrlName() == null) return null;
+
+        StringBuilder url = new StringBuilder();
+        url.append("activity/").append(activity.getId().getFingerprint()).append('/');
+        url.append("phase/").append(phaseExecution.getPhase().toString()).append('/');
+        url.append(phaseExecution.getUrlName(attachment)).append('/');
+        return url.toString();
     }
 
     /**
@@ -165,7 +195,7 @@ public class CloudStatistics extends ManagementLink {
         public @CheckForNull ProvisioningActivity onFailure(@Nonnull ProvisioningActivity.Id id, @Nonnull Throwable throwable) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
-                activity.attach(ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
+                activity.attach(ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.Exception(
                         ProvisioningActivity.Status.FAIL, "Provisioning failed", throwable
                 ));
             }

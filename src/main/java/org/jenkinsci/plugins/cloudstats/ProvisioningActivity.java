@@ -24,13 +24,15 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import hudson.Util;
-import hudson.slaves.NodeProvisioner;
+import hudson.model.ModelObject;
 import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -38,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Record of provisioning attempt lifecycle.
@@ -46,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author ogondza.
  */
 @Restricted(NoExternalUse.class) // Until we gain more confidence in this API
-public final class ProvisioningActivity {
+public final class ProvisioningActivity implements ModelObject {
 
     /**
      * Progress of an activity.
@@ -88,16 +89,7 @@ public final class ProvisioningActivity {
          *
          * The identification of the cause should be in attachment.
          */
-        FAIL;
-
-        public Status worseOf(@CheckForNull Status status) {
-            if (status == null) return this;
-
-            return ordinal() > status.ordinal()
-                    ? this
-                    : status
-            ;
-        }
+        FAIL
     }
 
     /**
@@ -113,29 +105,33 @@ public final class ProvisioningActivity {
      * next phase started or not. For the time tracking purposes, the phase is considered completed as soon as the next
      * phase completes. IOW, despite the fact the slave already started launching, plugin can still append provisioning log.
      */
-    public static final class PhaseExecution {
+    public static final class PhaseExecution implements ModelObject {
         private final @Nonnull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
         private final long started;
+        private final @Nonnull Phase phase;
 
-        public PhaseExecution() {
+        /*package*/ PhaseExecution(@Nonnull Phase phase) {
             this.started = System.currentTimeMillis();
+            this.phase = phase;
         }
 
         public @Nonnull List<PhaseExecutionAttachment> getAttachments() {
             return Collections.unmodifiableList(attachments);
         }
 
-        public @CheckForNull <T extends PhaseExecutionAttachment> T getAttachment(@Nonnull Class<T> type) {
-            for (PhaseExecutionAttachment attachment : attachments) {
-                // TODO fail if there is more
-                if (type.isInstance(attachment)) return type.cast(attachment);
+        public @CheckForNull <T extends PhaseExecutionAttachment> List<T> getAttachments(@Nonnull Class<T> type) {
+            List<T> out = new ArrayList<>();
+            for (PhaseExecutionAttachment attachment : getAttachments()) {
+                if (type.isInstance(attachment)) {
+                    out.add(type.cast(attachment));
+                }
             }
-            return null;
+            return out;
         }
 
         public @Nonnull Status getStatus() {
             Status status = Status.OK;
-            for (PhaseExecutionAttachment a : attachments) {
+            for (PhaseExecutionAttachment a : getAttachments()) {
                 if (a.getStatus().ordinal() > status.ordinal()) {
                     status = a.getStatus();
                 }
@@ -147,8 +143,67 @@ public final class ProvisioningActivity {
             return new Date(started);
         }
 
-        private void attach(PhaseExecutionAttachment phaseExecutionAttachment) {
+        public @Nonnull Phase getPhase() {
+            return phase;
+        }
+
+        @Override
+        public @Nonnull String getDisplayName() {
+            return phase.toString();
+        }
+
+        private void attach(@Nonnull PhaseExecutionAttachment phaseExecutionAttachment) {
             attachments.add(phaseExecutionAttachment);
+        }
+
+        @Restricted(DoNotUse.class)
+        public @CheckForNull String getUrlName(@Nonnull PhaseExecutionAttachment attachment) {
+            String urlName = attachment.getUrlName();
+            if (urlName == null) return null;
+
+            if (!attachments.contains(attachment)) throw new IllegalArgumentException(
+                    "Attachment not present in current execution"
+            );
+
+            int cntr = 0;
+            for (PhaseExecutionAttachment a: attachments) {
+                if (a.equals(attachment)) break;
+
+                if (urlName.equals(a.getUrlName())) {
+                    cntr++;
+                }
+            }
+
+            if (cntr > 0) {
+                return "attachment/" + urlName + ':' + cntr;
+            } else {
+                return "attachment/" + urlName;
+            }
+        }
+
+        @Restricted(DoNotUse.class)
+        public PhaseExecutionAttachment getAttachment(String urlName) {
+            int n = 0;
+            int i = urlName.lastIndexOf(':');
+            if (i != -1) {
+                try {
+                    n = Integer.valueOf(urlName.substring(i + 1));
+                    urlName = urlName.substring(0, i - 1);
+                } catch (NumberFormatException nan) {
+                    // It is not expected that ':' is found in the name, though proceed to fail later as the name will not be found
+                }
+            }
+
+            int cntr = 0;
+            for (PhaseExecutionAttachment a: attachments) {
+                if (!urlName.equals(a.getUrlName())) continue;
+
+                if (cntr == n) return a;
+
+                cntr++;
+            }
+
+            return null;
         }
     }
 
@@ -217,7 +272,14 @@ public final class ProvisioningActivity {
          * Name of the slave to be provisioned by this activity. <tt>null</tt> if not known ahead.
          */
         public @CheckForNull String getNodeName() {
-            return  nodeName;
+            return nodeName;
+        }
+
+        /**
+         * Unique fingerprint of this activity.
+         */
+        public int getFingerprint() {
+            return fingerprint;
         }
 
         @Override
@@ -260,11 +322,7 @@ public final class ProvisioningActivity {
         progress.put(Phase.COMPLETED, null);
     }
 
-    public ProvisioningActivity(@Nonnull TrackedPlannedNode node) {
-        this(node.getId());
-    }
-
-    public ProvisioningActivity(Id id) {
+    public ProvisioningActivity(@Nonnull Id id) {
         this.id = id;
         enter(Phase.PROVISIONING);
 
@@ -343,7 +401,7 @@ public final class ProvisioningActivity {
         synchronized (progress) {
             if (progress.get(phase) != null) throw new IllegalStateException("The phase " + phase + " has already started");
 
-            progress.put(phase, new PhaseExecution());
+            progress.put(phase, new PhaseExecution(phase));
         }
     }
 
@@ -356,7 +414,7 @@ public final class ProvisioningActivity {
     public void enterIfNotAlready(@Nonnull Phase phase) {
         synchronized (progress) {
             if (progress.get(phase) != null) return;
-            progress.put(phase, new PhaseExecution());
+            progress.put(phase, new PhaseExecution(phase));
         }
     }
 
@@ -371,9 +429,10 @@ public final class ProvisioningActivity {
         }
     }
 
+    @Override
     public @Nonnull String getDisplayName() {
         synchronized (id) {
-            return name;
+            return "Activity " + name;
         }
     }
 
@@ -386,6 +445,12 @@ public final class ProvisioningActivity {
         synchronized (id) {
             name = newName;
         }
+    }
+
+    @Restricted(NoExternalUse.class) // Stapler only
+    public PhaseExecution getPhase(@Nonnull String phaseName) {
+        Phase phase = Phase.valueOf(phaseName);
+        return getPhaseExecution(phase);
     }
 
     public boolean isFor(Id id) {

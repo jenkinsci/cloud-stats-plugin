@@ -28,12 +28,15 @@ import hudson.Functions;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import hudson.model.Action;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
  * Additional information attached to the {@link org.jenkinsci.plugins.cloudstats.ProvisioningActivity.PhaseExecution}.
  */
-public class PhaseExecutionAttachment {
+public class PhaseExecutionAttachment implements Action {
 
     private final @Nonnull ProvisioningActivity.Status status;
     private final @Nonnull String title;
@@ -61,20 +64,31 @@ public class PhaseExecutionAttachment {
         return title;
     }
 
+    @Override
+    public String getIconFileName() {
+        return null;
+    }
+
+    @Override
+    public @Nonnull String getDisplayName() {
+        return title;
+    }
+
     /**
      * Url fragment (without slashes) to provide URL subspace for this attachment.
      *
      * @return non-null, in case the attachment serves some more content. null otherwise.
      */
-    public @CheckForNull String getUrl() {
+    @Override
+    public @CheckForNull String getUrlName() {
         return null;
     }
 
-    public static final class ExceptionAttachment extends PhaseExecutionAttachment {
+    public static final class Exception extends PhaseExecutionAttachment {
 
         private final @Nonnull Throwable throwable;
 
-        public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
+        public Exception(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
             super(status, title);
             this.throwable = throwable;
         }
@@ -85,6 +99,11 @@ public class PhaseExecutionAttachment {
 
         public String toString() {
             return Functions.printThrowable(throwable);
+        }
+
+        @Override
+        public @CheckForNull String getUrlName() {
+            return "exception";
         }
     }
 }
