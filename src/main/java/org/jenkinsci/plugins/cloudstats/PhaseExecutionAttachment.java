@@ -84,11 +84,11 @@ public class PhaseExecutionAttachment implements Action {
         return null;
     }
 
-    public static final class Exception extends PhaseExecutionAttachment {
+    public static final class ExceptionAttachment extends PhaseExecutionAttachment {
 
         private final @Nonnull Throwable throwable;
 
-        public Exception(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
+        public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
             super(status, title);
             this.throwable = throwable;
         }

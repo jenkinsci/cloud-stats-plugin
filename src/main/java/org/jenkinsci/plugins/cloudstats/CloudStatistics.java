@@ -97,7 +97,7 @@ public class CloudStatistics extends ManagementLink {
     public ProvisioningActivity getActivity(@Nonnull String hashString) {
         int hash;
         try {
-            hash = Integer.valueOf(hashString);
+            hash = Integer.parseInt(hashString);
         } catch (NumberFormatException nan) {
             return null;
         }
@@ -195,7 +195,7 @@ public class CloudStatistics extends ManagementLink {
         public @CheckForNull ProvisioningActivity onFailure(@Nonnull ProvisioningActivity.Id id, @Nonnull Throwable throwable) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
-                activity.attach(ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.Exception(
+                activity.attach(ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
                         ProvisioningActivity.Status.FAIL, "Provisioning failed", throwable
                 ));
             }

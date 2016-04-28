@@ -44,7 +44,6 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -117,7 +116,7 @@ public class CloudStatisticsTest {
             Thread.sleep(100);
         }
         assertEquals(FAIL, activity.getStatus());
-        PhaseExecutionAttachment.Exception attachment = prov.getAttachments(PhaseExecutionAttachment.Exception.class).get(0);
+        PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class).get(0);
         assertEquals(ThrowException.EXCEPTION, attachment.getCause());
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
@@ -223,7 +222,7 @@ public class CloudStatisticsTest {
         assertNotNull(failedToProvision.getPhaseExecution(COMPLETED));
         ProvisioningActivity.PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
-        PhaseExecutionAttachment.Exception exception = (PhaseExecutionAttachment.Exception) failedProvisioning.getAttachments().get(0);
+        PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
         assertEquals("Something bad happened", exception.getCause().getMessage());
         JenkinsRule.WebClient wc = j.createWebClient();
         Page page = wc.goTo("cloud-stats").getAnchorByText(exception.getTitle()).click();

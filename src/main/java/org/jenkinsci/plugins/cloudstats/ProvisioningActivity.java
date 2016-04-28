@@ -187,7 +187,7 @@ public final class ProvisioningActivity implements ModelObject {
             int i = urlName.lastIndexOf(':');
             if (i != -1) {
                 try {
-                    n = Integer.valueOf(urlName.substring(i + 1));
+                    n = Integer.parseInt(urlName.substring(i + 1));
                     urlName = urlName.substring(0, i - 1);
                 } catch (NumberFormatException nan) {
                     // It is not expected that ':' is found in the name, though proceed to fail later as the name will not be found
