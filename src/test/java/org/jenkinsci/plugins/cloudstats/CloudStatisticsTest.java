@@ -276,8 +276,8 @@ public class CloudStatisticsTest {
         ProvisioningActivity fActivity = l.onStarted(fixup);
         ProvisioningActivity aActivity = l.onStarted(assign);
 
-        assertEquals("incorrectName", fActivity.getDisplayName());
-        assertEquals("template", aActivity.getDisplayName());
+        assertEquals("Activity incorrectName", fActivity.getDisplayName());
+        assertEquals("Activity template", aActivity.getDisplayName());
 
         LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 1, "template", "correct-name"), j);
         LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 2, "template", "Some Name"), j);
