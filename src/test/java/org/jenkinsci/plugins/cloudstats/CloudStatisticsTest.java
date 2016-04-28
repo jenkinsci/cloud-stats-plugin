@@ -102,23 +102,6 @@ public class CloudStatisticsTest {
     }
 
     @Test
-    public void showOnlyIfThereAreClouds() throws Exception {
-        JenkinsRule.WebClient wc = j.createWebClient();
-        wc.getOptions().setThrowExceptionOnFailingStatusCode(false);
-        wc.getOptions().setPrintContentOnFailingStatusCode(false);
-
-        assertThat(wc.goTo("manage").asText(), not(containsString("Cloud Statistics")));
-        assertThat(wc.goTo("cloud-stats/").asText(), containsString("No clouds configured"));
-
-        j.jenkins.clouds.add(new TestCloud("Dummy"));
-
-        assertThat(wc.goTo("manage").asText(), containsString("Cloud Statistics"));
-        String actual = wc.goTo("cloud-stats/").asText();
-        assertThat(actual, not(containsString("No clouds configured")));
-        assertThat(actual, containsString("Dummy Test Cloud"));
-    }
-
-    @Test
     public void provisionAndFail() throws Exception {
         j.createFreeStyleProject().scheduleBuild2(0);
 
@@ -276,8 +259,8 @@ public class CloudStatisticsTest {
         ProvisioningActivity fActivity = l.onStarted(fixup);
         ProvisioningActivity aActivity = l.onStarted(assign);
 
-        assertEquals("Activity incorrectName", fActivity.getDisplayName());
-        assertEquals("Activity template", aActivity.getDisplayName());
+        assertEquals("incorrectName", fActivity.getName());
+        assertEquals("template", aActivity.getName());
 
         LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 1, "template", "correct-name"), j);
         LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 2, "template", "Some Name"), j);
@@ -285,8 +268,8 @@ public class CloudStatisticsTest {
         l.onComplete(fixup, fSlave);
         l.onComplete(assign, aSlave);
 
-        assertEquals(fSlave.getDisplayName(), fActivity.getDisplayName());
-        assertEquals(aSlave.getDisplayName(), aActivity.getDisplayName());
+        assertEquals(fSlave.getDisplayName(), fActivity.getName());
+        assertEquals(aSlave.getDisplayName(), aActivity.getName());
     }
 
     private void detectCompletionNow() throws Exception {

@@ -429,11 +429,15 @@ public final class ProvisioningActivity implements ModelObject {
         }
     }
 
-    @Override
-    public @Nonnull String getDisplayName() {
+    public @Nonnull String getName() {
         synchronized (id) {
-            return "Activity " + name;
+            return name;
         }
+    }
+
+    @Override @Restricted(DoNotUse.class) // Stapler only
+    public @Nonnull String getDisplayName() {
+        return "Activity " + getName();
     }
 
     /**
