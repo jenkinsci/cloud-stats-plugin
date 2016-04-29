@@ -185,11 +185,11 @@ public class CloudStatisticsTest {
 
         // When
 
-        ProvisioningActivity.Id provisionId = new ProvisioningActivity.Id("MyCloud", 1, "broken-template");
+        ProvisioningActivity.Id provisionId = new ProvisioningActivity.Id("MyCloud", "broken-template");
         provisioningListener.onStarted(provisionId);
         provisioningListener.onFailure(provisionId, new Exception("Something bad happened"));
 
-        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", 2, null, "slave");
+        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "slave");
         provisioningListener.onStarted(warnId);
         Node slave = createTrackedSlave(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
@@ -199,7 +199,7 @@ public class CloudStatisticsTest {
         Thread.sleep(500);
         slave.toComputer().doDoDelete();
 
-        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", 3, "working-template", "future-slave");
+        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-slave");
         provisioningListener.onStarted(okId);
         slave = createTrackedSlave(okId, j);
         provisioningListener.onComplete(okId, slave);
@@ -253,16 +253,16 @@ public class CloudStatisticsTest {
     @Test
     public void renameActivity() throws Exception {
         CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
-        ProvisioningActivity.Id fixup = new ProvisioningActivity.Id("Cloud", 1, "template", "incorrectName");
-        ProvisioningActivity.Id assign = new ProvisioningActivity.Id("Cloud", 2, "template");
+        ProvisioningActivity.Id fixup = new ProvisioningActivity.Id("Cloud", "template", "incorrectName");
+        ProvisioningActivity.Id assign = new ProvisioningActivity.Id("Cloud", "template");
         ProvisioningActivity fActivity = l.onStarted(fixup);
         ProvisioningActivity aActivity = l.onStarted(assign);
 
         assertEquals("incorrectName", fActivity.getName());
         assertEquals("template", aActivity.getName());
 
-        LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 1, "template", "correct-name"), j);
-        LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", 2, "template", "Some Name"), j);
+        LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", "template", "correct-name"), j);
+        LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", "template", "Some Name"), j);
 
         l.onComplete(fixup, fSlave);
         l.onComplete(assign, aSlave);
@@ -305,15 +305,11 @@ public class CloudStatisticsTest {
 
             provision.j = j;
             int i = seq.getAndIncrement();
-            provision.id = new ProvisioningActivity.Id(name, i, null, name + "-slave-" + i);
+            provision.id = new ProvisioningActivity.Id(name, null, name + "-slave-" + i);
 
             return Collections.<NodeProvisioner.PlannedNode>singletonList(new TrackedPlannedNode(
-                    name, provision.id.getNodeName(), 1, Computer.threadPoolForRemoting.submit(provision)
-            ) {
-                @Override public @Nonnull ProvisioningActivity.Id getId() {
-                    return provision.id;
-                }
-            });
+                    provision.id, 1, Computer.threadPoolForRemoting.submit(provision)
+            ));
         }
 
         @Override

@@ -28,6 +28,8 @@ import javax.annotation.Nonnull;
 /**
  * Interface to be implemented by plugins to have their provisioning activities tracked.
  *
+ * It is necessary to implement this by {@link hudson.slaves.NodeProvisioner.PlannedNode}, {@link hudson.model.Node} and {@link hudson.model.Computer}.
+ *
  * @author ogondza.
  * @see TrackedPlannedNode
  */

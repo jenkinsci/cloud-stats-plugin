@@ -34,29 +34,37 @@ import java.util.concurrent.Future;
 import static hudson.slaves.NodeProvisioner.*;
 
 /**
- * {@link PlannedNode} that keeps track of owning cloud and fingerprint to track the activity.
+ * Convenient subclass of {@link PlannedNode} to simplify tracking the activity.
  *
- * {@link Cloud#provision(Label, int)} needs to return this subtype to have the provisioning activity tracked.
+ * {@link Cloud#provision(Label, int)} needs to return {@link PlannedNode} implmenting {@link TrackedItem} to have the
+ * provisioning activity tracked.
  *
  * @author ogondza.
+ * @see TrackedItem
  */
 public class TrackedPlannedNode extends PlannedNode implements TrackedItem {
 
     private final @Nonnull ProvisioningActivity.Id id;
 
-    public TrackedPlannedNode(@Nonnull String cloudName, @Nullable String templateName, @Nonnull String displayName, int numExecutors, @Nonnull Future<Node> future) {
-        super(displayName, future, numExecutors);
+    public TrackedPlannedNode(@Nonnull ProvisioningActivity.Id id, int numExecutors, @Nonnull Future<Node> future) {
+        super(extractTemporaryName(id), future, numExecutors);
 
-        this.id = new ProvisioningActivity.Id(cloudName, templateName, this);
+        this.id = id;
     }
 
-    public TrackedPlannedNode(@Nonnull String cloudName, @Nullable String displayName, int numExecutors, @Nonnull Future<Node> future) {
-        super(displayName, future, numExecutors);
-
-        this.id = new ProvisioningActivity.Id(cloudName, null, this);
+    // Try to use the most specific name, fallback to less specific if not set
+    private static String extractTemporaryName(ProvisioningActivity.Id id) {
+        String name = id.getNodeName();
+        if (name == null) {
+            name = id.getTemplateName();
+            if (name == null) {
+                name = id.getCloudName();
+            }
+        }
+        return name;
     }
 
-    @Nonnull public ProvisioningActivity.Id getId() {
+    public @Nonnull ProvisioningActivity.Id getId() {
         return id;
     }
 }

@@ -210,7 +210,7 @@ public final class ProvisioningActivity implements ModelObject {
     /**
      * Activity identifier.
      *
-     * Used to a) uniquely identify the activity throughout the lifecycle and b) map computer to its cloud/template.
+     * Used to a) uniquely identify the activity throughout the lifecycle and b) map Computer/Node/PlannedNode to its cloud/template.
      */
     public static final class Id {
         private final @Nonnull String cloudName;
@@ -227,31 +227,23 @@ public final class ProvisioningActivity implements ModelObject {
 
         /**
          * @param cloudName Name of the cloud that initiated this activity.
-         * @param fingerprint Unique id of this activity.
          * @param templateName Name of the template that initiated this activity.
          * @param nodeName Name of the slave to be provisioned. Of the name of the slave is not known ahead, it can
          *                    be <tt>null</tt> cloud stats plugin will update it once it will be known.
          */
-        public Id(@Nonnull String cloudName, int fingerprint, @CheckForNull String templateName, @CheckForNull String nodeName) {
+        public Id(@Nonnull String cloudName, @CheckForNull String templateName, @CheckForNull String nodeName) {
             this.cloudName = cloudName;
             this.templateName = templateName;
             this.nodeName = nodeName;
-            this.fingerprint = fingerprint;
+            this.fingerprint = System.identityHashCode(this) ^ (int) System.currentTimeMillis();
         }
 
-        public Id(@Nonnull String cloudName, int fingerprint, @CheckForNull String templateName) {
-            this.cloudName = cloudName;
-            this.templateName = templateName;
-            this.nodeName = null;
-            this.fingerprint = fingerprint;
+        public Id(@Nonnull String cloudName, @CheckForNull String templateName) {
+            this(cloudName, templateName, null);
         }
 
-        public Id(@Nonnull String cloudName, int fingerprint) {
-            this(cloudName, fingerprint, null);
-        }
-
-        /*package*/ Id(String cloudName, String templateName, TrackedPlannedNode trackedPlannedNode) {
-            this(cloudName, getFingerprint(trackedPlannedNode), templateName);
+        public Id(@Nonnull String cloudName) {
+            this(cloudName, null);
         }
 
         /**
