@@ -58,12 +58,13 @@ THE SOFTWARE.
 
             <table class="pane sortable bigtable" width="100%" id="cloud-stat-grid">
                 <tr>
-                    <th>Cloud / template</th><th>Name</th><th>Provisioning</th><th>Launch</th><th>Operation</th><th>Completion</th>
+                    <th>Cloud</th><th>Template</th><th>Name</th><th>Provisioning</th><th>Launch</th><th>Operation</th><th>Completion</th>
                 </tr>
                 <j:forEach var="activity" items="${it.activities}">
                     <j:set var="activityStatus" value="${activity.status}"/>
                     <tr class="status-${activityStatus}">
-                        <td>${activity.id.cloudName}/${activity.id.templateName}</td>
+                        <td>${activity.id.cloudName}</td>
+                        <td>${activity.id.templateName}</td>
                         <td>${activity.displayName}</td>
                         <j:forEach var="execution" items="${activity.phaseExecutions.values()}">
                             <j:set var="status" value="${(execution == null || execution.status.ordinal() &lt; activityStatus.ordinal()) ? null : execution.status}"/>
