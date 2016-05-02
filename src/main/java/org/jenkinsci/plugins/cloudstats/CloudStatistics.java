@@ -171,7 +171,9 @@ public class CloudStatistics extends ManagementLink {
         }
 
         /**
-         * Inform plugin provisioning has started. This is only needed when provisioned outside {@link NodeProvisioner}.
+         * Inform plugin provisioning has completed. This is only needed when provisioned outside {@link NodeProvisioner}.
+         *
+         * The method should be called before the node is added to Jenkins.
          */
         public @CheckForNull ProvisioningActivity onComplete(@Nonnull ProvisioningActivity.Id id, @Nonnull Node node) {
             ProvisioningActivity activity = stats.getActivityFor(id);
@@ -190,7 +192,9 @@ public class CloudStatistics extends ManagementLink {
         }
 
         /**
-         * Inform plugin provisioning has started. This is only needed when provisioned outside {@link NodeProvisioner}.
+         * Inform plugin provisioning has failed. This is only needed when provisioned outside {@link NodeProvisioner}.
+         *
+         * No node with {@code id} should be added added to jenkins.
          */
         public @CheckForNull ProvisioningActivity onFailure(@Nonnull ProvisioningActivity.Id id, @Nonnull Throwable throwable) {
             ProvisioningActivity activity = stats.getActivityFor(id);
@@ -309,6 +313,8 @@ public class CloudStatistics extends ManagementLink {
     }
 
     private static @CheckForNull ProvisioningActivity.Id getIdFor(Computer computer) {
+        if (computer instanceof Jenkins.MasterComputer) return null;
+
         if (!(computer instanceof TrackedItem)) {
             LOGGER.info("No support for cloud-stats-plugin by " + computer.getClass());
             return null;
@@ -324,7 +330,7 @@ public class CloudStatistics extends ManagementLink {
             }
         }
 
-        LOGGER.log(Level.WARNING, "No activity tracked for " + id, new Exception());
+        LOGGER.log(Level.WARNING, "No activity tracked for " + id, new IllegalStateException());
         return null;
     }
 }
