@@ -449,6 +449,16 @@ public final class ProvisioningActivity implements ModelObject {
         return getPhaseExecution(phase);
     }
 
+    @Restricted(NoExternalUse.class) // Stapler only
+    public String getDurationString(@Nonnull PhaseExecution execution) {
+        Phase phase = execution.getPhase();
+        if (phase == Phase.COMPLETED) throw new IllegalArgumentException();
+        PhaseExecution next = getPhaseExecution(Phase.values()[phase.ordinal() + 1]);
+        long done = next == null ? System.currentTimeMillis(): next.started;
+
+        return Util.getTimeSpanString(done - execution.started);
+    }
+
     public boolean isFor(Id id) {
         return id.fingerprint == this.id.fingerprint;
     }
