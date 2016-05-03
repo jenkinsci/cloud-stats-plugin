@@ -32,14 +32,10 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Record of provisioning attempt lifecycle.
@@ -90,121 +86,6 @@ public final class ProvisioningActivity implements ModelObject {
          * The identification of the cause should be in attachment.
          */
         FAIL
-    }
-
-    /**
-     * Phase execution record.
-     *
-     * While the phases starts in declared order, they might not complete in that order. Much less previous phase will
-     * be completed before next one starts.
-     *
-     * There are several reasons for that: provisioning listener is called when the results are picked up, the slave
-     * might have started launching agent in the meantime. There are plugin that in fact enforce the launch to complete,
-     * before completing the {@link hudson.slaves.NodeProvisioner.PlannedNode#future}. To avoid any problems this can cause,
-     * the execution of phases is expected to occur in order, the execution will accept attachments regardless if the
-     * next phase started or not. For the time tracking purposes, the phase is considered completed as soon as the next
-     * phase completes. IOW, despite the fact the slave already started launching, plugin can still append provisioning log.
-     */
-    public static final class PhaseExecution implements ModelObject {
-        private final @Nonnull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
-        private final long started;
-        private final @Nonnull Phase phase;
-
-        /*package*/ PhaseExecution(@Nonnull Phase phase) {
-            this.started = System.currentTimeMillis();
-            this.phase = phase;
-        }
-
-        public @Nonnull List<PhaseExecutionAttachment> getAttachments() {
-            return Collections.unmodifiableList(attachments);
-        }
-
-        public @CheckForNull <T extends PhaseExecutionAttachment> List<T> getAttachments(@Nonnull Class<T> type) {
-            List<T> out = new ArrayList<>();
-            for (PhaseExecutionAttachment attachment : getAttachments()) {
-                if (type.isInstance(attachment)) {
-                    out.add(type.cast(attachment));
-                }
-            }
-            return out;
-        }
-
-        public @Nonnull Status getStatus() {
-            Status status = Status.OK;
-            for (PhaseExecutionAttachment a : getAttachments()) {
-                if (a.getStatus().ordinal() > status.ordinal()) {
-                    status = a.getStatus();
-                }
-            }
-            return status;
-        }
-
-        public @Nonnull Date getStarted() {
-            return new Date(started);
-        }
-
-        public @Nonnull Phase getPhase() {
-            return phase;
-        }
-
-        @Override
-        public @Nonnull String getDisplayName() {
-            return phase.toString();
-        }
-
-        private void attach(@Nonnull PhaseExecutionAttachment phaseExecutionAttachment) {
-            attachments.add(phaseExecutionAttachment);
-        }
-
-        @Restricted(DoNotUse.class)
-        public @CheckForNull String getUrlName(@Nonnull PhaseExecutionAttachment attachment) {
-            String urlName = attachment.getUrlName();
-            if (urlName == null) return null;
-
-            if (!attachments.contains(attachment)) throw new IllegalArgumentException(
-                    "Attachment not present in current execution"
-            );
-
-            int cntr = 0;
-            for (PhaseExecutionAttachment a: attachments) {
-                if (a.equals(attachment)) break;
-
-                if (urlName.equals(a.getUrlName())) {
-                    cntr++;
-                }
-            }
-
-            if (cntr > 0) {
-                return "attachment/" + urlName + ':' + cntr;
-            } else {
-                return "attachment/" + urlName;
-            }
-        }
-
-        @Restricted(DoNotUse.class)
-        public PhaseExecutionAttachment getAttachment(String urlName) {
-            int n = 0;
-            int i = urlName.lastIndexOf(':');
-            if (i != -1) {
-                try {
-                    n = Integer.parseInt(urlName.substring(i + 1));
-                    urlName = urlName.substring(0, i - 1);
-                } catch (NumberFormatException nan) {
-                    // It is not expected that ':' is found in the name, though proceed to fail later as the name will not be found
-                }
-            }
-
-            int cntr = 0;
-            for (PhaseExecutionAttachment a: attachments) {
-                if (!urlName.equals(a.getUrlName())) continue;
-
-                if (cntr == n) return a;
-
-                cntr++;
-            }
-
-            return null;
-        }
     }
 
     /**
@@ -290,10 +171,6 @@ public final class ProvisioningActivity implements ModelObject {
         @Override
         public String toString() {
             return String.format("ProvisioningActivity for %s/%s/%s (%d)", cloudName, templateName, nodeName, fingerprint);
-        }
-
-        private static int getFingerprint(TrackedPlannedNode node) {
-            return System.identityHashCode(node);
         }
     }
 
@@ -454,9 +331,9 @@ public final class ProvisioningActivity implements ModelObject {
         Phase phase = execution.getPhase();
         if (phase == Phase.COMPLETED) throw new IllegalArgumentException();
         PhaseExecution next = getPhaseExecution(Phase.values()[phase.ordinal() + 1]);
-        long done = next == null ? System.currentTimeMillis(): next.started;
+        long done = next == null ? System.currentTimeMillis(): next.getStartedTimestamp();
 
-        return Util.getTimeSpanString(done - execution.started);
+        return Util.getTimeSpanString(done - execution.getStartedTimestamp());
     }
 
     public boolean isFor(Id id) {

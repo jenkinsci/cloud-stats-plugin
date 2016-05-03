@@ -46,7 +46,7 @@ public class ProvisioningActivityTest {
     @Test
     public void phaseExecutionTrivia() {
         long before = System.currentTimeMillis();
-        ProvisioningActivity.PhaseExecution pe = new ProvisioningActivity.PhaseExecution(PROVISIONING);
+        PhaseExecution pe = new PhaseExecution(PROVISIONING);
         long after = System.currentTimeMillis();
 
         long started = pe.getStarted().getTime();
@@ -96,7 +96,7 @@ public class ProvisioningActivityTest {
     @Test
     public void attachmentsAndStates() {
         ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
-        ProvisioningActivity.PhaseExecution pe = activity.getPhaseExecution(PROVISIONING);
+        PhaseExecution pe = activity.getPhaseExecution(PROVISIONING);
 
         PhaseExecutionAttachment ok = new PhaseExecutionAttachment(OK, "It is all fine");
         activity.attach(PROVISIONING, ok);

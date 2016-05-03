@@ -30,11 +30,9 @@ import javax.annotation.Nonnull;
 
 import hudson.model.Action;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
- * Additional information attached to the {@link org.jenkinsci.plugins.cloudstats.ProvisioningActivity.PhaseExecution}.
+ * Additional information attached to the {@link PhaseExecution}.
  */
 public class PhaseExecutionAttachment implements Action {
 

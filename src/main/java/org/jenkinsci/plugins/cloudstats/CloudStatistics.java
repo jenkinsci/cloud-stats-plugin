@@ -114,7 +114,7 @@ public class CloudStatistics extends ManagementLink {
     @Restricted(NoExternalUse.class) // view only
     public @CheckForNull String getUrl(
             @Nonnull ProvisioningActivity activity,
-            @Nonnull ProvisioningActivity.PhaseExecution phaseExecution,
+            @Nonnull PhaseExecution phaseExecution,
             @Nonnull PhaseExecutionAttachment attachment
     ) {
         activity.getClass(); phaseExecution.getClass(); attachment.getClass();
@@ -288,7 +288,7 @@ public class CloudStatistics extends ManagementLink {
             }
 
             for (ProvisioningActivity activity: stats.log) {
-                Map<ProvisioningActivity.Phase, ProvisioningActivity.PhaseExecution> executions = activity.getPhaseExecutions();
+                Map<ProvisioningActivity.Phase, PhaseExecution> executions = activity.getPhaseExecutions();
 
                 if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) continue; // Completed already
                 assert activity.getStatus() != ProvisioningActivity.Status.FAIL; // Should be completed already if failed

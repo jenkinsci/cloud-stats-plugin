@@ -1,9 +1,3 @@
-import org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment
-import org.jenkinsci.plugins.cloudstats.ProvisioningActivity
-
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-
 /*
  * The MIT License (MIT)
  *
@@ -27,6 +21,11 @@ import java.text.SimpleDateFormat
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+package org.jenkinsci.plugins.cloudstats
+
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 
 def l = namespace(lib.LayoutTagLib)
 def st = namespace("jelly:stapler")
@@ -70,13 +69,13 @@ l.layout {
 
             for (ProvisioningActivity activity in my.activities) {
                 def activityStatus = activity.status
-                List<ProvisioningActivity.PhaseExecution> executions = new ArrayList<>(activity.phaseExecutions.values())
+                List<PhaseExecution> executions = new ArrayList<>(activity.phaseExecutions.values())
                 tr("class": "status-${activityStatus}") {
                     td(activity.id.cloudName)
                     td(activity.id.templateName)
                     td(activity.name)
                     td(df.format(executions[0].started))
-                    for (ProvisioningActivity.PhaseExecution execution: executions) {
+                    for (PhaseExecution execution: executions) {
                         def status = (execution == null || execution.status.ordinal() < activityStatus.ordinal()) ? null : execution.status
                         td(class: "status-${status}") {
                             if (execution != null) {

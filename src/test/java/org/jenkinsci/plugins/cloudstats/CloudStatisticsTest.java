@@ -110,7 +110,7 @@ public class CloudStatisticsTest {
         List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
         // As it still fails many will be provisioned. Take the last one as the most recent is being updated
         ProvisioningActivity activity = activities.get(activities.size() - 1);
-        ProvisioningActivity.PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
+        PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
 
         while (activity.getStatus() != FAIL) {
             Thread.sleep(100);
@@ -220,7 +220,7 @@ public class CloudStatisticsTest {
         assertEquals(null, failedToProvision.getPhaseExecution(LAUNCHING));
         assertEquals(null, failedToProvision.getPhaseExecution(OPERATING));
         assertNotNull(failedToProvision.getPhaseExecution(COMPLETED));
-        ProvisioningActivity.PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
+        PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
         assertEquals("Something bad happened", exception.getCause().getMessage());
@@ -235,7 +235,7 @@ public class CloudStatisticsTest {
         assertNotNull(warn.getPhaseExecution(LAUNCHING));
         assertNotNull(warn.getPhaseExecution(OPERATING));
         assertNotNull(warn.getPhaseExecution(COMPLETED));
-        ProvisioningActivity.PhaseExecution warnedLaunch = warn.getPhaseExecution(LAUNCHING);
+        PhaseExecution warnedLaunch = warn.getPhaseExecution(LAUNCHING);
         assertEquals(WARN, warnedLaunch.getStatus());
         assertEquals("There is something attention worthy", warnedLaunch.getAttachments().get(0).getTitle());
 
