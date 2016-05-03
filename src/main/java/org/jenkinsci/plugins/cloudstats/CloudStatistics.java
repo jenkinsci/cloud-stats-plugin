@@ -24,12 +24,15 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
+import hudson.BulkChange;
 import hudson.Extension;
+import hudson.XmlFile;
 import hudson.model.Computer;
 import hudson.model.Label;
 import hudson.model.ManagementLink;
 import hudson.model.Node;
 import hudson.model.PeriodicWork;
+import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
@@ -42,6 +45,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +58,7 @@ import java.util.logging.Logger;
  * Statistics of past cloud activities.
  */
 @Extension
-public class CloudStatistics extends ManagementLink {
+public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
 
@@ -68,6 +72,15 @@ public class CloudStatistics extends ManagementLink {
      */
     public static @Nonnull CloudStatistics get() {
         return jenkins().getExtensionList(CloudStatistics.class).get(0);
+    }
+
+    @Restricted(NoExternalUse.class)
+    public CloudStatistics() {
+        try {
+            load();
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Unable to load stored statistics", e);
+        }
     }
 
     public String getDisplayName() {
@@ -130,6 +143,41 @@ public class CloudStatistics extends ManagementLink {
     }
 
     /**
+     * Attach information to activity's phase execution.
+     */
+    public void attach(@Nonnull ProvisioningActivity activity, @Nonnull ProvisioningActivity.Phase phase, @Nonnull PhaseExecutionAttachment attachment) {
+        activity.attach(phase, attachment);
+        // Enforce attachment going through this class so we know when to save
+        persist();
+    }
+
+    public void save() throws IOException {
+        getConfigFile().write(this);
+    }
+
+    private void persist() {
+        try {
+            save();
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Unable to store cloud statistics", e);
+        }
+    }
+
+    private void load() throws IOException {
+        final XmlFile file = getConfigFile();
+        if(file.exists()) {
+            file.unmarshal(this);
+        }
+    }
+
+    private XmlFile getConfigFile() {
+        return new XmlFile(Jenkins.XSTREAM, new File(new File(
+                Jenkins.getInstance().root,
+                getClass().getCanonicalName() + ".xml"
+        ).getAbsolutePath()));
+    }
+
+    /**
      * Listen to ongoing provisioning activities.
      *
      * All activities that are triggered by Jenkins queue load (those that goes through {@link NodeProvisioner}) are
@@ -142,11 +190,22 @@ public class CloudStatistics extends ManagementLink {
 
         @Override @Restricted(DoNotUse.class)
         public void onStarted(Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
-            for (NodeProvisioner.PlannedNode plannedNode : plannedNodes) {
-                ProvisioningActivity.Id id = getIdFor(plannedNode);
-                if (id != null) {
-                    onStarted(id);
+            BulkChange change = new BulkChange(stats);
+            try {
+                boolean changed = false;
+                for (NodeProvisioner.PlannedNode plannedNode : plannedNodes) {
+                    ProvisioningActivity.Id id = getIdFor(plannedNode);
+                    if (id != null) {
+                        onStarted(id);
+                        changed = true;
+                    }
                 }
+
+                if (changed) {
+                    stats.persist();
+                }
+            } finally {
+                change.abort();
             }
         }
 
@@ -159,6 +218,10 @@ public class CloudStatistics extends ManagementLink {
         public @Nonnull ProvisioningActivity onStarted(@Nonnull ProvisioningActivity.Id id) {
             ProvisioningActivity activity = new ProvisioningActivity(id);
             stats.log.add(activity);
+            // Do not save in case called from loop from an overload
+            if (!BulkChange.contains(stats)) {
+                stats.persist();
+            }
             return activity;
         }
 
@@ -179,6 +242,7 @@ public class CloudStatistics extends ManagementLink {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
                 activity.rename(node.getDisplayName());
+                stats.persist();
             }
             return activity;
         }
@@ -199,7 +263,7 @@ public class CloudStatistics extends ManagementLink {
         public @CheckForNull ProvisioningActivity onFailure(@Nonnull ProvisioningActivity.Id id, @Nonnull Throwable throwable) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
-                activity.attach(ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
+                stats.attach(activity, ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
                         ProvisioningActivity.Status.FAIL, "Provisioning failed", throwable
                 ));
             }
@@ -230,7 +294,10 @@ public class CloudStatistics extends ManagementLink {
             if (activity == null) return;
 
             // Do not enter second time on relaunch
-            activity.enterIfNotAlready(ProvisioningActivity.Phase.LAUNCHING);
+            boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.LAUNCHING);
+            if (entered) {
+                stats.save();
+            }
         }
 
         @Override
@@ -241,6 +308,7 @@ public class CloudStatistics extends ManagementLink {
             if (activity == null) return;
 
             // TODO attach details
+            // ...
         }
 
         @Override public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
@@ -250,7 +318,10 @@ public class CloudStatistics extends ManagementLink {
             if (activity == null) return;
 
             // Do not enter second time on relaunch
-            activity.enterIfNotAlready(ProvisioningActivity.Phase.OPERATING);
+            boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.OPERATING);
+            if (entered) {
+                stats.save();
+            }
         }
     }
 
@@ -287,6 +358,7 @@ public class CloudStatistics extends ManagementLink {
                 }
             }
 
+            boolean changed = false;
             for (ProvisioningActivity activity: stats.log) {
                 Map<ProvisioningActivity.Phase, PhaseExecution> executions = activity.getPhaseExecutions();
 
@@ -299,6 +371,10 @@ public class CloudStatistics extends ManagementLink {
                 if (trackedExisting.contains(activity.getId())) continue; // Still operating
 
                 activity.enter(ProvisioningActivity.Phase.COMPLETED);
+                changed = true;
+            }
+            if (changed) {
+                stats.save();
             }
         }
     }
@@ -323,7 +399,7 @@ public class CloudStatistics extends ManagementLink {
         return ((TrackedItem) computer).getId();
     }
 
-    private @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
+    /*package*/ @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
         for (ProvisioningActivity activity : log.toList()) {
             if (activity.isFor(id)) {
                 return activity;

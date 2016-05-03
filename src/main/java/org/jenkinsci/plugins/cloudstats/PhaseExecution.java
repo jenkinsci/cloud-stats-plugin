@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.cloudstats;
 import hudson.model.ModelObject;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -99,6 +100,10 @@ public final class PhaseExecution implements ModelObject {
         return phase.toString();
     }
 
+    /**
+     * @see CloudStatistics.attach(ProvisioningActivity, ProvisioningActivity.Phase, PhaseExecutionAttachment)
+     */
+    @Restricted(NoExternalUse.class)
     /*package*/ void attach(@Nonnull PhaseExecutionAttachment phaseExecutionAttachment) {
         attachments.add(phaseExecutionAttachment);
     }

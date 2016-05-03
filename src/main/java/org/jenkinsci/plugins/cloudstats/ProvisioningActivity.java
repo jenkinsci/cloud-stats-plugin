@@ -279,20 +279,24 @@ public final class ProvisioningActivity implements ModelObject {
      *
      * Exposed for convenience of clients that can be invoked repeatedly and have no easier way to tell if phase was
      * entered already, such as launch listener.
+     *
+     * @return {@code true} is phase was entered.
      */
-    public void enterIfNotAlready(@Nonnull Phase phase) {
+    public boolean enterIfNotAlready(@Nonnull Phase phase) {
         synchronized (progress) {
-            if (progress.get(phase) != null) return;
+            if (progress.get(phase) != null) return false;
             progress.put(phase, new PhaseExecution(phase));
         }
+        return true;
     }
 
-    public void attach(Phase phase, PhaseExecutionAttachment attachment) {
+    @Restricted(NoExternalUse.class)
+    /*package*/ void attach(Phase phase, PhaseExecutionAttachment attachment) {
         PhaseExecution execution = getPhaseExecution(phase);
         if (execution == null) throw new IllegalArgumentException("Phase " + phase + " not entered yet");
         execution.attach(attachment);
 
-        // Complete the activity upon first failure
+        // Enforce attach goes through this class to complete the activity upon first failure
         if (attachment.getStatus() == Status.FAIL) {
             enterIfNotAlready(Phase.COMPLETED);
         }
@@ -311,6 +315,9 @@ public final class ProvisioningActivity implements ModelObject {
 
     /**
      * Attach the name once we know what it is.
+     *
+     * Should never be invoked by other plugins as it is only needed when name of the node is discovered for the first
+     * time and during rename.
      */
     @Restricted(NoExternalUse.class)
     /*package*/ void rename(@Nonnull String newName) {
