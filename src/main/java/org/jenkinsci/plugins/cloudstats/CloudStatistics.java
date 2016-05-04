@@ -172,7 +172,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private XmlFile getConfigFile() {
         return new XmlFile(Jenkins.XSTREAM, new File(new File(
-                Jenkins.getInstance().root,
+                jenkins().root,
                 getClass().getCanonicalName() + ".xml"
         ).getAbsolutePath()));
     }
