@@ -68,7 +68,7 @@ l.layout(permission: app.ADMINISTER) {
 
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-            for (ProvisioningActivity activity in my.activities) {
+            my.activities.reverseEach { activity ->
                 def activityStatus = activity.status
                 List<PhaseExecution> executions = new ArrayList<>(activity.phaseExecutions.values())
                 tr("class": "status-${activityStatus}") {
