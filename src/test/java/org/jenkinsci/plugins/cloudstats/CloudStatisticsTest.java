@@ -59,7 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.LAUNCHING;
@@ -121,7 +120,6 @@ public class CloudStatisticsTest {
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
 
-        detectCompletionNow();
         assertNotNull(activity.getPhaseExecution(COMPLETED));
     }
 
@@ -174,7 +172,6 @@ public class CloudStatisticsTest {
 
         assertEquals(OK, activity.getStatus());
 
-        detectCompletionNow();
         assertNotNull(activity.getPhaseExecution(COMPLETED));
     }
 
@@ -204,7 +201,6 @@ public class CloudStatisticsTest {
         slave.toComputer().waitUntilOnline();
         Thread.sleep(500);
         slave.toComputer().doDoDelete();
-        detectCompletionNow(); // Force completion detection
 
         Thread.sleep(500);
 
@@ -267,10 +263,6 @@ public class CloudStatisticsTest {
 
         assertEquals(fSlave.getDisplayName(), fActivity.getName());
         assertEquals(aSlave.getDisplayName(), aActivity.getName());
-    }
-
-    private void detectCompletionNow() throws Exception {
-        j.jenkins.getExtensionList(CloudStatistics.SlaveCompletionDetector.class).get(0).doRun();
     }
 
     @Nonnull
