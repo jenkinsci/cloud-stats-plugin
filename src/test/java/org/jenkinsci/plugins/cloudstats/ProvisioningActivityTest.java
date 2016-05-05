@@ -122,4 +122,55 @@ public class ProvisioningActivityTest {
         assertEquals(fail, attachments.get(0));
         assertEquals(FAIL, pe.getStatus());
     }
+
+    @Test
+    public void duration() {
+        // Completed
+        ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
+        PhaseExecution provisioning = enter(pa, PROVISIONING, 10);
+        PhaseExecution launching = enter(pa, LAUNCHING, 30);
+        PhaseExecution operating = enter(pa, OPERATING, 40);
+        PhaseExecution completed = enter(pa, COMPLETED, 100);
+
+        assertEquals(20, pa.getDuration(provisioning));
+        assertEquals(10, pa.getDuration(launching));
+        assertEquals(60, pa.getDuration(operating));
+        try {
+            pa.getDuration(completed);
+            fail();
+        } catch (IllegalArgumentException _) {}
+
+        // In progress
+        pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
+        provisioning = enter(pa, PROVISIONING, 10);
+        launching = enter(pa, LAUNCHING, 30);
+
+        assertEquals(20, pa.getDuration(provisioning));
+        assertEquals(System.currentTimeMillis() - 30, pa.getDuration(launching));
+        try {
+            pa.getDuration(pa.getPhaseExecution(COMPLETED));
+            fail();
+        } catch (NullPointerException _) {}
+
+        // Completed prematurely
+        pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
+        provisioning = enter(pa, PROVISIONING, 10);
+        enter(pa, COMPLETED, 30);
+
+        assertEquals(20, pa.getDuration(provisioning));
+        try {
+            pa.getDuration(pa.getPhaseExecution(LAUNCHING));
+            fail();
+        } catch (NullPointerException _) {}
+        try {
+            pa.getDuration(pa.getPhaseExecution(OPERATING));
+            fail();
+        } catch (NullPointerException _) {}
+    }
+
+    private PhaseExecution enter(ProvisioningActivity activity, ProvisioningActivity.Phase phase, long started) {
+        PhaseExecution execution = new PhaseExecution(phase, started);
+        activity.enter(execution);
+        return execution;
+    }
 }

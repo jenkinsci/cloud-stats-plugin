@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.cloudstats
 
+import static hudson.Util.getTimeSpanString;
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 
@@ -80,7 +81,7 @@ l.layout(permission: app.ADMINISTER) {
                         td(class: "status-${status}") {
                             if (execution != null) {
                                 if (execution.phase != ProvisioningActivity.Phase.COMPLETED) {
-                                    text(activity.getDurationString(execution))
+                                    text(getTimeSpanString(activity.getDuration(execution)))
                                 } else {
                                     text(df.format(execution.started))
                                 }

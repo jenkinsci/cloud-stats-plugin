@@ -274,6 +274,12 @@ public final class ProvisioningActivity implements ModelObject {
         }
     }
 
+    /*package for testing*/ void enter(@Nonnull PhaseExecution pe) {
+        synchronized (progress) {
+            progress.put(pe.getPhase(), pe);
+        }
+    }
+
     /**
      * Make sure the phase of this activity is entered.
      *
@@ -334,13 +340,20 @@ public final class ProvisioningActivity implements ModelObject {
     }
 
     @Restricted(NoExternalUse.class) // Stapler only
-    public String getDurationString(@Nonnull PhaseExecution execution) {
+    public long getDuration(@Nonnull PhaseExecution execution) {
         Phase phase = execution.getPhase();
         if (phase == Phase.COMPLETED) throw new IllegalArgumentException();
-        PhaseExecution next = getPhaseExecution(Phase.values()[phase.ordinal() + 1]);
+
+        // Find any later nonnull execution
+        PhaseExecution next = null;
+        for (Phase p: Phase.values()) {
+            if (p.ordinal() <= phase.ordinal()) continue;
+            next = getPhaseExecution(p);
+            if (next != null) break;
+        }
         long done = next == null ? System.currentTimeMillis(): next.getStartedTimestamp();
 
-        return Util.getTimeSpanString(done - execution.getStartedTimestamp());
+        return done - execution.getStartedTimestamp();
     }
 
     public boolean isFor(Id id) {

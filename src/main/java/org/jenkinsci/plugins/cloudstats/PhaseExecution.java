@@ -55,7 +55,11 @@ public final class PhaseExecution implements ModelObject {
     private final @Nonnull ProvisioningActivity.Phase phase;
 
     /*package*/ PhaseExecution(@Nonnull ProvisioningActivity.Phase phase) {
-        this.started = System.currentTimeMillis();
+        this(phase, System.currentTimeMillis());
+    }
+
+    /*package*/ PhaseExecution(@Nonnull ProvisioningActivity.Phase phase, long started) {
+        this.started = started;
         this.phase = phase;
     }
 
