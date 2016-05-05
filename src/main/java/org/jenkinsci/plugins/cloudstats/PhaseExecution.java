@@ -101,7 +101,7 @@ public final class PhaseExecution implements ModelObject {
     }
 
     /**
-     * @see CloudStatistics.attach(ProvisioningActivity, ProvisioningActivity.Phase, PhaseExecutionAttachment)
+     * @see CloudStatistics#attach(ProvisioningActivity, ProvisioningActivity.Phase, PhaseExecutionAttachment)
      */
     @Restricted(NoExternalUse.class)
     /*package*/ void attach(@Nonnull PhaseExecutionAttachment phaseExecutionAttachment) {
