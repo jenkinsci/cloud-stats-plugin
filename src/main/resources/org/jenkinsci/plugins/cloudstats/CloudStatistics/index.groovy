@@ -30,7 +30,7 @@ import java.text.SimpleDateFormat
 def l = namespace(lib.LayoutTagLib)
 def st = namespace("jelly:stapler")
 
-l.layout {
+l.layout(permission: app.ADMINISTER) {
     style("""
         cloud-stat-grid {
             border: 1px. solid #BBB;
