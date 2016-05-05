@@ -29,7 +29,7 @@ plugins are expected to do the following:
 - Make `PlannedNode`, `Computer` and `Node` implement `TrackedItem`. The interface
 provides single method to connect all those using dedicated `Id` instance. The
 instance holds some necessary data to connect it back to the cloud/template
-responsible for provisioning and as a unique fingerprint identifying single provisioning
+responsible for provisioning and works as a unique fingerprint identifying single provisioning
 activity. Therefore, `PlannedNode`, `Computer` and `Node` are expected to provide
 the same instance of the `Id`. Note that there is a convenient abstract class
 `TrackedPlannedNode` that create the `Id` so plugin merely needs to pass it around.
@@ -37,8 +37,8 @@ the same instance of the `Id`. Note that there is a convenient abstract class
 - In case there is a way to provision slaves that does not goes through Jenkins
 core (`NodeProvisioner`), plugins are expected to notify cloud-stats about such
 activity. This often happens when slaves are provisioned manually in Jenkins UI.
-Provided the slave get attached to Jenkins, cloud-stats will track it from launching
-phase on so the plugin is expected to manually notify about provisioning.
+Provided the slave get attached to Jenkins, cloud-stats will track it just fine from launching
+phase on without any explicit notifications from provisioning plugin.
 
 - Optionally, plugin can attach any kind of information to any phase it likes.
 cloud-stats is generally able to attach exception in case of failed launch or provisioning
