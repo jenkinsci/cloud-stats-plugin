@@ -196,8 +196,6 @@ public class CloudStatisticsTest {
         a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, "There is something attention worthy"));
 
         slave.toComputer().waitUntilOnline();
-        Thread.sleep(500);
-        slave.toComputer().doDoDelete();
 
         ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-slave");
         provisioningListener.onStarted(okId);
@@ -234,7 +232,7 @@ public class CloudStatisticsTest {
         assertNotNull(warn.getPhaseExecution(PROVISIONING));
         assertNotNull(warn.getPhaseExecution(LAUNCHING));
         assertNotNull(warn.getPhaseExecution(OPERATING));
-        assertNotNull(warn.getPhaseExecution(COMPLETED));
+        assertNull(warn.getPhaseExecution(COMPLETED));
         PhaseExecution warnedLaunch = warn.getPhaseExecution(LAUNCHING);
         assertEquals(WARN, warnedLaunch.getStatus());
         assertEquals("There is something attention worthy", warnedLaunch.getAttachments().get(0).getTitle());

@@ -339,6 +339,11 @@ public final class ProvisioningActivity implements ModelObject {
         return getPhaseExecution(phase);
     }
 
+    /**
+     * Get duration of the provisioning phase.
+     *
+     * @return Positive integer in case the phase is completed, negative in case it is in progress
+     */
     @Restricted(NoExternalUse.class) // Stapler only
     public long getDuration(@Nonnull PhaseExecution execution) {
         Phase phase = execution.getPhase();
@@ -351,9 +356,12 @@ public final class ProvisioningActivity implements ModelObject {
             next = getPhaseExecution(p);
             if (next != null) break;
         }
-        long done = next == null ? System.currentTimeMillis(): next.getStartedTimestamp();
 
-        return done - execution.getStartedTimestamp();
+        long started = execution.getStartedTimestamp();
+        return next != null
+                ? next.getStartedTimestamp() - started
+                : -(System.currentTimeMillis() - started)
+        ;
     }
 
     public boolean isFor(Id id) {

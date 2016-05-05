@@ -146,7 +146,7 @@ public class ProvisioningActivityTest {
         launching = enter(pa, LAUNCHING, 30);
 
         assertEquals(20, pa.getDuration(provisioning));
-        assertEquals(System.currentTimeMillis() - 30, pa.getDuration(launching));
+        assertEquals(-(System.currentTimeMillis() - 30), pa.getDuration(launching));
         try {
             pa.getDuration(pa.getPhaseExecution(COMPLETED));
             fail();

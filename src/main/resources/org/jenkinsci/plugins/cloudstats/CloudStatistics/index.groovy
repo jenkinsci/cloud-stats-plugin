@@ -81,7 +81,11 @@ l.layout(permission: app.ADMINISTER) {
                         td(class: "status-${status}") {
                             if (execution != null) {
                                 if (execution.phase != ProvisioningActivity.Phase.COMPLETED) {
-                                    text(getTimeSpanString(activity.getDuration(execution)))
+                                    def duration = activity.getDuration(execution)
+                                    text(getTimeSpanString(Math.abs(duration)))
+                                    if (duration < 0) {
+                                        text(" and counting")
+                                    }
                                 } else {
                                     text(df.format(execution.started))
                                 }
