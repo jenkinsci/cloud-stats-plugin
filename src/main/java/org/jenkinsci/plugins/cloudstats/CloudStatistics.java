@@ -268,7 +268,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
                 stats.attach(activity, ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
-                        ProvisioningActivity.Status.FAIL, "Provisioning failed", throwable
+                        ProvisioningActivity.Status.FAIL, throwable.getMessage(), throwable
                 ));
             }
             return activity;
