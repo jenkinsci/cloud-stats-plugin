@@ -23,7 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Interface to be implemented by plugins to have their provisioning activities tracked.
@@ -36,6 +36,9 @@ import javax.annotation.Nonnull;
 public interface TrackedItem {
     /**
      * Get unique identifier of the item.
+     *
+     * Implementations are permitted to return null in case the particular instance should not be tracked while other
+     * instances generally are.
      */
-    @Nonnull ProvisioningActivity.Id getId();
+    @Nullable ProvisioningActivity.Id getId();
 }
