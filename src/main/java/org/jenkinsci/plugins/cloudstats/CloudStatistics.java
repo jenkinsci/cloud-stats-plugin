@@ -110,6 +110,10 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         return log.toList();
     }
 
+    public ActivityIndex getIndex() {
+        return new ActivityIndex(log.toList());
+    }
+
     @Restricted(NoExternalUse.class) // view only
     public ProvisioningActivity getActivity(@Nonnull String hashString) {
         int hash;
