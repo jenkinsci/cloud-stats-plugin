@@ -34,7 +34,7 @@ def st = namespace("jelly:stapler")
 l.layout(permission: app.ADMINISTER) {
     style("""
         cloud-stat-grid {
-            border: 1px. solid #BBB;
+            border: 1px solid #BBB;
         }
 
         td.status-WARN {
