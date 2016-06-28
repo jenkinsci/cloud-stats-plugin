@@ -111,7 +111,10 @@ l.layout(permission: app.ADMINISTER) {
                                             def url = my.getUrl(activity, execution, attachment)
                                             def title = attachment.title
                                             if (title.length() > 100) {
-                                                title = title.substring(0, 99) + '…'
+                                                title = title.readLines()[0];
+                                                if (title.length() > 100) {
+                                                    title = title.substring(0, 99) + '…'
+                                                }
                                             }
                                             if (url == null) {
                                                 text(title)
