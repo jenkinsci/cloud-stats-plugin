@@ -109,10 +109,14 @@ l.layout(permission: app.ADMINISTER) {
                                     for (PhaseExecutionAttachment attachment : execution.attachments) {
                                         li {
                                             def url = my.getUrl(activity, execution, attachment)
+                                            def title = attachment.title
+                                            if (title.length() > 100) {
+                                                title = title.substring(0, 99) + '…'
+                                            }
                                             if (url == null) {
-                                                text(attachment.title)
+                                                text(title)
                                             } else {
-                                                a(href: url) { text(attachment.title) }
+                                                a(href: url) { text(title) }
                                             }
                                         }
                                     }

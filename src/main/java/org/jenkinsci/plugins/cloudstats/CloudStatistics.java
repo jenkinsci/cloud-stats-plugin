@@ -110,6 +110,23 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         return log.toList();
     }
 
+    public @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
+        for (ProvisioningActivity activity : log.toList()) {
+            if (activity.isFor(id)) {
+                return activity;
+            }
+        }
+
+        LOGGER.log(Level.WARNING, "No activity tracked for " + id, new IllegalStateException());
+        return null;
+    }
+
+    public @CheckForNull ProvisioningActivity getActivityFor(TrackedItem item) {
+        ProvisioningActivity.Id id = item.getId();
+        if (id == null) return null;
+        return getActivityFor(id);
+    }
+
     public ActivityIndex getIndex() {
         return new ActivityIndex(log.toList());
     }
@@ -272,7 +289,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
                 stats.attach(activity, ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
-                        ProvisioningActivity.Status.FAIL, throwable.getMessage(), throwable
+                        ProvisioningActivity.Status.FAIL, throwable
                 ));
             }
             return activity;
@@ -405,16 +422,5 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
 
         return ((TrackedItem) computer).getId();
-    }
-
-    /*package*/ @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
-        for (ProvisioningActivity activity : log.toList()) {
-            if (activity.isFor(id)) {
-                return activity;
-            }
-        }
-
-        LOGGER.log(Level.WARNING, "No activity tracked for " + id, new IllegalStateException());
-        return null;
     }
 }
