@@ -370,7 +370,7 @@ public class CloudStatisticsTest {
             }
 
             @Override
-            public @Nonnull ProvisioningActivity.Id getId() {
+            public ProvisioningActivity.Id getId() {
                 return id;
             }
         }
@@ -385,7 +385,7 @@ public class CloudStatisticsTest {
             }
 
             @Override
-            public @Nonnull ProvisioningActivity.Id getId() {
+            public ProvisioningActivity.Id getId() {
                 return id;
             }
         }
