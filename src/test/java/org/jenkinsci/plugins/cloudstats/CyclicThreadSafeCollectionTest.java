@@ -126,12 +126,20 @@ public class CyclicThreadSafeCollectionTest {
 
         log.add(1);
         assertEquals(Arrays.asList(1), log.toList());
-
         log.add(2);
         assertEquals(Arrays.asList(1, 2), log.toList());
-
         log.add(3);
         assertEquals(Arrays.asList(2, 3), log.toList());
+
+        log.clear();
+
+        assertEquals(Arrays.asList(), log.toList());
+        log.add(4);
+        assertEquals(Arrays.asList(4), log.toList());
+        log.add(5);
+        assertEquals(Arrays.asList(4, 5), log.toList());
+        log.add(6);
+        assertEquals(Arrays.asList(5, 6), log.toList());
     }
 
     @Test
