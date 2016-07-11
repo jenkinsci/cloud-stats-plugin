@@ -45,25 +45,38 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Statistics of past cloud activities.
+ * Statistics of provisioning activities.
  */
 @Extension
 public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
 
-    /*
-     * The log itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
+    /**
+     * All activities that are not in completed state.
+     *
+     * The consistency between 'active' and 'log' is ensured by active monitor.
+     */
+    @GuardedBy("active")
+    private final @Nonnull Set<ProvisioningActivity> active = new LinkedHashSet<>();
+
+    /**
+     * Activities that are in completed state. The oldest entries (least recently completed) are rotated.
+     *
+     * The collection itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
      */
     private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(100);
 
@@ -92,8 +105,20 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         // This _needs_ to be done in getIconFileName only because of JENKINS-33683.
         Jenkins jenkins = jenkins();
         if (!jenkins.hasPermission(Jenkins.ADMINISTER)) return null;
-        if (jenkins.clouds.isEmpty() && log.isEmpty()) return null;
+        if (jenkins.clouds.isEmpty() && isEmpty()) return null;
         return "graph.png";
+    }
+
+    private boolean isEmpty() {
+        synchronized (active) {
+            return log.isEmpty() && active.isEmpty();
+        }
+    }
+
+    /*package for testing*/ Collection<ProvisioningActivity> getNotCompletedActivities() {
+        synchronized (active) {
+            return new ArrayList<>(active);
+        }
     }
 
     @Override
@@ -107,11 +132,16 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     public List<ProvisioningActivity> getActivities() {
-        return log.toList();
+        ArrayList<ProvisioningActivity> out = new ArrayList<>(active.size() + log.size());
+        synchronized (active) {
+            out.addAll(log.toList());
+            out.addAll(active);
+        }
+        return out;
     }
 
     public @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
-        for (ProvisioningActivity activity : log.toList()) {
+        for (ProvisioningActivity activity : getActivities()) {
             if (activity.isFor(id)) {
                 return activity;
             }
@@ -128,7 +158,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     public ActivityIndex getIndex() {
-        return new ActivityIndex(log.toList());
+        return new ActivityIndex(getActivities());
     }
 
     @Restricted(NoExternalUse.class) // view only
@@ -140,7 +170,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             return null;
         }
 
-        for (ProvisioningActivity activity : log) {
+        for (ProvisioningActivity activity : getActivities()) {
             if (activity.getId().getFingerprint() == hash) {
                 return activity;
             }
@@ -190,8 +220,26 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private void load() throws IOException {
         final XmlFile file = getConfigFile();
-        if(file.exists()) {
+        if (file.exists()) {
             file.unmarshal(this);
+        }
+        // Migrate config from version 0.2 - non-completed activities ware in log collection
+        synchronized (active) {
+            if (active.isEmpty()) {
+                List<ProvisioningActivity> toSort = log.toList();
+                log.clear();
+                for (ProvisioningActivity activity: toSort) {
+                    assert activity != null;
+                    if (activity.getPhaseExecution(ProvisioningActivity.Phase.COMPLETED) != null) {
+                        active.add(activity);
+                    } else {
+                        log.add(activity);
+                    }
+                }
+                if (!active.isEmpty()) {
+                    persist();
+                }
+            }
         }
     }
 
@@ -242,7 +290,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
          */
         public @Nonnull ProvisioningActivity onStarted(@Nonnull ProvisioningActivity.Id id) {
             ProvisioningActivity activity = new ProvisioningActivity(id);
-            stats.log.add(activity);
+            synchronized (stats.active) {
+                stats.active.add(activity);
+            }
             // Do not save in case called from loop from an overload
             if (!BulkChange.contains(stats)) {
                 stats.persist();
@@ -383,11 +433,14 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 }
             }
 
-            boolean changed = false;
-            for (ProvisioningActivity activity: stats.log) {
+            ArrayList<ProvisioningActivity> completed = new ArrayList<>();
+            for (ProvisioningActivity activity: stats.getNotCompletedActivities()) {
                 Map<ProvisioningActivity.Phase, PhaseExecution> executions = activity.getPhaseExecutions();
 
-                if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) continue; // Completed already
+                if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) {
+                    completed.add(activity);
+                    continue; // Completed already
+                }
                 assert activity.getStatus() != ProvisioningActivity.Status.FAIL; // Should be completed already if failed
 
                 // TODO there is still a chance some activity will never be recognised as completed when provisioning completes without error and launching never starts for some reason
@@ -396,9 +449,13 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 if (trackedExisting.contains(activity.getId())) continue; // Still operating
 
                 activity.enter(ProvisioningActivity.Phase.COMPLETED);
-                changed = true;
+                completed.add(activity);
             }
-            if (changed) {
+            if (!completed.isEmpty()) {
+                synchronized (stats.active) {
+                    stats.log.addAll(completed);
+                    stats.active.removeAll(completed);
+                }
                 stats.save();
             }
         }

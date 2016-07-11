@@ -121,6 +121,20 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     @Test
+    public void toList() {
+        CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(2);
+
+        log.add(1);
+        assertEquals(Arrays.asList(1), log.toList());
+
+        log.add(2);
+        assertEquals(Arrays.asList(1, 2), log.toList());
+
+        log.add(3);
+        assertEquals(Arrays.asList(2, 3), log.toList());
+    }
+
+    @Test
     public void contains() {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(3);
         log.add(1);
