@@ -66,6 +66,11 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
 
     /**
+     * The number of completed records to be stored.
+     */
+    public static final int ARCHIVE_RECORDS = Integer.getInteger("org.jenkinsci.plugins.cloudstats.CloudStatistics.ARCHIVE_RECORDS", 100);
+
+    /**
      * All activities that are not in completed state.
      *
      * The consistency between 'active' and 'log' is ensured by active monitor.
@@ -78,7 +83,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      *
      * The collection itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
      */
-    private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(100);
+    private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
 
     /**
      * Get the singleton instance.
