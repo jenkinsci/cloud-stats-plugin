@@ -61,6 +61,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.getProvisioningListener;
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.getCloudStatistics;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.LAUNCHING;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERATING;
@@ -107,7 +109,7 @@ public class CloudStatisticsTest {
         j.jenkins.clouds.add(new TestCloud("dummy", j, new ThrowException()));
         triggerProvisioning();
 
-        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+        List<ProvisioningActivity> activities = getCloudStatistics().getActivities();
         // As it still fails many will be provisioned. Take the last one as the most recent is being updated
         ProvisioningActivity activity = activities.get(activities.size() - 1);
         PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
@@ -134,7 +136,7 @@ public class CloudStatisticsTest {
         j.jenkins.clouds.add(new TestCloud("dummy", j, new LaunchSuccessfully()));
         triggerProvisioning();
 
-        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+        List<ProvisioningActivity> activities = getCloudStatistics().getActivities();
         for (ProvisioningActivity a : activities) {
             assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
             assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-slave-"));
@@ -180,8 +182,8 @@ public class CloudStatisticsTest {
 
     @Test
     public void ui() throws Exception {
-        CloudStatistics cs = CloudStatistics.get();
-        CloudStatistics.ProvisioningListener provisioningListener = CloudStatistics.ProvisioningListener.get();
+        CloudStatistics cs = getCloudStatistics();
+        CloudStatistics.ProvisioningListener provisioningListener = getProvisioningListener();
 
         // When
 
@@ -249,7 +251,7 @@ public class CloudStatisticsTest {
 
     @Test
     public void renameActivity() throws Exception {
-        CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
+        CloudStatistics.ProvisioningListener l = getProvisioningListener();
         ProvisioningActivity.Id fixup = new ProvisioningActivity.Id("Cloud", "template", "incorrectName");
         ProvisioningActivity.Id assign = new ProvisioningActivity.Id("Cloud", "template");
         ProvisioningActivity fActivity = l.onStarted(fixup);
@@ -271,7 +273,7 @@ public class CloudStatisticsTest {
     @Test // Single cyclic buffer ware split to active and archived activities
     @LocalData
     public void migrateToV03() throws Exception {
-        CloudStatistics cs = CloudStatistics.get();
+        CloudStatistics cs = getCloudStatistics();
         assertEquals(2, cs.getActivities().size());
         assertEquals(1, cs.getNotCompletedActivities().size());
     }
