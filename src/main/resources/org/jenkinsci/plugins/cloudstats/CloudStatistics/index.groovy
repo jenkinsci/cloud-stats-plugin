@@ -91,7 +91,7 @@ l.layout(permission: app.ADMINISTER) {
                             data = Math.abs(duration)
                             content = getTimeSpanString(data)
                             if (duration < 0) {
-                                content += " and counting"
+                                content += " and operating"
                             }
                         } else {
                             content = df.format(execution.started)
