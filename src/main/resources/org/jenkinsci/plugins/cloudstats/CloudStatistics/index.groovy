@@ -74,7 +74,7 @@ l.layout(permission: app.ADMINISTER) {
                 tr("class": "status-${activityStatus}") {
                     td(activity.id.cloudName)
                     td(activity.id.templateName)
-                    td{activity.name}
+                    td(activity.name)
                     td(data: executions[0].startedTimestamp) {
                         text(df.format(executions[0].started))
                     }

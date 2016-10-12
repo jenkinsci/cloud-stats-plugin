@@ -32,6 +32,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -93,7 +94,7 @@ public final class ProvisioningActivity implements ModelObject {
      *
      * Used to a) uniquely identify the activity throughout the lifecycle and b) map Computer/Node/PlannedNode to its cloud/template.
      */
-    public static final class Id {
+    public static final class Id implements Serializable {
         private final @Nonnull String cloudName;
 
 
