@@ -86,6 +86,11 @@ public class PhaseExecutionAttachment implements Action {
 
         private final @Nonnull Throwable throwable;
 
+        public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull Throwable throwable) {
+            super(status, throwable.getMessage());
+            this.throwable = throwable;
+        }
+
         public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
             super(status, title);
             this.throwable = throwable;

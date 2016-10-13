@@ -48,6 +48,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.recipes.LocalData;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -207,7 +208,6 @@ public class CloudStatisticsTest {
         // Then
 
         List<ProvisioningActivity> all = cs.getActivities();
-
         ProvisioningActivity failedToProvision = all.get(0);
         assertEquals(provisionId, failedToProvision.getId());
         assertEquals(FAIL, failedToProvision.getStatus());
@@ -222,7 +222,15 @@ public class CloudStatisticsTest {
         Page page = wc.goTo("cloud-stats").getAnchorByText(exception.getTitle()).click();
         assertThat(page.getWebResponse().getContentAsString(), containsString("Something bad happened"));
 
-        ProvisioningActivity warn = all.get(1);
+        ProvisioningActivity ok = all.get(1);
+        assertEquals(okId, ok.getId());
+        assertEquals(OK, ok.getStatus());
+        assertNotNull(ok.getPhaseExecution(PROVISIONING));
+        assertNotNull(ok.getPhaseExecution(LAUNCHING));
+        assertNotNull(ok.getPhaseExecution(OPERATING));
+        assertNotNull(ok.getPhaseExecution(COMPLETED));
+
+        ProvisioningActivity warn = all.get(2);
         assertEquals(warnId, warn.getId());
         assertEquals(WARN, warn.getStatus());
         assertNotNull(warn.getPhaseExecution(PROVISIONING));
@@ -232,14 +240,6 @@ public class CloudStatisticsTest {
         PhaseExecution warnedLaunch = warn.getPhaseExecution(LAUNCHING);
         assertEquals(WARN, warnedLaunch.getStatus());
         assertEquals("There is something attention worthy", warnedLaunch.getAttachments().get(0).getTitle());
-
-        ProvisioningActivity ok = all.get(2);
-        assertEquals(okId, ok.getId());
-        assertEquals(OK, ok.getStatus());
-        assertNotNull(ok.getPhaseExecution(PROVISIONING));
-        assertNotNull(ok.getPhaseExecution(LAUNCHING));
-        assertNotNull(ok.getPhaseExecution(OPERATING));
-        assertNotNull(ok.getPhaseExecution(COMPLETED));
 
         //j.interactiveBreak();
     }
@@ -263,6 +263,14 @@ public class CloudStatisticsTest {
 
         assertEquals(fSlave.getDisplayName(), fActivity.getName());
         assertEquals(aSlave.getDisplayName(), aActivity.getName());
+    }
+
+    @Test // Single cyclic buffer ware split to active and archived activities
+    @LocalData
+    public void migrateToV03() throws Exception {
+        CloudStatistics cs = CloudStatistics.get();
+        assertEquals(2, cs.getActivities().size());
+        assertEquals(1, cs.getNotCompletedActivities().size());
     }
 
     @Nonnull
@@ -363,7 +371,7 @@ public class CloudStatisticsTest {
             }
 
             @Override
-            public @Nonnull ProvisioningActivity.Id getId() {
+            public ProvisioningActivity.Id getId() {
                 return id;
             }
         }
@@ -378,7 +386,7 @@ public class CloudStatisticsTest {
             }
 
             @Override
-            public @Nonnull ProvisioningActivity.Id getId() {
+            public ProvisioningActivity.Id getId() {
                 return id;
             }
         }

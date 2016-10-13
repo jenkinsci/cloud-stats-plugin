@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.plugins.cloudstats.CloudStatistics plugin="cloud-stats@0.1">
+  <log>
+    <data>
+      <org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+        <id>
+          <cloudName>cloud-name</cloudName>
+          <templateName>tmplt</templateName>
+          <fingerprint>-17720072</fingerprint>
+        </id>
+        <name>tmplt-7934</name>
+        <progress class="linked-hash-map">
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>PROVISIONING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+              <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+              <started>1467741257749</started>
+              <phase>PROVISIONING</phase>
+            </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+          </entry>
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>LAUNCHING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+              <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+              <started>1467741313557</started>
+              <phase>LAUNCHING</phase>
+            </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+          </entry>
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>OPERATING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+              <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+              <started>1467741341626</started>
+              <phase>OPERATING</phase>
+            </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+          </entry>
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>COMPLETED</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <null/>
+          </entry>
+        </progress>
+      </org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+      <org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+        <id>
+          <cloudName>cloud-name</cloudName>
+          <templateName>tmplt</templateName>
+          <fingerprint>-1696122118</fingerprint>
+        </id>
+        <name>tmplt-4228</name>
+        <progress class="linked-hash-map">
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>PROVISIONING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+              <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+              <started>1468173397574</started>
+              <phase>PROVISIONING</phase>
+            </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+          </entry>
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>LAUNCHING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+              <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+              <started>1468173528189</started>
+              <phase>LAUNCHING</phase>
+            </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+          </entry>
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>OPERATING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+              <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+              <started>1468173561575</started>
+              <phase>OPERATING</phase>
+            </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+          </entry>
+          <entry>
+            <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>COMPLETED</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+            <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+              <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+              <started>1468178390063</started>
+              <phase>COMPLETED</phase>
+            </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+          </entry>
+        </progress>
+      </org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+    </data>
+    <next>2</next>
+    <size>2</size>
+  </log>
+</org.jenkinsci.plugins.cloudstats.CloudStatistics>

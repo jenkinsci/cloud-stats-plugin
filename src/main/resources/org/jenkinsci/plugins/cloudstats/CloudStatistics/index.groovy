@@ -68,37 +68,58 @@ l.layout(permission: app.ADMINISTER) {
 
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-            my.activities.reverseEach { activity ->
+            my.activities.reverseEach { ProvisioningActivity activity ->
                 def activityStatus = activity.status
                 List<PhaseExecution> executions = new ArrayList<>(activity.phaseExecutions.values())
                 tr("class": "status-${activityStatus}") {
                     td(activity.id.cloudName)
                     td(activity.id.templateName)
                     td(activity.name)
-                    td(df.format(executions[0].started))
+                    td(data: executions[0].startedTimestamp) {
+                        text(df.format(executions[0].started))
+                    }
                     for (PhaseExecution execution: executions) {
-                        def status = (execution == null || execution.status.ordinal() < activityStatus.ordinal()) ? null : execution.status
-                        td(class: "status-${status}") {
-                            if (execution != null) {
-                                if (execution.phase != ProvisioningActivity.Phase.COMPLETED) {
-                                    def duration = activity.getDuration(execution)
-                                    text(getTimeSpanString(Math.abs(duration)))
-                                    if (duration < 0) {
-                                        text(" and counting")
-                                    }
-                                } else {
-                                    text(df.format(execution.started))
-                                }
-                                if (!execution.attachments.isEmpty()) {
-                                    ul {
-                                        for (PhaseExecutionAttachment attachment : execution.attachments) {
-                                            li {
-                                                def url = my.getUrl(activity, execution, attachment)
-                                                if (url == null) {
-                                                    text(attachment.title)
-                                                } else {
-                                                    a(href: url) { text(attachment.title) }
+                        if (execution == null) {
+                            td() // empty cell
+                            continue
+                        }
+
+                        String content;
+                        long data;
+                        if (execution.phase != ProvisioningActivity.Phase.COMPLETED) {
+                            def duration = activity.getDuration(execution)
+                            data = Math.abs(duration)
+                            content = getTimeSpanString(data)
+                            if (duration < 0) {
+                                content += " and counting"
+                            }
+                        } else {
+                            content = df.format(execution.started)
+                            data = execution.startedTimestamp
+                        }
+
+                        def attrs = [ "data": data ]
+                        if (execution.status.ordinal() >= activityStatus.ordinal()) {
+                            attrs["class"] = "status-${execution.status}"
+                        }
+                        td(attrs) {
+                            text(content)
+                            if (!execution.attachments.isEmpty()) {
+                                ul {
+                                    for (PhaseExecutionAttachment attachment : execution.attachments) {
+                                        li {
+                                            def url = my.getUrl(activity, execution, attachment)
+                                            def title = attachment.title
+                                            if (title.length() > 100) {
+                                                title = title.readLines()[0];
+                                                if (title.length() > 100) {
+                                                    title = title.substring(0, 99) + '…'
                                                 }
+                                            }
+                                            if (url == null) {
+                                                text(title)
+                                            } else {
+                                                a(href: url) { text(title) }
                                             }
                                         }
                                     }

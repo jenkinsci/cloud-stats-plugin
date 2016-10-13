@@ -46,27 +46,45 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Statistics of past cloud activities.
+ * Statistics of provisioning activities.
  */
 @Extension
 public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
 
-    /*
-     * The log itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
+    /**
+     * The number of completed records to be stored.
      */
-    private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(100);
+    public static final int ARCHIVE_RECORDS = Integer.getInteger("org.jenkinsci.plugins.cloudstats.CloudStatistics.ARCHIVE_RECORDS", 100);
+
+    /**
+     * All activities that are not in completed state.
+     *
+     * The consistency between 'active' and 'log' is ensured by active monitor.
+     */
+    @GuardedBy("active")
+    private final @Nonnull Set<ProvisioningActivity> active = new LinkedHashSet<>();
+
+    /**
+     * Activities that are in completed state. The oldest entries (least recently completed) are rotated.
+     *
+     * The collection itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
+     */
+    private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
 
     /**
      * Get the singleton instance.
@@ -93,8 +111,20 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         // This _needs_ to be done in getIconFileName only because of JENKINS-33683.
         Jenkins jenkins = jenkins();
         if (!jenkins.hasPermission(Jenkins.ADMINISTER)) return null;
-        if (jenkins.clouds.isEmpty() && log.isEmpty()) return null;
+        if (jenkins.clouds.isEmpty() && isEmpty()) return null;
         return "graph.png";
+    }
+
+    private boolean isEmpty() {
+        synchronized (active) {
+            return log.isEmpty() && active.isEmpty();
+        }
+    }
+
+    /*package for testing*/ Collection<ProvisioningActivity> getNotCompletedActivities() {
+        synchronized (active) {
+            return new ArrayList<>(active);
+        }
     }
 
     @Override
@@ -108,7 +138,33 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     public List<ProvisioningActivity> getActivities() {
-        return log.toList();
+        ArrayList<ProvisioningActivity> out = new ArrayList<>(active.size() + log.size());
+        synchronized (active) {
+            out.addAll(log.toList());
+            out.addAll(active);
+        }
+        return out;
+    }
+
+    public @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
+        for (ProvisioningActivity activity : getActivities()) {
+            if (activity.isFor(id)) {
+                return activity;
+            }
+        }
+
+        LOGGER.log(Level.WARNING, "No activity tracked for " + id, new IllegalStateException());
+        return null;
+    }
+
+    public @CheckForNull ProvisioningActivity getActivityFor(TrackedItem item) {
+        ProvisioningActivity.Id id = item.getId();
+        if (id == null) return null;
+        return getActivityFor(id);
+    }
+
+    public ActivityIndex getIndex() {
+        return new ActivityIndex(getActivities());
     }
 
     @Restricted(NoExternalUse.class) // view only
@@ -120,7 +176,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             return null;
         }
 
-        for (ProvisioningActivity activity : log) {
+        for (ProvisioningActivity activity : getActivities()) {
             if (activity.getId().getFingerprint() == hash) {
                 return activity;
             }
@@ -170,8 +226,26 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private void load() throws IOException {
         final XmlFile file = getConfigFile();
-        if(file.exists()) {
+        if (file.exists()) {
             file.unmarshal(this);
+        }
+        // Migrate config from version 0.2 - non-completed activities ware in log collection
+        synchronized (active) {
+            if (active.isEmpty()) {
+                List<ProvisioningActivity> toSort = log.toList();
+                log.clear();
+                for (ProvisioningActivity activity: toSort) {
+                    assert activity != null;
+                    if (activity.getPhaseExecution(ProvisioningActivity.Phase.COMPLETED) != null) {
+                        active.add(activity);
+                    } else {
+                        log.add(activity);
+                    }
+                }
+                if (!active.isEmpty()) {
+                    persist();
+                }
+            }
         }
     }
 
@@ -222,7 +296,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
          */
         public @Nonnull ProvisioningActivity onStarted(@Nonnull ProvisioningActivity.Id id) {
             ProvisioningActivity activity = new ProvisioningActivity(id);
-            stats.log.add(activity);
+            synchronized (stats.active) {
+                stats.active.add(activity);
+            }
             // Do not save in case called from loop from an overload
             if (!BulkChange.contains(stats)) {
                 stats.persist();
@@ -269,7 +345,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
                 stats.attach(activity, ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
-                        ProvisioningActivity.Status.FAIL, throwable.getMessage(), throwable
+                        ProvisioningActivity.Status.FAIL, throwable
                 ));
             }
             return activity;
@@ -286,6 +362,18 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         return jenkins;
     }
 
+    // TODO: ComputerListener#preLaunch might not have access to Node instance:
+    //    at hudson.slaves.SlaveComputer._connect(SlaveComputer.java:219)
+    //    at hudson.model.Computer.connect(Computer.java:339)
+    //    at hudson.slaves.RetentionStrategy$1.start(RetentionStrategy.java:108)
+    //    at hudson.model.AbstractCIBase.updateComputer(AbstractCIBase.java:129)
+    //    at hudson.model.AbstractCIBase.updateComputerList(AbstractCIBase.java:180)
+    //            - locked <0x13cf> (a java.lang.Object)
+    //    at jenkins.model.Jenkins.updateComputerList(Jenkins.java:1200)
+    //    at jenkins.model.Jenkins.setNodes(Jenkins.java:1696)
+    //    at jenkins.model.Jenkins.addNode(Jenkins.java:1678)
+    //            - locked <0x13a6> (a hudson.model.Hudson)
+    //    at org.jvnet.hudson.test.JenkinsRule.createSlave(JenkinsRule.java:814)
     @Extension @Restricted(NoExternalUse.class)
     public static class OperationListener extends ComputerListener {
 
@@ -363,11 +451,14 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 }
             }
 
-            boolean changed = false;
-            for (ProvisioningActivity activity: stats.log) {
+            ArrayList<ProvisioningActivity> completed = new ArrayList<>();
+            for (ProvisioningActivity activity: stats.getNotCompletedActivities()) {
                 Map<ProvisioningActivity.Phase, PhaseExecution> executions = activity.getPhaseExecutions();
 
-                if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) continue; // Completed already
+                if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) {
+                    completed.add(activity);
+                    continue; // Completed already
+                }
                 assert activity.getStatus() != ProvisioningActivity.Status.FAIL; // Should be completed already if failed
 
                 // TODO there is still a chance some activity will never be recognised as completed when provisioning completes without error and launching never starts for some reason
@@ -376,9 +467,13 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 if (trackedExisting.contains(activity.getId())) continue; // Still operating
 
                 activity.enter(ProvisioningActivity.Phase.COMPLETED);
-                changed = true;
+                completed.add(activity);
             }
-            if (changed) {
+            if (!completed.isEmpty()) {
+                synchronized (stats.active) {
+                    stats.log.addAll(completed);
+                    stats.active.removeAll(completed);
+                }
                 stats.save();
             }
         }
@@ -449,16 +544,5 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
 
         return ((TrackedItem) computer).getId();
-    }
-
-    /*package*/ @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
-        for (ProvisioningActivity activity : log.toList()) {
-            if (activity.isFor(id)) {
-                return activity;
-            }
-        }
-
-        LOGGER.log(Level.WARNING, "No activity tracked for " + id, new IllegalStateException());
-        return null;
     }
 }

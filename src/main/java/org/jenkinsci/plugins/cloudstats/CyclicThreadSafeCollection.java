@@ -34,7 +34,8 @@ import java.util.List;
 /**
  * Circular Threadsafe Collection.
  *
- * At most <tt>capacity</tt> elements are preserved and when more added, oldest elements are deleted.
+ * At most <tt>capacity</tt> elements are preserved and when more added, oldest elements are deleted. Collection preserves
+ * insertion order of the elements so the oldest is the first one.
  *
  * The class does not implement selective deletion operations (<tt>remove()</tt>, <tt>removeAll()</tt>, <tt>retainAll()</tt>) but it implements <tt>clear()</tt>.
  *
