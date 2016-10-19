@@ -31,6 +31,8 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.iterableWithSize;
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.getProvisioningListener;
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.getCloudStatistics;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -50,7 +52,7 @@ public class RestartTest {
 
         j.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
+                final CloudStatistics.ProvisioningListener listener = getProvisioningListener();
 
                 listener.onStarted(started);
                 listener.onStarted(failed);
@@ -62,8 +64,8 @@ public class RestartTest {
 
         j.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
-                final CloudStatistics stats = CloudStatistics.get();
+                final CloudStatistics.ProvisioningListener listener = getProvisioningListener();
+                final CloudStatistics stats = getCloudStatistics();
 
                 assertThat(stats.getActivities(), Matchers.<ProvisioningActivity>iterableWithSize(3));
 
@@ -84,7 +86,7 @@ public class RestartTest {
 
         j.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
-                final CloudStatistics stats = CloudStatistics.get();
+                final CloudStatistics stats = getCloudStatistics();
 
                 assertThat(stats.getActivities(), Matchers.<ProvisioningActivity>iterableWithSize(3));
 

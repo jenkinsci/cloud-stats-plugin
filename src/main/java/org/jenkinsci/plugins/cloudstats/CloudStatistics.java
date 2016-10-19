@@ -87,8 +87,18 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     /**
      * Get the singleton instance.
+     * @deprecated use {@link CloudStatistics#getCloudStatistics()}
      */
+    @Deprecated
     public static @Nonnull CloudStatistics get() {
+        return jenkins().getExtensionList(CloudStatistics.class).get(0);
+    }
+
+    /**
+     * Human readable org.jenkinsci.plugins.cloudstats.CloudStatistics#get() after static import.
+     * @return CloudStatistics singleton.
+     */
+    public static @Nonnull CloudStatistics getCloudStatistics() {
         return jenkins().getExtensionList(CloudStatistics.class).get(0);
     }
 
@@ -264,7 +274,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     @Extension
     public static class ProvisioningListener extends CloudProvisioningListener {
 
-        private final CloudStatistics stats = CloudStatistics.get();
+        private final CloudStatistics stats = getCloudStatistics();
 
         @Override @Restricted(DoNotUse.class)
         public void onStarted(Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
@@ -350,7 +360,18 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             return activity;
         }
 
+        /**
+         * @deprecated use {@link #getProvisioningListener()}
+         */
+        @Deprecated
         public static ProvisioningListener get() {
+            return jenkins().getExtensionList(ProvisioningListener.class).get(0);
+        }
+
+        /**
+         * Human readable static import for singleton.
+         */
+        public static ProvisioningListener getProvisioningListener() {
             return jenkins().getExtensionList(ProvisioningListener.class).get(0);
         }
     }
@@ -376,7 +397,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     @Extension @Restricted(NoExternalUse.class)
     public static class OperationListener extends ComputerListener {
 
-        private final CloudStatistics stats = CloudStatistics.get();
+        private final CloudStatistics stats = getCloudStatistics();
 
         @Override
         public void preLaunch(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
@@ -422,7 +443,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     @Restricted(NoExternalUse.class) @Extension
     public static class SlaveCompletionDetector extends PeriodicWork {
 
-        private final CloudStatistics stats = CloudStatistics.get();
+        private final CloudStatistics stats = getCloudStatistics();
 
         @Override
         public long getRecurrencePeriod() {
