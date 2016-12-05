@@ -242,6 +242,33 @@ public final class ProvisioningActivity implements ModelObject {
         return ret;
     }
 
+    /**
+     * Get current {@link PhaseExecution}.
+     */
+    public @Nonnull PhaseExecution getCurrentPhaseExecution() {
+        synchronized (progress) {
+            PhaseExecution ex = progress.get(Phase.COMPLETED);
+            if (ex != null) return ex;
+
+            ex = progress.get(Phase.OPERATING);
+            if (ex != null) return ex;
+
+            ex = progress.get(Phase.LAUNCHING);
+            if (ex != null) return ex;
+
+            ex = progress.get(Phase.PROVISIONING);
+            if (ex != null) return ex;
+
+            throw new IllegalStateException("Unknown provisioning state of " + getDisplayName());
+        }
+    }
+
+    /**
+     * Get current {@link Phase}.
+     */
+    public @Nonnull Phase getCurrentPhase() {
+        return getCurrentPhaseExecution().getPhase();
+    }
 
     /**
      * Status of the activity as a whole.
