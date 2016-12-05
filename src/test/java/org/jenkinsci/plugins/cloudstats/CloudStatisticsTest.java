@@ -107,14 +107,18 @@ public class CloudStatisticsTest {
         j.jenkins.clouds.add(new TestCloud("dummy", j, new ThrowException()));
         triggerProvisioning();
 
-        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
-        // As it still fails many will be provisioned. Take the last one as the most recent is being updated
-        ProvisioningActivity activity = activities.get(activities.size() - 1);
-        PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
+        ProvisioningActivity activity;
+        for (;;) {
+            List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+            if (activities.size() > 0) {
+                activity = activities.get(0);
 
-        while (activity.getStatus() != FAIL) {
+                if (activity.getStatus() == FAIL) break;
+            }
             Thread.sleep(100);
         }
+
+        PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, activity.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class).get(0);
         assertEquals(ThrowException.EXCEPTION, attachment.getCause());
@@ -134,7 +138,11 @@ public class CloudStatisticsTest {
         j.jenkins.clouds.add(new TestCloud("dummy", j, new LaunchSuccessfully()));
         triggerProvisioning();
 
-        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+        List<ProvisioningActivity> activities;
+        for (;;) {
+            activities = CloudStatistics.get().getActivities();
+            if (activities.size() > 0) break;
+        }
         for (ProvisioningActivity a : activities) {
             assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
             assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-slave-"));
