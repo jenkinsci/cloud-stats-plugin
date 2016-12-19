@@ -109,13 +109,7 @@ l.layout(permission: app.ADMINISTER) {
                                     for (PhaseExecutionAttachment attachment : execution.attachments) {
                                         li {
                                             def url = my.getUrl(activity, execution, attachment)
-                                            def title = attachment.title
-                                            if (title.length() > 100) {
-                                                title = title.readLines()[0];
-                                                if (title.length() > 100) {
-                                                    title = title.substring(0, 99) + '…'
-                                                }
-                                            }
+                                            def title = attachment.displayName
                                             if (url == null) {
                                                 text(title)
                                             } else {

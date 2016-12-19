@@ -28,7 +28,7 @@ THE SOFTWARE.
         <st:include page="sidepanel" it="${app}"/>
 
         <l:main-panel>
-            <h1 class="it.status">${it.title}</h1>
+            <h1 class="it.status">${it.displayName}</h1>
 
             <st:include page="_index"/>
         </l:main-panel>
