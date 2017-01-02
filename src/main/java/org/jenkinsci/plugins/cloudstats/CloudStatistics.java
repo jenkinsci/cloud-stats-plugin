@@ -34,6 +34,8 @@ import hudson.model.Node;
 import hudson.model.PeriodicWork;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
+import hudson.slaves.AbstractCloudComputer;
+import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
 import hudson.slaves.ComputerListener;
@@ -479,6 +481,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static @CheckForNull ProvisioningActivity.Id getIdFor(Computer computer) {
         if (computer instanceof Jenkins.MasterComputer) return null;
+        if (!(computer instanceof AbstractCloudComputer)) return null;
 
         if (!(computer instanceof TrackedItem)) {
             logTypeNotSupported(computer.getClass());
