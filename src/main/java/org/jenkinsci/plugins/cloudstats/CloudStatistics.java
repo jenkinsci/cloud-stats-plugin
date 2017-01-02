@@ -422,20 +422,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    // TODO: ComputerListener#preLaunch might not have access to Node instance:
-    //    at hudson.slaves.SlaveComputer._connect(SlaveComputer.java:219)
-    //    at hudson.model.Computer.connect(Computer.java:339)
-    //    at hudson.slaves.RetentionStrategy$1.start(RetentionStrategy.java:108)
-    //    at hudson.model.AbstractCIBase.updateComputer(AbstractCIBase.java:129)
-    //    at hudson.model.AbstractCIBase.updateComputerList(AbstractCIBase.java:180)
-    //            - locked <0x13cf> (a java.lang.Object)
-    //    at jenkins.model.Jenkins.updateComputerList(Jenkins.java:1200)
-    //    at jenkins.model.Jenkins.setNodes(Jenkins.java:1696)
-    //    at jenkins.model.Jenkins.addNode(Jenkins.java:1678)
-    //            - locked <0x13a6> (a hudson.model.Hudson)
-    //    at org.jvnet.hudson.test.JenkinsRule.createSlave(JenkinsRule.java:814)
-    // In theory, this should not be needed once SlaveCompletionDetector can reliably be used. It is worth to consider
-    // keeping this around to be sure not to leak a thing.
+    // In theory, this should not be needed once SlaveCompletionDetector can reliably be used. Keeping this around to be sure not to leak a thing.
     @Restricted(NoExternalUse.class) @Extension
     public static class DanglingSlaveScavenger extends PeriodicWork {
 
@@ -483,7 +470,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    // Does not work before JENKINS-33780, Optional until we rely on core that have the fix
+    // Does not work before JENKINS-33780, Optional until we rely on core 2.8 that have the fix
     @Restricted(NoExternalUse.class) @Extension(optional = true)
     public static class SlaveCompletionDetector extends NodeListener {
 
@@ -498,6 +485,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             if (id == null) return; // Not tracked
 
             ProvisioningActivity activity = stats.getActivityFor(id);
+            if (activity == null) return;
+
             activity.rename(newOne.getNodeName());
             stats.persist();
         }
@@ -508,6 +497,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             if (id == null) return; // Not tracked
 
             ProvisioningActivity activity = stats.getActivityFor(id);
+            if (activity == null) return;
+
             if (activity.getPhaseExecution(ProvisioningActivity.Phase.COMPLETED) != null) {
                 LOGGER.log(Level.WARNING, "Activity for deleted node " + node.getNodeName() + " already completed", new Exception());
             }
