@@ -31,6 +31,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.Serializable;
 import java.util.Date;
@@ -178,7 +179,7 @@ public final class ProvisioningActivity implements ModelObject {
     private final @Nonnull Id id;
 
     @GuardedBy("id")
-    private @Nonnull String name;
+    private @Nullable String name;
 
     /**
      * All phases the activity has started so far.
@@ -336,7 +337,7 @@ public final class ProvisioningActivity implements ModelObject {
         }
     }
 
-    public @Nonnull String getName() {
+    public @CheckForNull String getName() {
         synchronized (id) {
             return name;
         }
@@ -355,7 +356,7 @@ public final class ProvisioningActivity implements ModelObject {
      */
     @Restricted(NoExternalUse.class)
     /*package*/ void rename(@Nonnull String newName) {
-        if (Util.fixEmptyAndTrim(newName) == null) throw new IllegalArgumentException();
+        if (Util.fixEmptyAndTrim(newName) == null) throw new IllegalArgumentException("Unable to rename to empty string");
         synchronized (id) {
             name = newName;
         }
@@ -407,7 +408,7 @@ public final class ProvisioningActivity implements ModelObject {
         if (o == this) return true;
         if (!o.getClass().equals(getClass())) return false;
         ProvisioningActivity rhs = (ProvisioningActivity) o;
-        return id == rhs.id;
+        return id.equals(rhs.id);
     }
 
     @Override

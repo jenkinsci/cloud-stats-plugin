@@ -146,6 +146,7 @@ public class CloudStatisticsTest {
         for (ProvisioningActivity a : activities) {
             assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
             assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-slave-"));
+            assertThat(activities.toString(), a.getName(), startsWith("dummy-slave-"));
         }
 
         ProvisioningActivity activity = activities.get(0);
