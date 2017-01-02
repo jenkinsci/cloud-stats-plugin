@@ -193,9 +193,9 @@ public class CloudStatisticsTest {
 
         // When
 
-        ProvisioningActivity.Id provisionId = new ProvisioningActivity.Id("MyCloud", "broken-template");
-        provisioningListener.onStarted(provisionId);
-        provisioningListener.onFailure(provisionId, new Exception(message));
+        ProvisioningActivity.Id failId = new ProvisioningActivity.Id("MyCloud", "broken-template");
+        provisioningListener.onStarted(failId);
+        provisioningListener.onFailure(failId, new Exception(message));
 
         ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "slave");
         provisioningListener.onStarted(warnId);
@@ -216,10 +216,8 @@ public class CloudStatisticsTest {
         Thread.sleep(500);
 
         // Then
-
-        List<ProvisioningActivity> all = cs.getActivities();
-        ProvisioningActivity failedToProvision = all.get(0);
-        assertEquals(provisionId, failedToProvision.getId());
+        ProvisioningActivity failedToProvision = cs.getActivityFor(failId);
+        assertEquals(failId, failedToProvision.getId());
         assertEquals(FAIL, failedToProvision.getStatus());
         assertEquals(null, failedToProvision.getPhaseExecution(LAUNCHING));
         assertEquals(null, failedToProvision.getPhaseExecution(OPERATING));
@@ -232,7 +230,7 @@ public class CloudStatisticsTest {
         Page page = wc.goTo("cloud-stats").getAnchorByHref(cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
         assertThat(page.getWebResponse().getContentAsString(), containsString(message));
 
-        ProvisioningActivity ok = all.get(1);
+        ProvisioningActivity ok = cs.getActivityFor(okId);
         assertEquals(okId, ok.getId());
         assertEquals(OK, ok.getStatus());
         assertNotNull(ok.getPhaseExecution(PROVISIONING));
@@ -240,7 +238,7 @@ public class CloudStatisticsTest {
         assertNotNull(ok.getPhaseExecution(OPERATING));
         assertNotNull(ok.getPhaseExecution(COMPLETED));
 
-        ProvisioningActivity warn = all.get(2);
+        ProvisioningActivity warn = cs.getActivityFor(warnId);
         assertEquals(warnId, warn.getId());
         assertEquals(WARN, warn.getStatus());
         assertNotNull(warn.getPhaseExecution(PROVISIONING));
