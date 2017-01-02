@@ -34,6 +34,8 @@ import hudson.model.Node;
 import hudson.model.PeriodicWork;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
+import hudson.slaves.AbstractCloudComputer;
+import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
 import hudson.slaves.ComputerListener;
@@ -51,6 +53,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -517,7 +521,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static @CheckForNull ProvisioningActivity.Id getIdFor(NodeProvisioner.PlannedNode plannedNode) {
         if (!(plannedNode instanceof TrackedItem)) {
-            LOGGER.info("No support for cloud-stats-plugin by " + plannedNode.getClass());
+            logTypeNotSupported(plannedNode.getClass());
             return null;
         }
 
@@ -537,12 +541,21 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static @CheckForNull ProvisioningActivity.Id getIdFor(Computer computer) {
         if (computer instanceof Jenkins.MasterComputer) return null;
+        if (!(computer instanceof AbstractCloudComputer)) return null;
 
         if (!(computer instanceof TrackedItem)) {
-            LOGGER.info("No support for cloud-stats-plugin by " + computer.getClass());
+            logTypeNotSupported(computer.getClass());
             return null;
         }
 
         return ((TrackedItem) computer).getId();
     }
+
+    private static void logTypeNotSupported(Class<?> type) {
+        if (!loggedUnsupportedTypes.contains(type)) {
+            LOGGER.info("No support for cloud-stats-plugin by " + type);
+            loggedUnsupportedTypes.add(type);
+        }
+    }
+    private static final Set<Class> loggedUnsupportedTypes = Collections.synchronizedSet(new HashSet<Class>());
 }

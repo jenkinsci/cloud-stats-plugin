@@ -21,7 +21,7 @@ attached states is propagated to phase execution and activity level. (If
 slave fails to launch, and exception will be attached explaining why the
 launch phase and thus the whole activity has failed).
 
-## Integrating cloud plugin with cloud-stat-plugin
+## Integrating cloud plugin with cloud-stats-plugin
 
 In order for cloud-stats plugin to recognize provisioning activity to track,
 plugins are expected to do the following:

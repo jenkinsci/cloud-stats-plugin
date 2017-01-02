@@ -69,18 +69,22 @@ public class ProvisioningActivityTest {
     @Test
     public void phasing() {
         ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
+        assertEquals(PROVISIONING, activity.getCurrentPhase());
         assertNotNull(activity.getPhaseExecution(PROVISIONING));
         assertNull(activity.getPhaseExecution(LAUNCHING));
 
         activity.enter(LAUNCHING);
+        assertEquals(LAUNCHING, activity.getCurrentPhase());
         assertNotNull(activity.getPhaseExecution(LAUNCHING));
         assertNull(activity.getPhaseExecution(OPERATING));
 
         activity.enter(OPERATING);
+        assertEquals(OPERATING, activity.getCurrentPhase());
         assertNotNull(activity.getPhaseExecution(OPERATING));
         assertNull(activity.getPhaseExecution(COMPLETED));
 
         activity.enter(COMPLETED);
+        assertEquals(COMPLETED, activity.getCurrentPhase());
         assertNotNull(activity.getPhaseExecution(COMPLETED));
 
         activity = new ProvisioningActivity(DUMMY_ID);

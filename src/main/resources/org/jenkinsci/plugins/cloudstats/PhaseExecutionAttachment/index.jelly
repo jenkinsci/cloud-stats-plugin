@@ -23,12 +23,12 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler" xmlns:t="/lib/hudson" xmlns:i="jelly:fmt">
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
     <l:layout title="${it.displayName}">
         <st:include page="sidepanel" it="${app}"/>
 
         <l:main-panel>
-            <h1 class="it.status">${it.title}</h1>
+            <h1 class="it.status">${it.displayName}</h1>
 
             <st:include page="_index"/>
         </l:main-panel>

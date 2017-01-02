@@ -59,7 +59,7 @@ public class PhaseExecutionAttachment implements Action {
      * Single line description of the attachment nature.
      */
     public @Nonnull String getTitle() {
-        return title;
+        return title.replaceAll("\n", " ");
     }
 
     @Override
@@ -69,7 +69,8 @@ public class PhaseExecutionAttachment implements Action {
 
     @Override
     public @Nonnull String getDisplayName() {
-        return title;
+        String title = getTitle();
+        return title.length() < 50 ? title: (title.substring(0, 49) + "…");
     }
 
     /**

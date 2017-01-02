@@ -107,14 +107,18 @@ public class CloudStatisticsTest {
         j.jenkins.clouds.add(new TestCloud("dummy", j, new ThrowException()));
         triggerProvisioning();
 
-        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
-        // As it still fails many will be provisioned. Take the last one as the most recent is being updated
-        ProvisioningActivity activity = activities.get(activities.size() - 1);
-        PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
+        ProvisioningActivity activity;
+        for (;;) {
+            List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+            if (activities.size() > 0) {
+                activity = activities.get(0);
 
-        while (activity.getStatus() != FAIL) {
+                if (activity.getStatus() == FAIL) break;
+            }
             Thread.sleep(100);
         }
+
+        PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, activity.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class).get(0);
         assertEquals(ThrowException.EXCEPTION, attachment.getCause());
@@ -133,10 +137,15 @@ public class CloudStatisticsTest {
         j.jenkins.clouds.add(new TestCloud("dummy", j, new LaunchSuccessfully()));
         triggerProvisioning();
 
-        List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+        List<ProvisioningActivity> activities;
+        for (;;) {
+            activities = CloudStatistics.get().getActivities();
+            if (activities.size() > 0) break;
+        }
         for (ProvisioningActivity a : activities) {
             assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
             assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-slave-"));
+            assertThat(activities.toString(), a.getName(), startsWith("dummy-slave-"));
         }
 
         ProvisioningActivity activity = activities.get(0);
@@ -178,6 +187,7 @@ public class CloudStatisticsTest {
 
     @Test
     public void ui() throws Exception {
+        String message = "Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened.";
         CloudStatistics cs = CloudStatistics.get();
         CloudStatistics.ProvisioningListener provisioningListener = CloudStatistics.ProvisioningListener.get();
 
@@ -185,7 +195,7 @@ public class CloudStatisticsTest {
 
         ProvisioningActivity.Id provisionId = new ProvisioningActivity.Id("MyCloud", "broken-template");
         provisioningListener.onStarted(provisionId);
-        provisioningListener.onFailure(provisionId, new Exception("Something bad happened"));
+        provisioningListener.onFailure(provisionId, new Exception(message));
 
         ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "slave");
         provisioningListener.onStarted(warnId);
@@ -217,10 +227,10 @@ public class CloudStatisticsTest {
         PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
-        assertEquals("Something bad happened", exception.getCause().getMessage());
+        assertEquals(message, exception.getCause().getMessage());
         JenkinsRule.WebClient wc = j.createWebClient();
-        Page page = wc.goTo("cloud-stats").getAnchorByText(exception.getTitle()).click();
-        assertThat(page.getWebResponse().getContentAsString(), containsString("Something bad happened"));
+        Page page = wc.goTo("cloud-stats").getAnchorByHref(cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
+        assertThat(page.getWebResponse().getContentAsString(), containsString(message));
 
         ProvisioningActivity ok = all.get(1);
         assertEquals(okId, ok.getId());
