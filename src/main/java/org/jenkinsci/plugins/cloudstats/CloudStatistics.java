@@ -366,18 +366,6 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         return jenkins;
     }
 
-    // TODO: ComputerListener#preLaunch might not have access to Node instance:
-    //    at hudson.slaves.SlaveComputer._connect(SlaveComputer.java:219)
-    //    at hudson.model.Computer.connect(Computer.java:339)
-    //    at hudson.slaves.RetentionStrategy$1.start(RetentionStrategy.java:108)
-    //    at hudson.model.AbstractCIBase.updateComputer(AbstractCIBase.java:129)
-    //    at hudson.model.AbstractCIBase.updateComputerList(AbstractCIBase.java:180)
-    //            - locked <0x13cf> (a java.lang.Object)
-    //    at jenkins.model.Jenkins.updateComputerList(Jenkins.java:1200)
-    //    at jenkins.model.Jenkins.setNodes(Jenkins.java:1696)
-    //    at jenkins.model.Jenkins.addNode(Jenkins.java:1678)
-    //            - locked <0x13a6> (a hudson.model.Hudson)
-    //    at org.jvnet.hudson.test.JenkinsRule.createSlave(JenkinsRule.java:814)
     @Extension @Restricted(NoExternalUse.class)
     public static class OperationListener extends ComputerListener {
 

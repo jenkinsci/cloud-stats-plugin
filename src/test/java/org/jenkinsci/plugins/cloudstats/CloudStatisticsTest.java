@@ -44,6 +44,8 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
+import jenkins.model.Jenkins;
+import jenkins.model.NodeListener;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -254,7 +256,9 @@ public class CloudStatisticsTest {
 
     @Test
     public void renameActivity() throws Exception {
+        CloudStatistics cs = CloudStatistics.get();
         CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
+
         ProvisioningActivity.Id fixup = new ProvisioningActivity.Id("Cloud", "template", "incorrectName");
         ProvisioningActivity.Id assign = new ProvisioningActivity.Id("Cloud", "template");
         ProvisioningActivity fActivity = l.onStarted(fixup);
@@ -263,14 +267,28 @@ public class CloudStatisticsTest {
         assertEquals("incorrectName", fActivity.getName());
         assertEquals("template", aActivity.getName());
 
-        LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", "template", "correct-name"), j);
-        LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(new ProvisioningActivity.Id("Cloud", "template", "Some Name"), j);
+        LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(fixup, j, "correct-name");
+        LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(assign, j, "Some Name");
 
         l.onComplete(fixup, fSlave);
         l.onComplete(assign, aSlave);
 
         assertEquals(fSlave.getDisplayName(), fActivity.getName());
         assertEquals(aSlave.getDisplayName(), aActivity.getName());
+
+        // Node update
+        // Until `jenkins.getNodesObject.replaceNode(..., ...);` is exposed
+        j.jenkins.removeNode(aSlave);
+        LaunchSuccessfully.TrackedSlave replacement = new LaunchSuccessfully.TrackedSlave(assign, j, "Updated Name");
+        j.jenkins.addNode(replacement);
+        NodeListener.fireOnUpdated(aSlave, replacement);
+
+        assertEquals("Updated Name", aActivity.getName());
+
+        // Explicit rename
+        fActivity.rename("renamed");
+
+        assertEquals("renamed", cs.getActivityFor(fixup).getName());
     }
 
     @Test // Single cyclic buffer ware split to active and archived activities
@@ -283,7 +301,7 @@ public class CloudStatisticsTest {
 
     @Nonnull
     private static LaunchSuccessfully.TrackedSlave createTrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws Exception {
-        LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(id, j);
+        LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(id, j, null);
         j.jenkins.addNode(slave);
         return slave;
     }
@@ -356,8 +374,8 @@ public class CloudStatisticsTest {
         private static final class TrackedSlave extends AbstractCloudSlave implements TrackedItem {
             private final ProvisioningActivity.Id id;
 
-            public TrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws Exception {
-                super(id.getNodeName(), "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+            public TrackedSlave(ProvisioningActivity.Id id, JenkinsRule j, String name) throws Exception {
+                super(name == null ? id.getNodeName() : name, "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
                 this.id = id;
             }
 
