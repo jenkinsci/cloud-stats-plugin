@@ -57,7 +57,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     public CyclicThreadSafeCollection(int capacity) {
         if (capacity < 0) throw new IllegalArgumentException("Capacity must be non-negative");
 
-        this.data = (E[]) new Object[capacity];
+        this.data = CyclicThreadSafeCollection.<E>newArray(capacity);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
      * It is not guaranteed the elements will be consecutive in the collection (other thread can add elements in between) but it is guaranteed to preserve order.
      */
     @Override
-    public boolean addAll(Collection<? extends E> c) {
+    public boolean addAll(@Nonnull Collection<? extends E> c) {
         for (E e : c) {
             add(e);
         }
@@ -100,7 +100,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
      * Iterated elements represent a snapshot of the collection.
      */
     @Override
-    public Iterator<E> iterator() {
+    public @Nonnull Iterator<E> iterator() {
         return toList().iterator();
     }
 
@@ -125,7 +125,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
+    public boolean containsAll(@Nonnull Collection<?> c) {
         return toList().containsAll(c);
     }
 
@@ -137,16 +137,16 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     @Override
-    public E[] toArray() {
-        return toArray((E[]) new Object[0]);
+    public @Nonnull E[] toArray() {
+        return toArray(CyclicThreadSafeCollection.<E>newArray(0));
     }
 
     @Override
-    public <T> T[] toArray(T[] ret) {
+    public @Nonnull <T> T[] toArray(@Nonnull T[] ret) {
         synchronized (data) {
             int size = size();
             if (ret.length < size) {
-                ret = (T[]) new Object[size];
+                ret = CyclicThreadSafeCollection.<T>newArray(size);
             } else if (ret.length > size) {
                 // javadoc: If this collection fits in the specified array with room to spare
                 // (i.e., the array has more elements than this collection), the element
@@ -164,18 +164,23 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private static <X> X[] newArray(int capacity) {
+        return (X[]) new Object[capacity];
+    }
+
     @Override
     public boolean remove(Object o) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(@Nonnull Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(@Nonnull Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 }
