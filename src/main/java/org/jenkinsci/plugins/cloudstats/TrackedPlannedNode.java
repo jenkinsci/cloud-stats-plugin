@@ -28,7 +28,6 @@ import hudson.model.Node;
 import hudson.slaves.Cloud;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.concurrent.Future;
 
 import static hudson.slaves.NodeProvisioner.*;

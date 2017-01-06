@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.cloudstats;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,7 +40,6 @@ import static org.junit.Assert.*;
 public class ProvisioningActivityTest {
 
     private static final ProvisioningActivity.Id DUMMY_ID = new ProvisioningActivity.Id("Fake cloud");
-    private static final List<PhaseExecutionAttachment> NO_ATTACHMENTS = Collections.<PhaseExecutionAttachment>emptyList();
 
     @Test
     public void phaseExecutionTrivia() {

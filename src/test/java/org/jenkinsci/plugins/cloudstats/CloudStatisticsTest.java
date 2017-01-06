@@ -44,7 +44,6 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
-import jenkins.model.Jenkins;
 import jenkins.model.NodeListener;
 import org.junit.Before;
 import org.junit.Rule;

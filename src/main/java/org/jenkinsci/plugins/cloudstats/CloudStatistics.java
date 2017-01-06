@@ -35,7 +35,6 @@ import hudson.model.PeriodicWork;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.slaves.AbstractCloudComputer;
-import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
 import hudson.slaves.ComputerListener;
