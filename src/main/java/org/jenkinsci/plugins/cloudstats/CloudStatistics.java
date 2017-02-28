@@ -124,7 +124,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    /*package for testing*/ Collection<ProvisioningActivity> getNotCompletedActivities() {
+    public Collection<ProvisioningActivity> getNotCompletedActivities() {
         synchronized (active) {
             return new ArrayList<>(active);
         }
