@@ -208,6 +208,21 @@ public final class ProvisioningActivity implements ModelObject {
         this.name = name;
     }
 
+    /*package for testing*/ ProvisioningActivity(@Nonnull Id id, long started) {
+        this.id = id;
+        enter(new PhaseExecution(Phase.PROVISIONING, started));
+
+        // No need to synchronize since in constructor
+        String name = id.nodeName;
+        if (name == null) {
+            name = id.templateName;
+        }
+        if (name == null) {
+            name = id.cloudName;
+        }
+        this.name = name;
+    }
+
     public @Nonnull Id getId() {
         return id;
     }
@@ -215,6 +230,12 @@ public final class ProvisioningActivity implements ModelObject {
     public @Nonnull Date getStarted() {
         synchronized (progress) {
             return progress.get(Phase.PROVISIONING).getStarted();
+        }
+    }
+
+    public long getStartedTimestamp() {
+        synchronized (progress) {
+            return progress.get(Phase.PROVISIONING).getStartedTimestamp();
         }
     }
 
