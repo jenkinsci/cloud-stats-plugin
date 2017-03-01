@@ -115,4 +115,37 @@ public final class ActivityIndex {
         Collection<ProvisioningActivity> ret = forCloud.get(template);
         return ret == null ? EMPTY: ret;
     }
+
+    /**
+     * Get map of cloud names to their health metrics.
+     */
+    public @Nonnull Map<String, Health> healthByCloud() {
+        HashMap<String, Health> ret = new HashMap<>(byCloud.size());
+        for (Map.Entry<String, Collection<ProvisioningActivity>> entry : byCloud.entrySet()) {
+            ret.put(entry.getKey(), new Health(entry.getValue()));
+        }
+
+        return ret;
+    }
+
+    public @Nonnull Map<String, Map<String, Health>> healthByTemplate() {
+        HashMap<String, Map<String, Health>> ret = new HashMap<>(byTemplate.size());
+        for (Map.Entry<String, Map<String, Collection<ProvisioningActivity>>> entry : byTemplate.entrySet()) {
+            HashMap<String, Health> tmpltret = new HashMap<>(entry.getValue().size());
+            for (Map.Entry<String, Collection<ProvisioningActivity>> template : entry.getValue().entrySet()) {
+                tmpltret.put(template.getKey(), new Health(template.getValue()));
+            }
+            ret.put(entry.getKey(), tmpltret);
+        }
+
+        return ret;
+    }
+
+    public @Nonnull Health cloudHealth(@Nonnull String cloud) {
+        return new Health(forCloud(cloud));
+    }
+
+    public @Nonnull Health templateHealth(@Nonnull String cloud, @Nullable String template) {
+        return new Health(forTemplate(cloud, template));
+    }
 }

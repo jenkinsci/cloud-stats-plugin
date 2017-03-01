@@ -254,6 +254,9 @@ public class CloudStatisticsTest {
         assertEquals(WARN, warnedLaunch.getStatus());
         assertEquals("There is something attention worthy", warnedLaunch.getAttachments().get(0).getTitle());
 
+        assertEquals(CloudStatistics.get().getIndex().cloudHealth("MyCloud").getOverall().getPercentage(), 50D, 0);
+        assertEquals(CloudStatistics.get().getIndex().cloudHealth("PickyCloud").getOverall().getPercentage(), 100D, 0);
+
         //j.interactiveBreak();
     }
 

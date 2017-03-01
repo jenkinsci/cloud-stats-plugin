@@ -24,7 +24,8 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import javax.annotation.Nonnull;
-import java.util.List;
+import java.text.DecimalFormat;
+import java.util.Collection;
 
 /**
  * Health metric for a series of provisioning attempts.
@@ -39,9 +40,9 @@ import java.util.List;
  */
 public final class Health {
 
-    private final @Nonnull List<ProvisioningActivity> samples;
+    private final @Nonnull Collection<ProvisioningActivity> samples;
 
-    public Health(@Nonnull List<ProvisioningActivity> samples) {
+    public Health(@Nonnull Collection<ProvisioningActivity> samples) {
         this.samples = samples;
     }
 
@@ -73,7 +74,7 @@ public final class Health {
 
         // Base the relative wights on the newest sample. It is important for older samples not to outweight the recent
         // ones but there is no reason to report bad score just because we do not have recent data.
-        double start = samples.get(0).getStartedTimestamp();
+        double start = samples.iterator().next().getStartedTimestamp();
 
         System.out.println(samples);
 
@@ -99,6 +100,8 @@ public final class Health {
     }
 
     public static final class Report implements Comparable<Report> {
+
+        private static final DecimalFormat FORMAT = new DecimalFormat("#.#'%'");
 
         private final float percent;
 
@@ -131,9 +134,10 @@ public final class Health {
         }
 
         @Override public String toString() {
-            if (Float.isNaN(percent)) return"?";
-            if (percent == (int) percent) return String.format("%.0f%%", percent);
-            return String.format("%.1f%%", percent);
+            if (Float.isNaN(percent)) return "?";
+            return FORMAT.format(percent);
+//            if (percent == (long) percent) return String.format("%.0f%%", percent);
+//            return String.format("%.1f%%", percent);
         }
     }
 }

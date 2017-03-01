@@ -60,7 +60,20 @@ l.layout(permission: app.ADMINISTER) {
     l.header(title: my.displayName)
     l.main_panel {
         h1(my.displayName)
+        table(class: "pane sortable bigtable", width: "100%") {
+            tr {
+                th("Cloud"); th("Overall success rate"); th("Current success rate")
+            }
+            my.index.healthByCloud().each { String cloud, Health health ->
+                tr {
+                    td(cloud)
+                    td(health.overall)
+                    td(health.current)
+                }
+            }
+        }
 
+        h2("Provisioning attempts")
         table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
             tr {
                 th("Cloud"); th("Template"); th("Name"); th("Started"); th("Provisioning"); th("Launch"); th("Operation"); th("Completed")
