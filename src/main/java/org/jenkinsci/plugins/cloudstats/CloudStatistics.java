@@ -407,7 +407,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             // ...
         }
 
-        @Override public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
+        @Override
+        public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
             ProvisioningActivity.Id id = getIdFor(c);
             if (id == null) return;
             ProvisioningActivity activity = stats.getActivityFor(id);
