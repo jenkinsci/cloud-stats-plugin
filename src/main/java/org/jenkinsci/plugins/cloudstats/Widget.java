@@ -23,23 +23,29 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import javax.annotation.Nullable;
+import hudson.Extension;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
+import jenkins.model.Jenkins;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
+
+import java.util.List;
 
 /**
- * Interface to be implemented by plugins to have their provisioning activities tracked.
- *
- * It is necessary to implement this by {@link hudson.slaves.NodeProvisioner.PlannedNode}, {@link hudson.model.Node} and {@link hudson.model.Computer}.
- *
  * @author ogondza.
- * @see TrackedPlannedNode
  */
-public interface TrackedItem {
-    /**
-     * Get unique identifier of the provisioning item.
-     *
-     * @return The identifier. Can be null in case the item that is generally tracked opts-out of tracking. Primary use
-     * is to allow null for items that serialized before plugin was integrated and have no id to provide. Implementations
-     * can use this disable tracking selectively on per-item basis.
-     */
-    @Nullable ProvisioningActivity.Id getId();
+@Restricted(DoNotUse.class) @Extension
+public class Widget extends hudson.widgets.Widget {
+
+//    @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
+//    public static void _register() {
+//        List<hudson.widgets.Widget> widgets = Jenkins.getInstance().getWidgets();
+//        for (hudson.widgets.Widget w: widgets) {
+//            if (w instanceof Widget) return;
+//        }
+//        System.out.println(Jenkins.getInstance().getWidgets());
+//        widgets.add(new Widget());
+//        System.out.println(Jenkins.getInstance().getWidgets());
+//    }
 }

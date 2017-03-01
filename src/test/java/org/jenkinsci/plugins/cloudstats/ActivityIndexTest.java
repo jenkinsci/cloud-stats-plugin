@@ -72,4 +72,9 @@ public class ActivityIndexTest {
         assertThat(index.forTemplate("X", "a").size(), equalTo(0));
         assertThat(index.forTemplate("A", "x").size(), equalTo(0));
     }
+
+    @Test
+    public void matrices() {
+
+    }
 }
