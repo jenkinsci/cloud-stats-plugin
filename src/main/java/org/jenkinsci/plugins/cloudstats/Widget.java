@@ -24,28 +24,17 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import hudson.Extension;
-import hudson.init.InitMilestone;
-import hudson.init.Initializer;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 
-import java.util.List;
-
 /**
  * @author ogondza.
  */
-@Restricted(DoNotUse.class) @Extension
+@Restricted(DoNotUse.class) @Extension(ordinal = 300) // Above queue
 public class Widget extends hudson.widgets.Widget {
 
-//    @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
-//    public static void _register() {
-//        List<hudson.widgets.Widget> widgets = Jenkins.getInstance().getWidgets();
-//        for (hudson.widgets.Widget w: widgets) {
-//            if (w instanceof Widget) return;
-//        }
-//        System.out.println(Jenkins.getInstance().getWidgets());
-//        widgets.add(new Widget());
-//        System.out.println(Jenkins.getInstance().getWidgets());
-//    }
+    public boolean isDisplayed() {
+        return !Jenkins.getInstance().clouds.isEmpty();
+    }
 }

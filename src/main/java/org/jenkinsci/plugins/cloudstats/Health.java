@@ -84,7 +84,7 @@ public final class Health {
             double age = (start - sample.getStartedTimestamp()) / 1000 / 60 / 60;
             age += 1; // Avoid division by 0 increasing the age linearly
             double increment = 1F / age;
-            System.out.printf("age=%s; sample=%s; inc=%s%n", start - sample.getStartedTimestamp(), sample.getStartedTimestamp(), increment);
+            //System.out.printf("age=%s; sample=%s; inc=%s%n", start - sample.getStartedTimestamp(), sample.getStartedTimestamp(), increment);
             if (sample.getStatus() != ProvisioningActivity.Status.FAIL) {
                 success += increment;
             } else {
@@ -95,7 +95,7 @@ public final class Health {
         // Map from range [-max;+max] to [0;+2max]
         success += max;
         max *=2;
-        System.out.printf("max=%s; start=%s; succ=%s; d=%s%n", max, start, success, success * 100 / max);
+        //System.out.printf("max=%s; start=%s; succ=%s; d=%s%n", max, start, success, success * 100 / max);
         return new Report((float) (success * 100 / max));
     }
 

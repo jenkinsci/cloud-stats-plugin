@@ -189,6 +189,8 @@ public class CloudStatisticsTest {
 
     @Test
     public void ui() throws Exception {
+        j.jenkins.clouds.add(new TestCloud("display_the_widget"));
+
         String message = "Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened.";
         CloudStatistics cs = CloudStatistics.get();
         CloudStatistics.ProvisioningListener provisioningListener = CloudStatistics.ProvisioningListener.get();

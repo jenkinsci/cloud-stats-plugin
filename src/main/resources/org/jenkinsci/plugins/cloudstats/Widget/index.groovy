@@ -22,24 +22,33 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.cloudstats.Widget;
+package org.jenkinsci.plugins.cloudstats.Widget
 
 import org.jenkinsci.plugins.cloudstats.*;
 
 def l = namespace(lib.LayoutTagLib)
 def st = namespace("jelly:stapler")
 
-CloudStatistics stats = CloudStatistics.get()
-l.pane(width: 2, title: "<a href='${rootURL}/${stats.getUrlName()}'>Cloud Statistics</a>") {
-    stats.index.byTemplate().each { String cloudName, template ->
-        tr {
-            td(cloudName)
-        }
-        template.each { String templateName, activities ->
+if (my.displayed) {
+   CloudStatistics stats = CloudStatistics.get()
+    def title = "<a href='${rootURL}/${stats.getUrlName()}'>Cloud Statistics</a>"
+    l.pane(id: "cloud-stats", width: 2, title: title) {
+        def index = stats.index
+        index.healthByTemplate().each { String cloudName, Map templates ->
             tr {
-                td{
-                    st.nbsp()
-                    text(templateName)
+                td(colspan: 2) {
+                    text(cloudName)
+                }
+                td(index.cloudHealth(cloudName).getCurrent())
+            }
+            // If the only template is the fake one there is no reason to report it as it represents the cloud
+            if (!(templates.size() == 1 && templates.get(null) != null)) {
+                templates.each { String templateName, Health health ->
+                    tr {
+                        td()
+                        td(templateName)
+                        td(health.current)
+                    }
                 }
             }
         }
