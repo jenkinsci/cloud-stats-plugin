@@ -25,7 +25,10 @@ package org.jenkinsci.plugins.cloudstats;
 
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Health metric for a series of provisioning attempts.
@@ -40,10 +43,11 @@ import java.util.Collection;
  */
 public final class Health {
 
-    private final @Nonnull Collection<ProvisioningActivity> samples;
+    private final @Nonnull List<ProvisioningActivity> samples;
 
     public Health(@Nonnull Collection<ProvisioningActivity> samples) {
-        this.samples = samples;
+        this.samples = new ArrayList<>(samples);
+        Collections.sort(this.samples);
     }
 
     /**
@@ -83,8 +87,11 @@ public final class Health {
         for (ProvisioningActivity sample : samples) {
             double age = (start - sample.getStartedTimestamp()) / 1000 / 60 / 60;
             age += 1; // Avoid division by 0 increasing the age linearly
+            assert age > 0: "Illegal sample age " + age;
+
             double increment = 1F / age;
             //System.out.printf("age=%s; sample=%s; inc=%s%n", start - sample.getStartedTimestamp(), sample.getStartedTimestamp(), increment);
+            assert increment >= 0 && increment <= 1: "Illegal sample increment " + increment;
             if (sample.getStatus() != ProvisioningActivity.Status.FAIL) {
                 success += increment;
             } else {
@@ -95,7 +102,7 @@ public final class Health {
         // Map from range [-max;+max] to [0;+2max]
         success += max;
         max *=2;
-        //System.out.printf("max=%s; start=%s; succ=%s; d=%s%n", max, start, success, success * 100 / max);
+        //System.out.printf("max=%s; start=%s; succ=%s; percentage=%s%n", max, start, success, success * 100 / max);
         return new Report((float) (success * 100 / max));
     }
 
@@ -136,8 +143,6 @@ public final class Health {
         @Override public String toString() {
             if (Float.isNaN(percent)) return "?";
             return FORMAT.format(percent);
-//            if (percent == (long) percent) return String.format("%.0f%%", percent);
-//            return String.format("%.1f%%", percent);
         }
     }
 }

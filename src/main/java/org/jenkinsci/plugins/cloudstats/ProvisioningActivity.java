@@ -45,7 +45,7 @@ import java.util.Objects;
  * @author ogondza.
  */
 @Restricted(NoExternalUse.class) // Until we gain more confidence in this API
-public final class ProvisioningActivity implements ModelObject {
+public final class ProvisioningActivity implements ModelObject, Comparable<ProvisioningActivity> {
 
     /**
      * Progress of an activity.
@@ -416,6 +416,11 @@ public final class ProvisioningActivity implements ModelObject {
 
     public boolean isFor(Id id) {
         return id.fingerprint == this.id.fingerprint;
+    }
+
+    @Override
+    public int compareTo(@Nonnull ProvisioningActivity o) {
+        return Long.compare(o.getStartedTimestamp(), getStartedTimestamp());
     }
 
     @Override

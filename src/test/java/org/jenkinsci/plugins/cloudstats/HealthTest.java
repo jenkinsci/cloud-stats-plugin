@@ -105,6 +105,11 @@ public class HealthTest {
         actual = health(failure(10), success(10), success(50), failure(50)).getCurrent();
         assertFalse(Float.isNaN(actual.getPercentage()));
         assertThat(actual.getPercentage(), equalTo(50F));
+
+        assertThat(
+                health(success(50), failure(10), failure(50), success(10)).getCurrent().getPercentage(),
+                equalTo(actual.getPercentage())
+        );
     }
 
     @Test
