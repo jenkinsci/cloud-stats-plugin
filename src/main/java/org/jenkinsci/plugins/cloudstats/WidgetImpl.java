@@ -24,6 +24,7 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import hudson.Extension;
+import hudson.widgets.Widget;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -32,7 +33,7 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
  * @author ogondza.
  */
 @Restricted(DoNotUse.class) @Extension(ordinal = 300) // Above queue
-public class Widget extends hudson.widgets.Widget {
+public class WidgetImpl extends Widget {
 
     public boolean isDisplayed() {
         return !Jenkins.getInstance().clouds.isEmpty();

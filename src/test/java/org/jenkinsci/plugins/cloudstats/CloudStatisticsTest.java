@@ -234,6 +234,7 @@ public class CloudStatisticsTest {
         PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
         assertEquals(message, exception.getCause().getMessage());
         JenkinsRule.WebClient wc = j.createWebClient();
+        wc.getOptions().setPrintContentOnFailingStatusCode(true);
         Page page = wc.goTo("cloud-stats").getAnchorByHref(cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
         assertThat(page.getWebResponse().getContentAsString(), containsString(message));
 
