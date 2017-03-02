@@ -235,7 +235,6 @@ public class CloudStatisticsTest {
         PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
         assertEquals(message, exception.getCause().getMessage());
 
-
         JenkinsRule.WebClient wc = j.createWebClient();
         j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
 

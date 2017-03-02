@@ -62,13 +62,27 @@ l.layout(permission: app.ADMINISTER) {
         h1(my.displayName)
         table(class: "pane sortable bigtable", width: "100%") {
             tr {
-                th("Cloud"); th("Overall success rate"); th("Current success rate")
+                th("Cloud"); th("Template"); th("Overall success rate"); th("Current success rate")
             }
-            my.index.healthByCloud().each { String cloud, Health health ->
+            def index = my.index
+            def templateHealth = index.healthByTemplate()
+            index.healthByCloud().each { String cloud, Health ch ->
                 tr {
                     td(cloud)
-                    td(health.overall)
-                    td(health.current)
+                    td()
+                    td(ch.overall)
+                    td(ch.current)
+                }
+                def templates = templateHealth.get(cloud)
+                if (templates.size() != 1 || templates.get(null) == null) {
+                    templates.each { String template, Health th ->
+                        tr {
+                            td()
+                            td(template)
+                            td(th.overall)
+                            td(th.current)
+                        }
+                    }
                 }
             }
         }
