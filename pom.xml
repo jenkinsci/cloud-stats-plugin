@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>cloud-stats</artifactId>
-  <version>0.8-SNAPSHOT</version>
+  <version>0.8</version>
   <packaging>hpi</packaging>
   <name>Cloud Statistics Plugin</name>
   <description>Report Jenkins dynamic provisioning activities and statistics</description>
@@ -32,7 +32,7 @@
     <connection>scm:git:git://github.com/jenkinsci/cloud-stats-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/cloud-stats-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/cloud-stats-plugin</url>
-    <tag>HEAD</tag>
+    <tag>cloud-stats-0.8</tag>
   </scm>
 
   <dependencies>
