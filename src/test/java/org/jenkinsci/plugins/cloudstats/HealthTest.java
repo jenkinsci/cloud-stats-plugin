@@ -102,13 +102,10 @@ public class HealthTest {
         assertFalse(Float.isNaN(actual.getPercentage()));
         assertThat(actual.getPercentage(), equalTo(50F));
 
-        actual = health(failure(10), success(10), success(50), failure(50)).getCurrent();
-        assertFalse(Float.isNaN(actual.getPercentage()));
-        assertThat(actual.getPercentage(), equalTo(50F));
-
-        assertThat(
+        assertEquals(
                 health(success(50), failure(10), failure(50), success(10)).getCurrent().getPercentage(),
-                equalTo(actual.getPercentage())
+                health(success(10), failure(10), success(50), failure(50)).getCurrent().getPercentage(),
+                0D
         );
     }
 
@@ -135,6 +132,24 @@ public class HealthTest {
                 health(success(0), success(1), failure(2)).getCurrent(), greaterThan(
                 health(success(0), failure(1), success(2)).getCurrent()
         ));
+    }
+
+    @Test
+    public void timeDecay() throws Exception {
+        assertThat(
+                health(success(0), success(1000), success(2000), success(3000), success(4000), success(5000), success(6000)).getCurrent().getPercentage(),
+                equalTo(100F)
+        );
+
+        assertEquals(0, health(failure(0)).getCurrent().getPercentage(), 0F);
+        assertEquals(50, health(success(0), failure(1)).getCurrent().getPercentage(), 1F);
+        assertEquals(66, health(success(0), success(1), failure(2)).getCurrent().getPercentage(), 2F);
+        assertEquals(75, health(success(0), success(1), success(2), failure(3)).getCurrent().getPercentage(), 2F);
+
+        assertEquals(57, health(success(0), failure(10)).getCurrent().getPercentage(), 1F);
+        assertEquals(81, health(success(0), failure(100)).getCurrent().getPercentage(), 1F);
+        assertEquals(97, health(success(0), failure(1000)).getCurrent().getPercentage(), 1F);
+        assertEquals(99, health(success(0), failure(10000)).getCurrent().getPercentage(), 1F);
     }
 
     private Health health(ProvisioningActivity... pas) {

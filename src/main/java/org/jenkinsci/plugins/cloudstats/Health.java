@@ -80,30 +80,21 @@ public final class Health {
         // ones but there is no reason to report bad score just because we do not have recent data.
         double start = samples.iterator().next().getStartedTimestamp();
 
-        System.out.println(samples);
-
-        double max = samples.size();
-        double success = 0;
+        double success = 1;
+        double count = samples.size();
         for (ProvisioningActivity sample : samples) {
-            double age = (start - sample.getStartedTimestamp()) / 1000 / 60 / 60;
-            age += 1; // Avoid division by 0 increasing the age linearly
-            assert age > 0: "Illegal sample age " + age;
-
-            double increment = 1F / age;
-            //System.out.printf("age=%s; sample=%s; inc=%s%n", start - sample.getStartedTimestamp(), sample.getStartedTimestamp(), increment);
-            assert increment >= 0 && increment <= 1: "Illegal sample increment " + increment;
-            if (sample.getStatus() != ProvisioningActivity.Status.FAIL) {
-                success += increment;
-            } else {
+            // Take only negative score into account so old successful samples will not turn the score down
+            if (sample.getStatus() == ProvisioningActivity.Status.FAIL) {
+                double age = (start - sample.getStartedTimestamp()) / 1000 / 60 / 60;
+                age += 1; // Avoid division by 0 increasing the age linearly
+                assert age > 0: "Illegal sample age " + age;
+                double increment = 1D / (count * age);
+                //System.out.printf("age=%s; sample=%s; inc=%s%n", age, sample.getStartedTimestamp(), increment);
                 success -= increment;
             }
         }
 
-        // Map from range [-max;+max] to [0;+2max]
-        success += max;
-        max *=2;
-        //System.out.printf("max=%s; start=%s; succ=%s; percentage=%s%n", max, start, success, success * 100 / max);
-        return new Report((float) (success * 100 / max));
+        return new Report((float) (success * 100));
     }
 
     public static final class Report implements Comparable<Report> {

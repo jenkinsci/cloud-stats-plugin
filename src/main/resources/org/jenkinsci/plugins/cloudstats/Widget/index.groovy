@@ -32,7 +32,7 @@ def st = namespace("jelly:stapler")
 if (my.displayed) {
    CloudStatistics stats = CloudStatistics.get()
     def title = "<a href='${rootURL}/${stats.getUrlName()}'>Cloud Statistics</a>"
-    l.pane(id: "cloud-stats", width: 2, title: title) {
+    l.pane(id: "cloud-stats", width: 2, title: title, style: "margin-bottom: 20px") {
         def index = stats.index
         index.healthByTemplate().each { String cloudName, Map templates ->
             tr {

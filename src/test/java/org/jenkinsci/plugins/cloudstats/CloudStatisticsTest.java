@@ -259,7 +259,7 @@ public class CloudStatisticsTest {
         assertEquals(CloudStatistics.get().getIndex().cloudHealth("MyCloud").getOverall().getPercentage(), 50D, 0);
         assertEquals(CloudStatistics.get().getIndex().cloudHealth("PickyCloud").getOverall().getPercentage(), 100D, 0);
 
-        j.interactiveBreak();
+        //j.interactiveBreak();
     }
 
     @Test
