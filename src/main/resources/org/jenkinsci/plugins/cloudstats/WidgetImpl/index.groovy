@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.cloudstats.Widget
+package org.jenkinsci.plugins.cloudstats.WidgetImpl
 
 import org.jenkinsci.plugins.cloudstats.*;
 

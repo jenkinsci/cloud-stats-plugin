@@ -36,6 +36,7 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 public class WidgetImpl extends Widget {
 
     public boolean isDisplayed() {
-        return !Jenkins.getInstance().clouds.isEmpty();
+        Jenkins instance = Jenkins.getInstance();
+        return instance != null && !instance.clouds.isEmpty();
     }
 }
