@@ -37,6 +37,7 @@ import hudson.model.LoadStatistics;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
+import hudson.security.AuthorizationStrategy;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
@@ -233,8 +234,11 @@ public class CloudStatisticsTest {
         assertEquals(FAIL, failedProvisioning.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
         assertEquals(message, exception.getCause().getMessage());
+
+
         JenkinsRule.WebClient wc = j.createWebClient();
-        wc.getOptions().setPrintContentOnFailingStatusCode(true);
+        j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
+
         Page page = wc.goTo("cloud-stats").getAnchorByHref(cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
         assertThat(page.getWebResponse().getContentAsString(), containsString(message));
 
