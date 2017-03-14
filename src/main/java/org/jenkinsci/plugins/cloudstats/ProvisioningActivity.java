@@ -130,6 +130,22 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
 
         /**
+         * Clone the Id with different name set.
+         *
+         * The created Id is equal to this one.
+         */
+        public @Nonnull Id named(@Nonnull String name) {
+            return new Id(this, name);
+        }
+
+        private Id(@Nonnull Id id, @Nonnull String name) {
+            cloudName = id.cloudName;
+            templateName = id.templateName;
+            fingerprint = id.fingerprint;
+            nodeName = name;
+        }
+
+        /**
          * Name of the cloud that initiated this activity.
          */
         public @Nonnull String getCloudName() {

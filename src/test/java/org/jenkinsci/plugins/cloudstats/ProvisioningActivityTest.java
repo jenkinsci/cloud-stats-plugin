@@ -44,6 +44,16 @@ public class ProvisioningActivityTest {
     private static final List<PhaseExecutionAttachment> NO_ATTACHMENTS = Collections.<PhaseExecutionAttachment>emptyList();
 
     @Test
+    public void id() throws Exception {
+        ProvisioningActivity.Id id = new ProvisioningActivity.Id("c", "t");
+        assertEquals(id, id);
+        assertEquals(id, id.named("n"));
+
+        ProvisioningActivity.Id nid = new ProvisioningActivity.Id("c", "t");
+        assertNotEquals(id, nid);
+    }
+
+    @Test
     public void phaseExecutionTrivia() {
         long before = System.currentTimeMillis();
         PhaseExecution pe = new PhaseExecution(PROVISIONING);
