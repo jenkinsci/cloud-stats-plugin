@@ -392,7 +392,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             // Do not enter second time on relaunch
             boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.LAUNCHING);
             if (entered) {
-                stats.save();
+                stats.persist();
             }
         }
 
@@ -417,7 +417,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             // Do not enter second time on relaunch
             boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.OPERATING);
             if (entered) {
-                stats.save();
+                stats.persist();
             }
         }
     }
@@ -466,7 +466,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                     stats.log.addAll(completed);
                     stats.active.removeAll(completed);
                 }
-                stats.save();
+                stats.persist();
             }
         }
     }
