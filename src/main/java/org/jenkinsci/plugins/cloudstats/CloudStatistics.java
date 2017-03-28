@@ -35,7 +35,6 @@ import hudson.model.PeriodicWork;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
 import hudson.slaves.AbstractCloudComputer;
-import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
 import hudson.slaves.ComputerListener;
@@ -54,10 +53,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -80,7 +79,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      * The consistency between 'active' and 'log' is ensured by active monitor.
      */
     @GuardedBy("active")
-    private final @Nonnull Set<ProvisioningActivity> active = new LinkedHashSet<>();
+    // This collection needs to have thread-safe iteration until https://issues.jenkins-ci.org/browse/JENKINS-41037 is fixed
+    private final @Nonnull Collection<ProvisioningActivity> active = new ConcurrentLinkedQueue<>();
 
     /**
      * Activities that are in completed state. The oldest entries (least recently completed) are rotated.
