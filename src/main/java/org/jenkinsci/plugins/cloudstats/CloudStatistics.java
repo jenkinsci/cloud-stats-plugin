@@ -151,12 +151,12 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     public List<ProvisioningActivity> getActivities() {
-        ArrayList<ProvisioningActivity> out = new ArrayList<>(active.size() + log.size());
         synchronized (active) {
+            ArrayList<ProvisioningActivity> out = new ArrayList<>(active.size() + log.size());
             out.addAll(log.toList());
             out.addAll(active);
+            return out;
         }
-        return out;
     }
 
     public @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
@@ -226,6 +226,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     public void save() throws IOException {
+        if (BulkChange.contains(this)) return;
         getConfigFile().write(this);
     }
 
@@ -294,6 +295,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 }
 
                 if (changed) {
+                    // Not using change.commit() here as persist handles exceptions already
                     stats.persist();
                 }
             } finally {
@@ -312,10 +314,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             synchronized (stats.active) {
                 stats.active.add(activity);
             }
-            // Do not save in case called from loop from an overload
-            if (!BulkChange.contains(stats)) {
-                stats.persist();
-            }
+            stats.persist();
             return activity;
         }
 
