@@ -49,16 +49,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -80,23 +78,15 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      *
      * The consistency between 'active' and 'log' is ensured by active monitor.
      */
-    @GuardedBy("active")
-    // This collection needs to have thread-safe iteration until https://issues.jenkins-ci.org/browse/JENKINS-41037 is fixed
-    private /*final*/ @Nonnull Collection<ProvisioningActivity> active = new ConcurrentLinkedQueue<>();
-
-    // Serialization format hardcode the old implementation - migrate to new one
-    private Object readResolve() throws ObjectStreamException {
-        if (active instanceof LinkedHashMap) {
-            active = new ConcurrentLinkedQueue<>(active);
-        }
-        return this;
-    }
+    @GuardedBy("active") // JENKINS-41037: XStream can iterate while it is written
+    private final @Nonnull Collection<ProvisioningActivity> active = new CopyOnWriteArrayList<>();
 
     /**
      * Activities that are in completed state. The oldest entries (least recently completed) are rotated.
      *
      * The collection itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
      */
+    @GuardedBy("active")
     private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
 
     /**
@@ -227,10 +217,11 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     public void save() throws IOException {
         if (BulkChange.contains(this)) return;
+
         getConfigFile().write(this);
     }
 
-    private void persist() {
+    /*package*/ void persist() {
         try {
             save();
         } catch (IOException e) {
@@ -243,6 +234,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         if (file.exists()) {
             file.unmarshal(this);
         }
+
         // Migrate config from version 0.2 - non-completed activities ware in log collection
         synchronized (active) {
             if (active.isEmpty()) {
@@ -263,7 +255,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    private XmlFile getConfigFile() {
+    /*package for testing*/ XmlFile getConfigFile() {
         return new XmlFile(Jenkins.XSTREAM, new File(new File(
                 jenkins().root,
                 getClass().getCanonicalName() + ".xml"

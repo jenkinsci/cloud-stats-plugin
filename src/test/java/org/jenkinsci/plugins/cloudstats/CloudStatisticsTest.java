@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import com.gargoylesoftware.htmlunit.Page;
+import hudson.BulkChange;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -48,11 +49,13 @@ import hudson.slaves.RetentionStrategy;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.LAUNCHING;
@@ -293,6 +297,50 @@ public class CloudStatisticsTest {
         CloudStatistics cs = CloudStatistics.get();
         assertEquals(2, cs.getActivities().size());
         assertEquals(1, cs.getNotCompletedActivities().size());
+    }
+
+    @Test @Issue("JENKINS-41037")
+    public void modifiedWhileSerialized() throws Exception {
+        final CloudStatistics cs = CloudStatistics.get();
+        final CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
+        final ProvisioningActivity activity = l.onStarted(new ProvisioningActivity.Id("Cloud", "template", "PAOriginal"));
+        final StatsModifyingAttachment blocker = new StatsModifyingAttachment(OK, "Blocker");
+        Computer.threadPoolForRemoting.submit(new Callable<Object>() {
+            @Override public Object call() throws Exception {
+                cs.attach(activity, PROVISIONING, blocker);
+                cs.persist();
+                return null;
+            }
+        }).get();
+
+        String serialized = cs.getConfigFile().asString();
+        assertThat(serialized, not(containsString("ConcurrentModificationException")));
+        assertThat(serialized, containsString("Blocker"));
+        assertThat(serialized, containsString("PAOriginal"));
+        assertThat(serialized, containsString("PAModifying"));
+        System.out.println("===");
+        System.out.println(serialized);
+    }
+
+    // Activity that adds another one while being written to simulate concurrent iteration and update
+    private static final class StatsModifyingAttachment extends PhaseExecutionAttachment  {
+
+        public StatsModifyingAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title) {
+            super(status, title);
+        }
+
+        private Object writeReplace() throws ObjectStreamException {
+            try {
+                // Avoid saving as it is a) not related to test and b) spins infinite recursion of saving
+                BulkChange bc = new BulkChange(CloudStatistics.get());
+                final CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
+                l.onStarted(new ProvisioningActivity.Id("Cloud", "template", "PAModifying"));
+                bc.abort();
+            } catch (Throwable e) {
+                return e;
+            }
+            return this;
+        }
     }
 
     private void detectCompletionNow() throws Exception {
