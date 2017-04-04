@@ -49,6 +49,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,7 +80,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      * The consistency between 'active' and 'log' is ensured by active monitor.
      */
     @GuardedBy("active") // JENKINS-41037: XStream can iterate while it is written
-    private final @Nonnull Collection<ProvisioningActivity> active = new CopyOnWriteArrayList<>();
+    private @Nonnull Collection<ProvisioningActivity> active = new CopyOnWriteArrayList<>();
 
     /**
      * Activities that are in completed state. The oldest entries (least recently completed) are rotated.
@@ -253,6 +254,16 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 }
             }
         }
+    }
+
+    private Object readResolve() throws ObjectStreamException {
+        // Replace former implementation of active queue
+        if (!(active instanceof CopyOnWriteArrayList)) {
+            Collection<ProvisioningActivity> a = active;
+            active = new CopyOnWriteArrayList<>();
+            active.addAll(a);
+        }
+        return this;
     }
 
     /*package for testing*/ XmlFile getConfigFile() {

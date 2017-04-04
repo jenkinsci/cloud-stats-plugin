@@ -64,6 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
@@ -315,11 +316,25 @@ public class CloudStatisticsTest {
 
         String serialized = cs.getConfigFile().asString();
         assertThat(serialized, not(containsString("ConcurrentModificationException")));
+        assertThat(serialized, not(containsString("active class=\"linked-hash-set\"")));
         assertThat(serialized, containsString("Blocker"));
         assertThat(serialized, containsString("PAOriginal"));
         assertThat(serialized, containsString("PAModifying"));
-        System.out.println("===");
-        System.out.println(serialized);
+        assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
+    }
+
+    @Test
+    @LocalData
+    @Issue("JENKINS-41037")
+    public void migrateToV010() throws Exception {
+        CloudStatistics cs = CloudStatistics.get();
+        ProvisioningActivity activity = cs.getActivities().iterator().next();
+        assertThat(activity.getName(), equalTo("Asdf"));
+        cs.persist();
+
+        String serialized = cs.getConfigFile().asString();
+        assertThat(serialized, not(containsString("active class=\"linked-hash-set\"")));
+        assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
     }
 
     // Activity that adds another one while being written to simulate concurrent iteration and update

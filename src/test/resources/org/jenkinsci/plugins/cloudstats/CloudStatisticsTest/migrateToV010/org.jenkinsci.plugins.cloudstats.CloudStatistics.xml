@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.plugins.cloudstats.CloudStatistics plugin="cloud-stats@0.10">
+  <active class="linked-hash-set">
+    <org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+      <id>
+        <cloudName>Asdf</cloudName>
+        <fingerprint>1228730636</fingerprint>
+      </id>
+      <name>Asdf</name>
+      <progress class="linked-hash-map">
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>PROVISIONING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+            <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+            <started>1490684489580</started>
+            <phase>PROVISIONING</phase>
+          </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+        </entry>
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>LAUNCHING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <null/>
+        </entry>
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>OPERATING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <null/>
+        </entry>
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>COMPLETED</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <null/>
+        </entry>
+      </progress>
+    </org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+  </active>
+  <log>
+    <data/>
+    <next>0</next>
+    <size>0</size>
+  </log>
+</org.jenkinsci.plugins.cloudstats.CloudStatistics>
