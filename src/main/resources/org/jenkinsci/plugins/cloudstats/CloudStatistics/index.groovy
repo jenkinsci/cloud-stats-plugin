@@ -93,7 +93,7 @@ l.layout(permission: app.ADMINISTER) {
                 th("Cloud"); th("Template"); th("Name"); th("Started"); th("Provisioning"); th("Launch"); th("Operation"); th("Completed")
             }
 
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
             my.activities.reverseEach { ProvisioningActivity activity ->
                 def activityStatus = activity.status
