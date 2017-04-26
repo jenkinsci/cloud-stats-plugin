@@ -66,7 +66,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         /**
          * The resources (if any) as well as the computer should be gone.
          *
-         * This phase is never started.
+         * This phase is never terminated.
          */
         COMPLETED
     }

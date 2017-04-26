@@ -465,7 +465,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 }
                 assert activity.getStatus() != ProvisioningActivity.Status.FAIL; // Should be completed already if failed
 
-                // TODO there is still a chance some activity will never be recognised as completed when provisioning completes without error and launching never starts for some reason
+                // TODO there is still a chance some activity will never be recognised as completed when provisioning
+                // completes without error and launching never starts for some reason
                 if (executions.get(ProvisioningActivity.Phase.LAUNCHING) == null) continue; // Still provisioning
 
                 if (trackedExisting.contains(activity.getId())) continue; // Still operating
