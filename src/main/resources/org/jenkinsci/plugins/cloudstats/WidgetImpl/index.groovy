@@ -24,10 +24,14 @@
 
 package org.jenkinsci.plugins.cloudstats.WidgetImpl
 
+import hudson.model.Actionable
+import hudson.slaves.Cloud
 import org.jenkinsci.plugins.cloudstats.*;
 
 def l = namespace(lib.LayoutTagLib)
 def st = namespace("jelly:stapler")
+
+assert my instanceof WidgetImpl
 
 if (my.displayed) {
    CloudStatistics stats = CloudStatistics.get()
@@ -36,17 +40,24 @@ if (my.displayed) {
         def index = stats.index
         index.healthByTemplate().each { String cloudName, Map templates ->
             tr {
+                def score = index.cloudHealth(cloudName).getCurrent()
                 td(colspan: 2) {
+                    l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                    st.nbsp()
                     text(cloudName)
                 }
-                td(index.cloudHealth(cloudName).getCurrent())
+                td(score)
             }
             // If the only template is the fake one there is no reason to report it as it represents the cloud
             if (!(templates.size() == 1 && templates.get(null) != null)) {
                 templates.each { String templateName, Health health ->
                     tr {
                         td()
-                        td(templateName)
+                        td {
+                            l.icon("class": "${health.current.weather.iconClassName} icon-sm", alt: health.current.weather.score)
+                            st.nbsp()
+                            text(templateName)
+                        }
                         td(health.current)
                     }
                 }

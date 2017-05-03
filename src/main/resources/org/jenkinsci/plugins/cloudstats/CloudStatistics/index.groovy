@@ -70,8 +70,18 @@ l.layout(permission: app.ADMINISTER) {
                 tr {
                     td(cloud)
                     td()
-                    td(ch.overall)
-                    td(ch.current)
+                    td {
+                        def score = ch.overall
+                        l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                        st.nbsp()
+                        text(score)
+                    }
+                    td {
+                        def score = ch.current
+                        l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                        st.nbsp()
+                        text(score)
+                    }
                 }
                 def templates = templateHealth.get(cloud)
                 if (templates.size() != 1 || templates.get(null) == null) {
@@ -79,8 +89,18 @@ l.layout(permission: app.ADMINISTER) {
                         tr {
                             td()
                             td(template)
-                            td(th.overall)
-                            td(th.current)
+                            td {
+                                def score = ch.overall
+                                l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                                st.nbsp()
+                                text(score)
+                            }
+                            td {
+                                def score = ch.current
+                                l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                                st.nbsp()
+                                text(score)
+                            }
                         }
                     }
                 }

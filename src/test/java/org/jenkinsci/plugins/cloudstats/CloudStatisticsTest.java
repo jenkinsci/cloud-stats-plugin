@@ -195,7 +195,8 @@ public class CloudStatisticsTest {
 
     @Test
     public void ui() throws Exception {
-        j.jenkins.clouds.add(new TestCloud("display_the_widget"));
+        j.jenkins.clouds.add(new TestCloud("MyCloud"));
+        j.jenkins.clouds.add(new TestCloud("PickyCloud"));
 
         String message = "Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened.";
         CloudStatistics cs = CloudStatistics.get();

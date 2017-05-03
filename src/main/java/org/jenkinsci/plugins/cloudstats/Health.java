@@ -23,12 +23,16 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import hudson.model.HealthReport;
+
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static java.lang.Math.round;
 
 /**
  * Health metric for a series of provisioning attempts.
@@ -134,6 +138,10 @@ public final class Health {
         @Override public String toString() {
             if (Float.isNaN(percent)) return "?";
             return FORMAT.format(percent);
+        }
+
+        public HealthReport getWeather() {
+            return new HealthReport(round(percent), "Cloud Statistics");
         }
     }
 }
