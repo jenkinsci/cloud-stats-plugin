@@ -200,7 +200,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         // No UI
         if (attachment.getUrlName() == null) return null;
 
-        StringBuilder url = new StringBuilder();
+        StringBuilder url = new StringBuilder("/cloud-stats/");
         url.append("activity/").append(activity.getId().getFingerprint()).append('/');
         url.append("phase/").append(phaseExecution.getPhase().toString()).append('/');
         url.append(phaseExecution.getUrlName(attachment)).append('/');
@@ -507,7 +507,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static void logTypeNotSupported(Class<?> type) {
         if (!loggedUnsupportedTypes.contains(type)) {
-            LOGGER.info("No support for cloud-stats-plugin by " + type);
+            LOGGER.info("No support for cloud-stats plugin by " + type);
             loggedUnsupportedTypes.add(type);
         }
     }
