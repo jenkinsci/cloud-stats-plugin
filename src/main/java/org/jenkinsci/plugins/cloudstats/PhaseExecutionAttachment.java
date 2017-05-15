@@ -102,7 +102,7 @@ public class PhaseExecutionAttachment implements Action {
         }
 
         public String toString() {
-            return Functions.printThrowable(throwable);
+            return "Exception attachment: " + throwable.toString();
         }
 
         @Override
