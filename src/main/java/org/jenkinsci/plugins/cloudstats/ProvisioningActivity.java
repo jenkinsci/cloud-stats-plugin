@@ -211,7 +211,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
     public ProvisioningActivity(@Nonnull Id id) {
         this.id = id;
-        enter(Phase.PROVISIONING);
+        enter(new PhaseExecution(Phase.PROVISIONING));
 
         // No need to synchronize since in constructor
         String name = id.nodeName;
@@ -334,7 +334,13 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     public void enter(@Nonnull Phase phase) {
         synchronized (progress) {
-            if (progress.get(phase) != null) throw new IllegalStateException("The phase " + phase + " has already started");
+            if (progress.get(phase) != null) throw new IllegalStateException(
+                    "The phase " + phase + " has already started"
+            );
+
+            if (getCurrentPhase().compareTo(phase) >= 0) throw new IllegalStateException(
+                    "The phase " + getCurrentPhase() + " has already started"
+            );
 
             progress.put(phase, new PhaseExecution(phase));
         }
@@ -356,7 +362,8 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     public boolean enterIfNotAlready(@Nonnull Phase phase) {
         synchronized (progress) {
-            if (progress.get(phase) != null) return false;
+            // Entered or skipped
+            if (progress.get(phase) != null || getCurrentPhase().compareTo(phase) >= 0) return false;
             progress.put(phase, new PhaseExecution(phase));
         }
         return true;
@@ -406,7 +413,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     }
 
     /**
-     * Get duration of the provisioning phase.
+     * Get duration of the activity phase.
      *
      * @return Positive integer in case the phase is completed, negative in case it is in progress
      */

@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.cloudstats;
 
 import org.hamcrest.Matchers;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 
 import java.util.Collections;
 import java.util.List;
@@ -180,6 +181,36 @@ public class ProvisioningActivityTest {
             pa.getDuration(pa.getPhaseExecution(OPERATING));
             fail();
         } catch (NullPointerException _) {}
+    }
+
+    @Test @Issue("https://github.com/jenkinsci/cloud-stats-plugin/issues/4")
+    public void enteringSkippedPhaseShouldFail() throws Exception {
+        ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
+        try {
+            pa.enter(PROVISIONING);
+            fail("Entering phase entered already");
+        } catch (IllegalStateException ex) {
+            assertEquals("The phase PROVISIONING has already started", ex.getMessage());
+        }
+        assertFalse("Entering phase entered already", pa.enterIfNotAlready(PROVISIONING));
+
+        pa.enter(COMPLETED);
+
+        try {
+            pa.enter(LAUNCHING);
+            fail("Entering phase that was skipped should fail");
+        } catch (IllegalStateException ex) {
+            assertEquals("The phase COMPLETED has already started", ex.getMessage());
+        }
+        assertFalse("Entering phase entered already", pa.enterIfNotAlready(LAUNCHING));
+
+        try {
+            pa.enter(OPERATING);
+            fail("Entering phase that was skipped should fail");
+        } catch (IllegalStateException ex) {
+            assertEquals("The phase COMPLETED has already started", ex.getMessage());
+        }
+        assertFalse("Entering phase entered already", pa.enterIfNotAlready(OPERATING));
     }
 
     private PhaseExecution enter(ProvisioningActivity activity, ProvisioningActivity.Phase phase, long started) {
