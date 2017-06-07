@@ -190,7 +190,7 @@ public class CloudStatisticsTest {
         assertEquals(OK, activity.getStatus());
 
         detectCompletionNow();
-        assertNotNull(activity.getPhaseExecution(COMPLETED));
+        assertNotNull(activity.getCurrentPhase().toString(), activity.getPhaseExecution(COMPLETED));
     }
 
     @Test
@@ -244,7 +244,7 @@ public class CloudStatisticsTest {
         JenkinsRule.WebClient wc = j.createWebClient();
         j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
 
-        Page page = wc.goTo("cloud-stats").getAnchorByHref(cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
+        Page page = wc.goTo("cloud-stats").getAnchorByHref(j.jenkins.getRootUrl() + cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
         assertThat(page.getWebResponse().getContentAsString(), containsString(message));
 
         ProvisioningActivity ok = all.get(1);

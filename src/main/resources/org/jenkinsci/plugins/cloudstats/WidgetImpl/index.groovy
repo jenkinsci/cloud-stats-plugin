@@ -26,25 +26,37 @@ package org.jenkinsci.plugins.cloudstats.WidgetImpl
 
 import hudson.model.Actionable
 import hudson.slaves.Cloud
-import org.jenkinsci.plugins.cloudstats.*;
+import jenkins.model.Jenkins
+import org.jenkinsci.plugins.cloudstats.*
 
 def l = namespace(lib.LayoutTagLib)
 def st = namespace("jelly:stapler")
 
-assert my instanceof WidgetImpl
+// Pull vars from binding into script for type safety / code assistance
+WidgetImpl widget = my
+Jenkins j = app
 
-if (my.displayed) {
+// Cloud views ware introduced in core when Cloud become Actionable. Link to the page only if core actually serves there something.
+boolean cloudViews = Actionable.class.isAssignableFrom(Cloud.class)
+
+if (widget.displayed) {
    CloudStatistics stats = CloudStatistics.get()
-    def title = "<a href='${rootURL}/${stats.getUrlName()}'>Cloud Statistics</a>"
-    l.pane(id: "cloud-stats", width: 2, title: title, style: "margin-bottom: 20px") {
+    def title = "<a href='${j.rootUrl}/${stats.getUrlName()}'>Cloud Statistics</a>"
+    l.pane(id: "cloudstats", width: 2, title: title, style: "margin-bottom: 20px") {
         def index = stats.index
-        index.healthByTemplate().each { String cloudName, Map templates ->
+        index.healthByTemplate().each { String cloudName, Map<String, Health> templates ->
             tr {
                 def score = index.cloudHealth(cloudName).getCurrent()
                 td(colspan: 2) {
                     l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
                     st.nbsp()
-                    text(cloudName)
+                    if (cloudViews) {
+                        a(href: j.rootUrl + "cloud/" + cloudName) {
+                            text(cloudName)
+                        }
+                    } else {
+                        text(cloudName)
+                    }
                 }
                 td(score)
             }
