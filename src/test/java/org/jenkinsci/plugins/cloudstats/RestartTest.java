@@ -43,6 +43,24 @@ public class RestartTest {
     public RestartableJenkinsRule j = new RestartableJenkinsRule();
 
     @Test
+    public void loadEmpty() throws Exception {
+        j.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                CloudStatistics cs = CloudStatistics.get();
+                cs.save();
+                assertThat(cs.getActivities(), Matchers.<ProvisioningActivity>emptyIterable());
+            }
+        });
+
+        j.addStep(new Statement() {
+            @Override public void evaluate() throws Throwable {
+                CloudStatistics cs = CloudStatistics.get();
+                assertThat(cs.getActivities(), Matchers.<ProvisioningActivity>emptyIterable());
+            }
+        });
+    }
+
+    @Test
     public void persistStatisticsBetweenRestarts() {
         final ProvisioningActivity.Id started = new ProvisioningActivity.Id("Cloud", "template", "started");
         final ProvisioningActivity.Id failed = new ProvisioningActivity.Id("Cloud", "template", "failed");
