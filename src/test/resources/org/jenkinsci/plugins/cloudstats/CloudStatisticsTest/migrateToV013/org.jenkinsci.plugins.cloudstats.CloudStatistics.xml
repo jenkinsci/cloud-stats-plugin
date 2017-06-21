@@ -1,0 +1,135 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<org.jenkinsci.plugins.cloudstats.CloudStatistics plugin="cloud-stats@0.11">
+  <active class="java.util.concurrent.CopyOnWriteArrayList">
+    <org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+      <id>
+        <cloudName>Test</cloudName>
+        <templateName>test</templateName>
+        <fingerprint>1</fingerprint>
+      </id>
+      <name>throwable-from-other-plugin</name>
+      <progress class="linked-hash-map">
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>PROVISIONING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+            <attachments class="java.util.concurrent.CopyOnWriteArrayList">
+              <org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment_-ExceptionAttachment>
+                <status>FAIL</status>
+                <title>EXCEPTION_MESSAGE</title>
+                <throwable class="com.microsoft.azure.CloudException" plugin="azure-credentials@1.1">
+                  <detailMessage>EXCEPTION_MESSAGE</detailMessage>
+                  <stackTrace>
+                    <trace>sun.reflect.GeneratedConstructorAccessor651.newInstance(Unknown Source)</trace>
+                    <trace>sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)</trace>
+                    <trace>java.lang.reflect.Constructor.newInstance(Constructor.java:423)</trace>
+                    <trace>com.microsoft.rest.ServiceResponseBuilder.build(ServiceResponseBuilder.java:116)</trace>
+                    <trace>com.microsoft.azure.management.resources.implementation.DeploymentOperationsInner.listDelegate(DeploymentOperationsInner.java:389)</trace>
+                    <trace>com.microsoft.azure.management.resources.implementation.DeploymentOperationsInner.access$100(DeploymentOperationsInner.java:38)</trace>
+                    <trace>com.microsoft.azure.management.resources.implementation.DeploymentOperationsInner$8.call(DeploymentOperationsInner.java:262)</trace>
+                    <trace>com.microsoft.azure.management.resources.implementation.DeploymentOperationsInner$8.call(DeploymentOperationsInner.java:258)</trace>
+                    <trace>rx.internal.operators.OnSubscribeMap$MapSubscriber.onNext(OnSubscribeMap.java:69)</trace>
+                    <trace>retrofit2.adapter.rxjava.RxJavaCallAdapterFactory$RequestArbiter.request(RxJavaCallAdapterFactory.java:173)</trace>
+                    <trace>rx.Subscriber.setProducer(Subscriber.java:211)</trace>
+                    <trace>rx.internal.operators.OnSubscribeMap$MapSubscriber.setProducer(OnSubscribeMap.java:102)</trace>
+                    <trace>retrofit2.adapter.rxjava.RxJavaCallAdapterFactory$CallOnSubscribe.call(RxJavaCallAdapterFactory.java:152)</trace>
+                    <trace>retrofit2.adapter.rxjava.RxJavaCallAdapterFactory$CallOnSubscribe.call(RxJavaCallAdapterFactory.java:138)</trace>
+                    <trace>rx.Observable.unsafeSubscribe(Observable.java:10142)</trace>
+                    <trace>rx.internal.operators.OnSubscribeMap.call(OnSubscribeMap.java:48)</trace>
+                    <trace>rx.internal.operators.OnSubscribeMap.call(OnSubscribeMap.java:33)</trace>
+                    <trace>rx.internal.operators.OnSubscribeLift.call(OnSubscribeLift.java:48)</trace>
+                    <trace>rx.internal.operators.OnSubscribeLift.call(OnSubscribeLift.java:30)</trace>
+                    <trace>rx.internal.operators.OnSubscribeLift.call(OnSubscribeLift.java:48)</trace>
+                    <trace>rx.internal.operators.OnSubscribeLift.call(OnSubscribeLift.java:30)</trace>
+                    <trace>rx.Observable.subscribe(Observable.java:10238)</trace>
+                    <trace>rx.Observable.subscribe(Observable.java:10205)</trace>
+                    <trace>rx.observables.BlockingObservable.blockForSingle(BlockingObservable.java:444)</trace>
+                    <trace>rx.observables.BlockingObservable.single(BlockingObservable.java:341)</trace>
+                    <trace>com.microsoft.azure.management.resources.implementation.DeploymentOperationsInner.list(DeploymentOperationsInner.java:169)</trace>
+                    <trace>com.microsoft.azure.management.resources.implementation.DeploymentOperationsImpl.list(DeploymentOperationsImpl.java:32)</trace>
+                    <trace>com.microsoft.azure.vmagent.AzureVMCloud.createProvisionedAgent(AzureVMCloud.java:486)</trace>
+                    <trace>com.microsoft.azure.vmagent.AzureVMCloud$3.call(AzureVMCloud.java:650)</trace>
+                    <trace>com.microsoft.azure.vmagent.AzureVMCloud$3.call(AzureVMCloud.java:636)</trace>
+                    <trace>jenkins.util.ContextResettingExecutorService$2.call(ContextResettingExecutorService.java:46)</trace>
+                    <trace>java.util.concurrent.FutureTask.run(FutureTask.java:266)</trace>
+                    <trace>java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)</trace>
+                    <trace>java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)</trace>
+                    <trace>java.lang.Thread.run(Thread.java:748)</trace>
+                  </stackTrace>
+                  <suppressedExceptions class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
+                    <c class="list"/>
+                    <list reference="../c"/>
+                  </suppressedExceptions>
+                  <response/>
+                  <body class="com.microsoft.azure.CloudError">
+                    <details/>
+                  </body>
+                </throwable>
+              </org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment_-ExceptionAttachment>
+              <org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment_-ExceptionAttachment>
+                <status>WARN</status>
+                <title>java.lang.NullPointerException</title>
+                <throwable class="java.lang.NullPointerException">
+                  <stackTrace>
+                    <trace>org.jenkinsci.plugins.cloudstats.CloudStatisticsTest.migrateToV013(CloudStatisticsTest.java:349)</trace>
+                    <trace>sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)</trace>
+                    <trace>sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)</trace>
+                    <trace>sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)</trace>
+                    <trace>java.lang.reflect.Method.invoke(Method.java:498)</trace>
+                    <trace>org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)</trace>
+                    <trace>org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)</trace>
+                    <trace>org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)</trace>
+                    <trace>org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)</trace>
+                    <trace>org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)</trace>
+                    <trace>org.jvnet.hudson.test.JenkinsRule$2.evaluate(JenkinsRule.java:534)</trace>
+                    <trace>org.junit.rules.RunRules.evaluate(RunRules.java:20)</trace>
+                    <trace>org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)</trace>
+                    <trace>org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)</trace>
+                    <trace>org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)</trace>
+                    <trace>org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)</trace>
+                    <trace>org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)</trace>
+                    <trace>org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)</trace>
+                    <trace>org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)</trace>
+                    <trace>org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)</trace>
+                    <trace>org.junit.runners.ParentRunner.run(ParentRunner.java:363)</trace>
+                    <trace>org.junit.runner.JUnitCore.run(JUnitCore.java:137)</trace>
+                    <trace>com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:68)</trace>
+                    <trace>com.intellij.rt.execution.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:51)</trace>
+                    <trace>com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:242)</trace>
+                    <trace>com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:70)</trace>
+                  </stackTrace>
+                  <suppressedExceptions class="java.util.Collections$UnmodifiableRandomAccessList" resolves-to="java.util.Collections$UnmodifiableList">
+                    <c class="list"/>
+                    <list reference="../c"/>
+                  </suppressedExceptions>
+                </throwable>
+              </org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment_-ExceptionAttachment>
+            </attachments>
+            <started>1497508323908</started>
+            <phase>PROVISIONING</phase>
+          </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+        </entry>
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>LAUNCHING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <null/>
+        </entry>
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>OPERATING</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <null/>
+        </entry>
+        <entry>
+          <org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>COMPLETED</org.jenkinsci.plugins.cloudstats.ProvisioningActivity_-Phase>
+          <org.jenkinsci.plugins.cloudstats.PhaseExecution>
+            <attachments class="java.util.concurrent.CopyOnWriteArrayList"/>
+            <started>1497509113908</started>
+            <phase>COMPLETED</phase>
+          </org.jenkinsci.plugins.cloudstats.PhaseExecution>
+        </entry>
+      </progress>
+    </org.jenkinsci.plugins.cloudstats.ProvisioningActivity>
+  </active>
+  <log>
+    <data/>
+    <next>0</next>
+    <size>0</size>
+  </log>
+</org.jenkinsci.plugins.cloudstats.CloudStatistics>

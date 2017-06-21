@@ -29,6 +29,7 @@ import hudson.BulkChange;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
+import hudson.Functions;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleBuild;
@@ -127,7 +128,7 @@ public class CloudStatisticsTest {
         PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, activity.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class).get(0);
-        assertEquals(ThrowException.EXCEPTION, attachment.getCause());
+        assertEquals(Functions.printThrowable(ThrowException.EXCEPTION), attachment.getText());
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
 
@@ -239,7 +240,8 @@ public class CloudStatisticsTest {
         PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
-        assertEquals(message, exception.getCause().getMessage());
+        assertEquals(message, exception.getTitle());
+        assertThat(exception.getText(), startsWith("java.lang.Exception: " + message));
 
         JenkinsRule.WebClient wc = j.createWebClient();
         j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
@@ -336,6 +338,23 @@ public class CloudStatisticsTest {
         String serialized = cs.getConfigFile().asString();
         assertThat(serialized, not(containsString("active class=\"linked-hash-set\"")));
         assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
+    }
+
+    @Test
+    @LocalData
+    public void migrateToV013() throws Exception {
+        ProvisioningActivity activity = CloudStatistics.get().getActivities().iterator().next();
+        List<PhaseExecutionAttachment.ExceptionAttachment> attachments = activity.getPhaseExecution(PROVISIONING).getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class);
+        PhaseExecutionAttachment.ExceptionAttachment partial = attachments.get(0);
+        assertThat(partial.getDisplayName(), equalTo("EXCEPTION_MESSAGE"));
+        assertThat(partial.getText(), equalTo("Plugin was unable to deserialize the exception from version 0.12 or older"));
+
+        PhaseExecutionAttachment.ExceptionAttachment full = attachments.get(1);
+        assertThat(full.getDisplayName(), equalTo("java.lang.NullPointerException"));
+        assertThat(full.getText(), startsWith("java.lang.NullPointerException\n\tat org.jenkinsci.plugins.cloudstats.CloudStatisticsTest.migrateToV013"));
+
+        CloudStatistics.get().persist();
+        assertThat(CloudStatistics.get().getConfigFile().asString(), not(containsString("suppressedExceptions")));
     }
 
     // Activity that adds another one while being written to simulate concurrent iteration and update

@@ -24,5 +24,5 @@
 
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core">
-    <pre>${h.printThrowable(it.cause)}</pre>
+    <pre>${it.text}</pre>
 </j:jelly>

@@ -85,24 +85,56 @@ public class PhaseExecutionAttachment implements Action {
 
     public static final class ExceptionAttachment extends PhaseExecutionAttachment {
 
-        private final @Nonnull Throwable throwable;
+        // Replaced by text field
+        @Deprecated private transient Throwable throwable;
+
+        private /*final*/ @Nonnull String text;
+
+        private Object readResolve() {
+            if (text != null) return this;
+
+            // Failed to deserialize
+            if (throwable == null) {
+                text = "Plugin was unable to deserialize the exception from version 0.12 or older";
+            } else {
+                text = Functions.printThrowable(throwable);
+                throwable = null;
+            }
+            return this;
+        }
 
         public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull Throwable throwable) {
-            super(status, throwable.getMessage());
-            this.throwable = throwable;
+            super(status, extractTitle(throwable));
+            this.text = Functions.printThrowable(throwable);
+        }
+
+        private static String extractTitle(@Nonnull Throwable throwable) {
+            String message = throwable.getMessage();
+            if (message != null) return message;
+
+            // The message might be empty (NPE for example) so get the type at least
+            return throwable.getClass().getName();
         }
 
         public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
             super(status, title);
-            this.throwable = throwable;
+            this.text = Functions.printThrowable(throwable);
         }
 
+        /**
+         * @deprecated Use #getText() instead.
+         */
+        @Deprecated
         public Throwable getCause() {
             return throwable;
         }
 
+        public @Nonnull String getText() {
+            return text;
+        }
+
         public String toString() {
-            return "Exception attachment: " + throwable.toString();
+            return "Exception attachment: " + text;
         }
 
         @Override
