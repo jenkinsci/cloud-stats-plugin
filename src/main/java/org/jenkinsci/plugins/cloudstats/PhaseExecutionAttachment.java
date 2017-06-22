@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
 
 import javax.annotation.CheckForNull;
@@ -31,10 +32,12 @@ import javax.annotation.Nonnull;
 import hudson.model.Action;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
 
+import java.io.Serializable;
+
 /**
  * Additional information attached to the {@link PhaseExecution}.
  */
-public class PhaseExecutionAttachment implements Action {
+public class PhaseExecutionAttachment implements Action, Serializable {
 
     private final @Nonnull ProvisioningActivity.Status status;
     private final @Nonnull String title;
@@ -85,11 +88,14 @@ public class PhaseExecutionAttachment implements Action {
 
     public static final class ExceptionAttachment extends PhaseExecutionAttachment {
 
+        public static final long serialVersionUID = 0;
+
         // Replaced by text field
         @Deprecated private transient Throwable throwable;
 
         private /*final*/ @Nonnull String text;
 
+        @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
         private Object readResolve() {
             if (text != null) return this;
 
