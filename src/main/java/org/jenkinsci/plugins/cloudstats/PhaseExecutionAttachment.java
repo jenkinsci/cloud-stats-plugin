@@ -140,7 +140,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         }
 
         public String toString() {
-            return "Exception attachment: " + text;
+            return "Exception attachment: " + getTitle();
         }
 
         @Override
