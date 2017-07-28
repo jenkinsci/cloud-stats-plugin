@@ -34,13 +34,19 @@ def st = namespace("jelly:stapler")
 // Pull vars from binding into script for type safety / code assistance
 CloudStatistics stats = my
 
+style("""
+        #cloud-stats-overview th {
+            text-align: left;
+        }
+""")
+
 l.layout(permission: app.ADMINISTER) {
     l.header(title: stats.displayName)
     l.main_panel {
         h1(stats.displayName)
-        table(class: "pane sortable bigtable", width: "100%") {
+        table(class: "pane sortable bigtable", width: "100%", id: "cloud-stats-overview") {
             tr {
-                th("Cloud"); th("Template"); th("Overall success rate"); th("Current success rate")
+                th("Cloud"); th("Template"); th("Overall success rate"); th("Current success rate"); th("Sample count")
             }
             def index = stats.index
             def templateHealth = index.healthByTemplate()
@@ -60,6 +66,7 @@ l.layout(permission: app.ADMINISTER) {
                         st.nbsp()
                         text(score)
                     }
+                    td(ch.numSamples)
                 }
                 def templates = templateHealth.get(cloud)
                 if (templates.size() != 1 || templates.get(null) == null) {
@@ -79,6 +86,7 @@ l.layout(permission: app.ADMINISTER) {
                                 st.nbsp()
                                 text(score)
                             }
+                            td(ch.numSamples)
                         }
                     }
                 }

@@ -101,6 +101,10 @@ public final class Health {
         return new Report((float) (success * 100));
     }
 
+    public long getNumSamples() {
+        return samples.size();
+    }
+
     public static final class Report implements Comparable<Report> {
 
         private static final DecimalFormat FORMAT = new DecimalFormat("#.#'%'");

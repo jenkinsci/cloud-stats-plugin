@@ -97,10 +97,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     public static final class Id implements Serializable {
         private final @Nonnull String cloudName;
-
-
         private final @CheckForNull String templateName;
-
         private final @CheckForNull String nodeName;
 
         /**
