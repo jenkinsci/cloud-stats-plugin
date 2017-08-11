@@ -40,9 +40,10 @@ Jenkins j = app
 boolean cloudViews = Actionable.class.isAssignableFrom(Cloud.class)
 
 if (widget.displayed) {
+   style("#cloudstats { margin-bottom: 20px; }")
    CloudStatistics stats = CloudStatistics.get()
     def title = "<a href='${j.rootUrl}/${stats.getUrlName()}'>Cloud Statistics</a>"
-    l.pane(id: "cloudstats", width: 2, title: title, style: "margin-bottom: 20px") {
+    l.pane(id: "cloudstats", width: 2, title: title) {
         def index = stats.index
         index.healthByTemplate().each { String cloudName, Map<String, Health> templates ->
             tr {
