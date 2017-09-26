@@ -150,12 +150,28 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    public @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
+    /**
+     * Get activity that is suspected to be completed already.
+     *
+     * @return The activity or null if rotated already.
+     */
+    public @CheckForNull ProvisioningActivity getPotentiallyCompletedActivityFor(ProvisioningActivity.Id id) {
+        if (id == null) return null;
+
         for (ProvisioningActivity activity : getActivities()) {
             if (activity.isFor(id)) {
                 return activity;
             }
         }
+        return null;
+    }
+
+    /**
+     * Get "active" activity, missing activity will be logged.
+     */
+    public @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
+        ProvisioningActivity activity = getPotentiallyCompletedActivityFor(id);
+        if (activity != null) return activity;
 
         LOGGER.log(Level.WARNING, "No activity tracked for " + id, new IllegalStateException());
         return null;
