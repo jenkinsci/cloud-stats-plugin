@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.cloudstats.WidgetImpl
+package org.jenkinsci.plugins.cloudstats.StatsWidget
 
 import hudson.model.Actionable
 import hudson.slaves.Cloud
@@ -33,7 +33,7 @@ def l = namespace(lib.LayoutTagLib)
 def st = namespace("jelly:stapler")
 
 // Pull vars from binding into script for type safety / code assistance
-WidgetImpl widget = my
+StatsWidget widget = my
 Jenkins j = app
 
 // Cloud views ware introduced in core when Cloud become Actionable. Link to the page only if core actually serves there something.

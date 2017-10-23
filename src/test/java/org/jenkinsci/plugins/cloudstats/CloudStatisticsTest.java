@@ -27,7 +27,6 @@ package org.jenkinsci.plugins.cloudstats;
 import com.gargoylesoftware.htmlunit.Page;
 import hudson.BulkChange;
 import hudson.EnvVars;
-import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.Functions;
 import hudson.model.Computer;
@@ -42,7 +41,6 @@ import hudson.model.queue.QueueTaskFuture;
 import hudson.security.AuthorizationStrategy;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
-import hudson.slaves.Cloud;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
@@ -57,11 +55,9 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectStreamException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -111,7 +107,7 @@ public class CloudStatisticsTest {
     public void provisionAndFail() throws Exception {
         j.createFreeStyleProject().scheduleBuild2(0);
 
-        j.jenkins.clouds.add(new TestCloud("dummy", j, new ThrowException()));
+        j.jenkins.clouds.add(new TestCloud("dummy", j, new TestCloud.ThrowException()));
         triggerProvisioning();
 
         ProvisioningActivity activity;
@@ -128,7 +124,7 @@ public class CloudStatisticsTest {
         PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, activity.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class).get(0);
-        assertEquals(Functions.printThrowable(ThrowException.EXCEPTION), attachment.getText());
+        assertEquals(Functions.printThrowable(TestCloud.ThrowException.EXCEPTION), attachment.getText());
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
 
@@ -389,65 +385,7 @@ public class CloudStatisticsTest {
         return slave;
     }
 
-    public static final class TestCloud extends Cloud {
-        private transient final Launcher provision;
-        private transient final JenkinsRule j;
-        private final AtomicInteger seq = new AtomicInteger();
-
-        public TestCloud(String name) {
-            super(name);
-            provision = null;
-            j = null;
-        }
-
-        public TestCloud(final String name, JenkinsRule j, final Launcher provision) {
-            super(name);
-            this.j = j;
-            this.provision = provision;
-        }
-
-        @Override
-        public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
-            assert provision != null;
-
-            provision.j = j;
-            int i = seq.getAndIncrement();
-            provision.id = new ProvisioningActivity.Id(name, null, name + "-slave-" + i);
-
-            return Collections.<NodeProvisioner.PlannedNode>singletonList(new TrackedPlannedNode(
-                    provision.id, 1, Computer.threadPoolForRemoting.submit(provision)
-            ));
-        }
-
-        @Override
-        public boolean canProvision(Label label) {
-            return provision != null;
-        }
-
-        @Extension
-        public static final class Desc extends Descriptor<Cloud> {
-            @Override
-            public String getDisplayName() {
-                return "Test Cloud";
-            }
-        }
-    }
-
-    private static abstract class Launcher implements Callable<Node> {
-        protected transient JenkinsRule j;
-        protected ProvisioningActivity.Id id;
-    }
-
-    private static class ThrowException extends Launcher {
-        public static final NullPointerException EXCEPTION = new NullPointerException("Whoops");
-
-        @Override
-        public Node call() throws Exception {
-            throw EXCEPTION;
-        }
-    }
-
-    private static class LaunchSuccessfully extends Launcher {
+    private static class LaunchSuccessfully extends TestCloud.Launcher {
 
         @Override
         public Node call() throws Exception {
