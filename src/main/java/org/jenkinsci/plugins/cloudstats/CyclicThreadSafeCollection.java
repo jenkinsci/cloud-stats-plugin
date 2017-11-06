@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Circular Threadsafe Collection.
+ * Circular thread-safe Collection.
  *
  * At most <tt>capacity</tt> elements are preserved and when more added, oldest elements are deleted. Collection preserves
  * insertion order of the elements so the oldest is the first one.
@@ -56,6 +56,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     public CyclicThreadSafeCollection(int capacity) {
         if (capacity < 0) throw new IllegalArgumentException("Capacity must be non-negative");
 
+        //noinspection unchecked
         this.data = (E[]) new Object[capacity];
     }
 
@@ -77,7 +78,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
      * It is not guaranteed the elements will be consecutive in the collection (other thread can add elements in between) but it is guaranteed to preserve order.
      */
     @Override
-    public boolean addAll(Collection<? extends E> c) {
+    public boolean addAll(@Nonnull Collection<? extends E> c) {
         for (E e : c) {
             add(e);
         }
@@ -94,12 +95,12 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     /**
-     * Create threadsafe iterator for collection snapshot.
+     * Create thread-safe iterator for collection snapshot.
      *
      * Iterated elements represent a snapshot of the collection.
      */
     @Override
-    public Iterator<E> iterator() {
+    public @Nonnull Iterator<E> iterator() {
         return toList().iterator();
     }
 
@@ -124,7 +125,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
+    public boolean containsAll(@Nonnull Collection<?> c) {
         return toList().containsAll(c);
     }
 
@@ -136,15 +137,18 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     @Override
-    public E[] toArray() {
+    public @Nonnull E[] toArray() {
+        //noinspection unchecked
         return toArray((E[]) new Object[0]);
     }
 
+    @SuppressWarnings("SuspiciousSystemArraycopy")
     @Override
-    public <T> T[] toArray(T[] ret) {
+    public @Nonnull <T> T[] toArray(@Nonnull T[] ret) {
         synchronized (data) {
             int size = size();
             if (ret.length < size) {
+                //noinspection unchecked
                 ret = (T[]) new Object[size];
             } else if (ret.length > size) {
                 // javadoc: If this collection fits in the specified array with room to spare
@@ -169,12 +173,12 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(@Nonnull Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(@Nonnull Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 }
