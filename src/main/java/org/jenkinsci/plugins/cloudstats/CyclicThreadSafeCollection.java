@@ -132,7 +132,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     /**
      * Get elements in separate collection.
      */
-    public List<E> toList() {
+    public @Nonnull List<E> toList() {
         return Arrays.asList(toArray());
     }
 

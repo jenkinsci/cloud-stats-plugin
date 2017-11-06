@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.cloudstats;
 
 import hudson.BulkChange;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.XmlFile;
 import hudson.model.Computer;
 import hudson.model.Label;
@@ -49,7 +50,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,7 +80,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      * The consistency between 'active' and 'log' is ensured by active monitor.
      */
     @GuardedBy("active") // JENKINS-41037: XStream can iterate while it is written
-    private @Nonnull Collection<ProvisioningActivity> active = new CopyOnWriteArrayList<>();
+    private /*final except for serialization*/ @Nonnull Collection<ProvisioningActivity> active = new CopyOnWriteArrayList<>();
 
     /**
      * Activities that are in completed state. The oldest entries (least recently completed) are rotated.
@@ -88,7 +88,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      * The collection itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
      */
     @GuardedBy("active")
-    private final @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
+    private /*final except for serialization*/ @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
 
     /**
      * Get the singleton instance.
@@ -272,13 +272,35 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    private Object readResolve() throws ObjectStreamException {
+    @SuppressWarnings("unused")
+    private Object readResolve() {
         // Replace former implementation of active queue
         if (!(active instanceof CopyOnWriteArrayList)) {
             Collection<ProvisioningActivity> a = active;
             active = new CopyOnWriteArrayList<>();
             active.addAll(a);
         }
+
+        try {
+            // // There are reports when #data was witnessed null for no reason I could identify: JENKINS-47836, JENKINS-47836
+            log.size();
+        } catch (NullPointerException npe) {
+            String msg = "Failed to properly deserialize cloud-stats records: ";
+            log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
+            FilePath configFile = new FilePath(getConfigFile().getFile());
+            try {
+                if (configFile.exists()) {
+                    FilePath target = new FilePath(new File(configFile.getRemote() + ".bak-JENKINS-44929"));
+                    configFile.renameTo(target);
+                    LOGGER.warning(msg + " Please file a bug report attaching " + target.getRemote());
+                } else {
+                    LOGGER.warning(msg + " " + configFile.getRemote() + " not found");
+                }
+            } catch (IOException | InterruptedException ex) {
+                LOGGER.log(Level.SEVERE, msg + " Unable to capture the old config.", ex);
+            }
+        }
+
         return this;
     }
 
