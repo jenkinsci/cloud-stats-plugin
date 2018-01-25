@@ -187,7 +187,6 @@ public class    CloudStatisticsTest {
         // Computer deletion can take a bit more time, wait max approx. 1m
         for (int i = 0; i < 10; i++) {
             if (activity.getPhaseExecution(COMPLETED) != null) {
-                System.out.println(i);
                 break;
             }
             Thread.sleep(100);
@@ -354,8 +353,20 @@ public class    CloudStatisticsTest {
         assertThat(partial.getText(), equalTo("Plugin was unable to deserialize the exception from version 0.12 or older"));
 
         PhaseExecutionAttachment.ExceptionAttachment full = attachments.get(1);
-        assertThat(full.getDisplayName(), equalTo("java.lang.NullPointerException"));
-        assertThat(full.getText(), startsWith("java.lang.NullPointerException\n\tat org.jenkinsci.plugins.cloudstats.CloudStatisticsTest.migrateToV013"));
+
+        final String EX_MSG = "java.lang.NullPointerException";
+        assertThat(full.getDisplayName(), equalTo(EX_MSG));
+        assertThat(full.getText(), startsWith(EX_MSG));
+
+        // Extract the text on next line by platform independent impl.
+        String subStr = full.getText().substring(full.getText().indexOf(EX_MSG) + EX_MSG.length());
+        for (int i=0;; i++) {
+            if (!Character.isWhitespace(subStr.charAt(i))) {
+                subStr = subStr.substring(i);
+                break;
+            }
+        }
+        assertThat(subStr, startsWith("at org.jenkinsci.plugins.cloudstats.CloudStatisticsTest.migrateToV013"));
 
         CloudStatistics.get().persist();
         assertThat(CloudStatistics.get().getConfigFile().asString(), not(containsString("suppressedExceptions")));
