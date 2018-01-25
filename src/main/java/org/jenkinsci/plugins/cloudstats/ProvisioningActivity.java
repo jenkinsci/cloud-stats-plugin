@@ -34,6 +34,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -199,7 +200,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     private final Map<Phase, PhaseExecution> progress;
     {
-        progress = new LinkedHashMap<>(Phase.values().length);
+        progress = Collections.synchronizedMap(new LinkedHashMap<Phase, PhaseExecution>(Phase.values().length));
         progress.put(Phase.PROVISIONING, null);
         progress.put(Phase.LAUNCHING, null);
         progress.put(Phase.OPERATING, null);
@@ -267,14 +268,8 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      * @return Map of {@link Phase} and nullable {@link PhaseExecution}.
      */
     public @Nonnull Map<Phase, PhaseExecution> getPhaseExecutions() {
-        Map<Phase, PhaseExecution> ret = new LinkedHashMap<>(4);
-        synchronized (progress) {
-            ret.put(Phase.PROVISIONING, progress.get(Phase.PROVISIONING));
-            ret.put(Phase.LAUNCHING, progress.get(Phase.LAUNCHING));
-            ret.put(Phase.OPERATING, progress.get(Phase.OPERATING));
-            ret.put(Phase.COMPLETED, progress.get(Phase.COMPLETED));
-        }
-        return ret;
+        // progress is threadsafe here
+        return Collections.unmodifiableMap(progress);
     }
 
     /**

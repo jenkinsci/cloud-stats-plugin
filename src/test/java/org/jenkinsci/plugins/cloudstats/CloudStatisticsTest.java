@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -78,7 +79,7 @@ import static org.junit.Assert.assertNull;
 /**
  * @author ogondza.
  */
-public class CloudStatisticsTest {
+public class    CloudStatisticsTest {
 
     public @Rule JenkinsRule j = new JenkinsRule();
     private NodeProvisioner.NodeProvisionerInvoker provisionerInvoker;
@@ -183,10 +184,17 @@ public class CloudStatisticsTest {
         assertEquals(computer, builtOn);
 
         computer.doDoDelete();
+        // Computer deletion can take a bit more time, wait max approx. 1m
+        for (int i = 0; i < 10; i++) {
+            if (activity.getPhaseExecution(COMPLETED) != null) {
+                System.out.println(i);
+                break;
+            }
+            Thread.sleep(100);
+            detectCompletionNow();
+        }
 
         assertEquals(OK, activity.getStatus());
-
-        detectCompletionNow();
         assertNotNull(activity.getCurrentPhase().toString(), activity.getPhaseExecution(COMPLETED));
     }
 
@@ -351,6 +359,78 @@ public class CloudStatisticsTest {
 
         CloudStatistics.get().persist();
         assertThat(CloudStatistics.get().getConfigFile().asString(), not(containsString("suppressedExceptions")));
+    }
+
+    // Test ConcurrentModificationException in CloudStatistics.save()
+    @Test
+    @Issue("JENKINS-49162")
+    public void testConcurrentModificationException() throws Exception {
+        Runnable activityProducer = new Runnable() {
+            @Override
+            public void run() {
+                for (;;) {
+                    try {
+                        ProvisioningActivity activity = CloudStatistics.ProvisioningListener.get().onStarted(new ProvisioningActivity.Id("test1", null, "test1"));
+                        activity.enterIfNotAlready(LAUNCHING);
+                        Thread.sleep(new Random().nextInt(50));
+                        activity.enterIfNotAlready(OPERATING);
+                        Thread.sleep(new Random().nextInt(50));
+                        activity.enterIfNotAlready(COMPLETED);
+                        Thread.sleep(new Random().nextInt(50));
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (Thread.interrupted()) break;
+                }
+            }
+        };
+
+        Runnable activitiesSaver = new Runnable() {
+            @Override
+            public void run() {
+                for (;;) {
+                    try {
+                        Thread.sleep(new Random().nextInt(100));
+                        CloudStatistics.get().save();
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (Thread.interrupted()) break;
+                }
+            }
+        };
+
+        Runnable[] runnables = new Runnable[] {
+                activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+                activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+                activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+                activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+                activitiesSaver
+        };
+        Thread[] threads = new Thread[runnables.length];
+        try {
+            for (int i = 0; i < runnables.length; i++) {
+                threads[i] = new Thread(runnables[i]);
+                threads[i].start();
+            }
+
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            // terminate after interrupting all children in finally
+        } finally {
+            for (Thread thread: threads) {
+                assert thread.isAlive(); // Died with exception
+                thread.interrupt();
+            }
+            // Avoid to return NULL from Jenkins.getInstance() (IllegalStateException)
+            Thread.sleep(100);
+        }
     }
 
     // Activity that adds another one while being written to simulate concurrent iteration and update
