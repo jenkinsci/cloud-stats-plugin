@@ -25,6 +25,8 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.BulkChange;
 import hudson.EnvVars;
 import hudson.ExtensionList;
@@ -55,6 +57,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -327,6 +330,57 @@ public class    CloudStatisticsTest {
         assertThat(serialized, containsString("PAOriginal"));
         assertThat(serialized, containsString("PAModifying"));
         assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
+    }
+
+    @Test
+    public void multipleAttachmentsForPhase() throws Exception {
+        CloudStatistics cs = CloudStatistics.get();
+        CloudStatistics.ProvisioningListener provisioningListener = CloudStatistics.ProvisioningListener.get();
+
+        ProvisioningActivity.Id pid = new ProvisioningActivity.Id("cloud", "template");
+        ProvisioningActivity pa = provisioningListener.onStarted(pid);
+        cs.attach(pa, PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(OK, new Error("OKmsg")));
+        cs.attach(pa, PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(WARN, new Error("WARNmsg")));
+
+        pa.enter(LAUNCHING);
+
+        cs.attach(pa, LAUNCHING, new PhaseExecutionAttachment.ExceptionAttachment(WARN, new Error("WARNmsg")));
+        cs.attach(pa, LAUNCHING, new PhaseExecutionAttachment.ExceptionAttachment(FAIL, new Error("FAILmsg")));
+
+        // Attaching failure caused the activity to complete
+        cs.attach(pa, COMPLETED, new PhaseExecutionAttachment.ExceptionAttachment(OK, new Error("OKmsg1")));
+        cs.attach(pa, COMPLETED, new PhaseExecutionAttachment.ExceptionAttachment(OK, new Error("OKmsg2")));
+
+        // All 6 attachments can be navigated to
+        JenkinsRule.WebClient wc = j.createWebClient();
+        HtmlPage csp = wc.goTo("cloud-stats");
+        ArrayList<HtmlAnchor> attachments = new ArrayList<>();
+        String numberedUrl = "WILL_BE_OVERRIDEN";
+        for (HtmlAnchor anchor : csp.getAnchors()) {
+            String href = anchor.getHrefAttribute();
+            if (href.contains(Integer.toString(pa.getId().getFingerprint()))) {
+                attachments.add(anchor);
+                if (href.contains(":1/")) {
+                    numberedUrl = href;
+                }
+            }
+        }
+        assertThat(attachments.size(), equalTo(6));
+        for (HtmlAnchor attachment : attachments) {
+            wc.goTo("cloud-stats");
+            Page attPage = attachment.click();
+            assertThat(attPage.getWebResponse().getContentAsString(), containsString("java.lang.Error"));
+        }
+
+        //noinspection deprecation
+        wc.getPage(numberedUrl);
+        //noinspection deprecation
+        wc.getPage(numberedUrl.replaceAll(":1", ":0"));
+
+        wc.getOptions().setThrowExceptionOnFailingStatusCode(false);
+        wc.getOptions().setPrintContentOnFailingStatusCode(false);
+        //noinspection deprecation
+        assertEquals(404, wc.getPage(numberedUrl.replaceAll(":1", ":17")).getWebResponse().getStatusCode());
     }
 
     @Test

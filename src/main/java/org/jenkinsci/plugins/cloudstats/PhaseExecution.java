@@ -144,11 +144,14 @@ public final class PhaseExecution implements ModelObject {
         if (i != -1) {
             try {
                 n = Integer.parseInt(urlName.substring(i + 1));
-                urlName = urlName.substring(0, i - 1);
+                urlName = urlName.substring(0, i);
             } catch (NumberFormatException nan) {
                 // It is not expected that ':' is found in the name, though proceed to fail later as the name will not be found
             }
         }
+
+        // Fail early
+        if (n > attachments.size()) return null;
 
         int cntr = 0;
         for (PhaseExecutionAttachment a: attachments) {
