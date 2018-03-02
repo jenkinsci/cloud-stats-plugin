@@ -86,7 +86,7 @@ l.layout(permission: app.ADMINISTER) {
                                 st.nbsp()
                                 text(score)
                             }
-                            td(ch.numSamples)
+                            td(th.numSamples)
                         }
                     }
                 }
