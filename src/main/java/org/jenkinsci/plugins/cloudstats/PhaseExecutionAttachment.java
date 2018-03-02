@@ -144,7 +144,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         }
 
         @Override
-        public @CheckForNull String getUrlName() {
+        public @Nonnull String getUrlName() {
             return "exception";
         }
     }

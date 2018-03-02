@@ -205,7 +205,7 @@ public class    CloudStatisticsTest {
         j.jenkins.clouds.add(new TestCloud("MyCloud"));
         j.jenkins.clouds.add(new TestCloud("PickyCloud"));
 
-        String message = "Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened.";
+        final String EXCEPTION_MESSAGE = "Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened.";
         CloudStatistics cs = CloudStatistics.get();
         CloudStatistics.ProvisioningListener provisioningListener = CloudStatistics.ProvisioningListener.get();
 
@@ -213,13 +213,14 @@ public class    CloudStatisticsTest {
 
         ProvisioningActivity.Id provisionId = new ProvisioningActivity.Id("MyCloud", "broken-template");
         provisioningListener.onStarted(provisionId);
-        provisioningListener.onFailure(provisionId, new Exception(message));
+        provisioningListener.onFailure(provisionId, new Exception(EXCEPTION_MESSAGE));
 
         ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "slave");
         provisioningListener.onStarted(warnId);
         Node slave = createTrackedSlave(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
-        a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, "There is something attention worthy"));
+        final String WARNING_MESSAGE = "There is something attention worthy. There is something attention worthy.";
+        a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, WARNING_MESSAGE));
 
         slave.toComputer().waitUntilOnline();
 
@@ -246,14 +247,14 @@ public class    CloudStatisticsTest {
         PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
         PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
-        assertEquals(message, exception.getTitle());
-        assertThat(exception.getText(), startsWith("java.lang.Exception: " + message));
+        assertEquals(EXCEPTION_MESSAGE, exception.getTitle());
+        assertThat(exception.getText(), startsWith("java.lang.Exception: " + EXCEPTION_MESSAGE));
 
         JenkinsRule.WebClient wc = j.createWebClient();
         j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
 
         Page page = wc.goTo("cloud-stats").getAnchorByHref(j.jenkins.getRootUrl() + cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
-        assertThat(page.getWebResponse().getContentAsString(), containsString(message));
+        assertThat(page.getWebResponse().getContentAsString(), containsString(EXCEPTION_MESSAGE));
 
         ProvisioningActivity ok = all.get(1);
         assertEquals(okId, ok.getId());
@@ -272,7 +273,7 @@ public class    CloudStatisticsTest {
         assertNull(warn.getPhaseExecution(COMPLETED));
         PhaseExecution warnedLaunch = warn.getPhaseExecution(LAUNCHING);
         assertEquals(WARN, warnedLaunch.getStatus());
-        assertEquals("There is something attention worthy", warnedLaunch.getAttachments().get(0).getTitle());
+        assertEquals(WARNING_MESSAGE, warnedLaunch.getAttachments().get(0).getTitle());
 
         assertEquals(CloudStatistics.get().getIndex().cloudHealth("MyCloud").getOverall().getPercentage(), 50D, 0);
         assertEquals(CloudStatistics.get().getIndex().cloudHealth("PickyCloud").getOverall().getPercentage(), 100D, 0);

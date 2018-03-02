@@ -100,11 +100,11 @@ table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
               for (PhaseExecutionAttachment attachment : execution.attachments) {
                 li {
                   def url = cs.getUrl(activity, execution, attachment)
-                  def title = attachment.displayName
                   if (url == null) {
-                    text(title)
+                    text(attachment.title)
                   } else {
-                    a(href: j.getRootUrl() + url) { text(title) }
+                    // It is OK to shorten the text as we have the whole page for the details
+                    a(href: j.getRootUrl() + url) { text(attachment.displayName) }
                   }
                 }
               }
