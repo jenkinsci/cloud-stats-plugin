@@ -126,6 +126,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
+    // This does not provide strong guarantee none of them was completed as the bookkeeping is done in listener. Manual
+    // phase entering will be detected with delay.
     public Collection<ProvisioningActivity> getNotCompletedActivities() {
         synchronized (active) {
             return new ArrayList<>(active);
@@ -502,6 +504,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 completed.add(activity);
             }
             if (!completed.isEmpty()) {
+                // Periodically ensure the completed activities will be removed from active list, whether they ware completed or not.
                 synchronized (stats.active) {
                     stats.log.addAll(completed);
                     stats.active.removeAll(completed);
@@ -544,8 +547,13 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 LOGGER.log(Level.WARNING, "Activity for deleted node " + node.getNodeName() + " already completed", new Exception());
             }
 
+            // The state might already been entered as deletion was not detected by this plugin reliably/on time so clients had to do that manually.
             boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
             if (entered) {
+                synchronized (stats.active) {
+                    stats.log.add(activity);
+                    stats.active.remove(activity);
+                }
                 stats.persist();
             }
         }

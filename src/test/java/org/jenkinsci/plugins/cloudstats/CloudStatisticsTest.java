@@ -65,6 +65,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
@@ -138,6 +139,8 @@ public class    CloudStatisticsTest {
 
     @Test
     public void provisionAndLaunch() throws Exception {
+        CloudStatistics cs = CloudStatistics.get();
+
         FreeStyleProject p = j.createFreeStyleProject();
         p.setAssignedLabel(Label.get("label"));
         QueueTaskFuture<FreeStyleBuild> build = p.scheduleBuild2(0);
@@ -147,7 +150,7 @@ public class    CloudStatisticsTest {
 
         List<ProvisioningActivity> activities;
         for (;;) {
-            activities = CloudStatistics.get().getActivities();
+            activities = cs.getActivities();
             if (activities.size() > 0) break;
         }
         for (ProvisioningActivity a : activities) {
@@ -186,18 +189,11 @@ public class    CloudStatisticsTest {
         Computer builtOn = build.get().getBuiltOn().toComputer();
         assertEquals(computer, builtOn);
 
+        assertThat(cs.getNotCompletedActivities(), contains(activity));
         computer.doDoDelete();
-        // Computer deletion can take a bit more time, wait max approx. 1m
-        for (int i = 0; i < 10; i++) {
-            if (activity.getPhaseExecution(COMPLETED) != null) {
-                break;
-            }
-            Thread.sleep(100);
-            detectCompletionNow();
-        }
-
         assertEquals(OK, activity.getStatus());
         assertNotNull(activity.getCurrentPhase().toString(), activity.getPhaseExecution(COMPLETED));
+        assertThat(cs.getNotCompletedActivities(), not(contains(activity)));
     }
 
     @Test
