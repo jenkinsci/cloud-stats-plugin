@@ -126,7 +126,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    // This does not provide strong guarantee none of them was completed as the bookkeeping is done in listener. Manual
+    // This does not provide strong guarantee all of them was completed as the bookkeeping is done in listener. Manual
     // phase entering will be detected with delay.
     public Collection<ProvisioningActivity> getNotCompletedActivities() {
         synchronized (active) {
