@@ -31,12 +31,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author ogondza.
@@ -125,7 +121,7 @@ public class CyclicThreadSafeCollectionTest {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(2);
 
         log.add(1);
-        assertEquals(Arrays.asList(1), log.toList());
+        assertEquals(Collections.singletonList(1), log.toList());
         log.add(2);
         assertEquals(Arrays.asList(1, 2), log.toList());
         log.add(3);
@@ -133,9 +129,9 @@ public class CyclicThreadSafeCollectionTest {
 
         log.clear();
 
-        assertEquals(Arrays.asList(), log.toList());
+        assertEquals(Collections.emptyList(), log.toList());
         log.add(4);
-        assertEquals(Arrays.asList(4), log.toList());
+        assertEquals(Collections.singletonList(4), log.toList());
         log.add(5);
         assertEquals(Arrays.asList(4, 5), log.toList());
         log.add(6);
@@ -163,10 +159,10 @@ public class CyclicThreadSafeCollectionTest {
     @Test
     public void iterator() {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(3);
-        assertEquals(Arrays.asList(), it2list(log));
+        assertEquals(Collections.emptyList(), it2list(log));
 
         log.add(1);
-        assertEquals(Arrays.asList(1), it2list(log));
+        assertEquals(Collections.singletonList(1), it2list(log));
 
         log.add(2);
         assertEquals(Arrays.asList(1, 2), it2list(log));

@@ -59,7 +59,7 @@
   </pluginRepositories>
 
   <properties>
-    <jenkins.version>1.580</jenkins.version>
+    <jenkins.version>2.8</jenkins.version><!-- Node listener -->
     <jenkins-test-harness.version>2.19</jenkins-test-harness.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

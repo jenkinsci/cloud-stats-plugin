@@ -56,8 +56,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     public CyclicThreadSafeCollection(int capacity) {
         if (capacity < 0) throw new IllegalArgumentException("Capacity must be non-negative");
 
-        //noinspection unchecked
-        this.data = (E[]) new Object[capacity];
+        this.data = CyclicThreadSafeCollection.newArray(capacity);
     }
 
     @Override
@@ -138,8 +137,9 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
 
     @Override
     public @Nonnull E[] toArray() {
-        //noinspection unchecked
-        return toArray((E[]) new Object[0]);
+        synchronized (data) { // size() and toArray() needs to be consistent
+            return toArray(CyclicThreadSafeCollection.<E>newArray(size()));
+        }
     }
 
     @SuppressWarnings("SuspiciousSystemArraycopy")
@@ -148,8 +148,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
         synchronized (data) {
             int size = size();
             if (ret.length < size) {
-                //noinspection unchecked
-                ret = (T[]) new Object[size];
+                ret = CyclicThreadSafeCollection.newArray(size);
             } else if (ret.length > size) {
                 // javadoc: If this collection fits in the specified array with room to spare
                 // (i.e., the array has more elements than this collection), the element
@@ -165,6 +164,11 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
             }
             return ret;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <X> X[] newArray(int capacity) {
+        return (X[]) new Object[capacity];
     }
 
     @Override
