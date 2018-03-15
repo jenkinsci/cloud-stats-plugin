@@ -514,8 +514,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    // Does not work before JENKINS-33780, Optional until we rely on core 2.8 that have the fix
-    @Restricted(NoExternalUse.class) @Extension(optional = true)
+    @Restricted(NoExternalUse.class) @Extension
     public static class SlaveCompletionDetector extends NodeListener {
 
         private final CloudStatistics stats = CloudStatistics.get();
