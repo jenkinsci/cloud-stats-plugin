@@ -35,15 +35,12 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.*;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
 import static org.junit.Assert.*;
 
-/**
- * @author ogondza.
- */
 public class ProvisioningActivityTest {
 
     private static final ProvisioningActivity.Id DUMMY_ID = new ProvisioningActivity.Id("Fake cloud");
 
     @Test
-    public void id() throws Exception {
+    public void id() {
         ProvisioningActivity.Id id = new ProvisioningActivity.Id("c", "t");
         assertEquals(id, id);
         assertEquals(id, id.named("n"));

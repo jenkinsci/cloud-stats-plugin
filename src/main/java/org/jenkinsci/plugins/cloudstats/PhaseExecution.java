@@ -43,11 +43,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * be completed before next one starts.
  *
  * There are several reasons for that: provisioning listener is called when the results are picked up, the slave
- * might have started launching agent in the meantime. There are plugin that in fact enforce the launch to complete,
+ * might have started launching agent in the meantime. There are plugins that in fact enforce the launch to complete,
  * before completing the {@link hudson.slaves.NodeProvisioner.PlannedNode#future}. To avoid any problems this can cause,
  * the execution of phases is expected to occur in order, the execution will accept attachments regardless if the
  * next phase started or not. For the time tracking purposes, the phase is considered completed as soon as the next
- * phase completes. IOW, despite the fact the slave already started launching, plugin can still append provisioning log.
+ * phase begins. IOW, despite the fact the slave already started launching, plugin can still append provisioning log.
  */
 public final class PhaseExecution implements ModelObject {
     private final @Nonnull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
@@ -67,7 +67,7 @@ public final class PhaseExecution implements ModelObject {
         return Collections.unmodifiableList(attachments);
     }
 
-    public @CheckForNull <T extends PhaseExecutionAttachment> List<T> getAttachments(@Nonnull Class<T> type) {
+    public @Nonnull <T extends PhaseExecutionAttachment> List<T> getAttachments(@Nonnull Class<T> type) {
         List<T> out = new ArrayList<>();
         for (PhaseExecutionAttachment attachment : getAttachments()) {
             if (type.isInstance(attachment)) {
@@ -91,7 +91,7 @@ public final class PhaseExecution implements ModelObject {
         return new Date(started);
     }
 
-    public @Nonnull long getStartedTimestamp() {
+    public long getStartedTimestamp() {
         return started;
     }
 
