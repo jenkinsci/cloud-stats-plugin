@@ -75,13 +75,13 @@ l.layout(permission: app.ADMINISTER) {
                             td()
                             td(template)
                             td {
-                                def score = ch.overall
+                                def score = th.overall
                                 l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
                                 st.nbsp()
                                 text(score)
                             }
                             td {
-                                def score = ch.current
+                                def score = th.current
                                 l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
                                 st.nbsp()
                                 text(score)
