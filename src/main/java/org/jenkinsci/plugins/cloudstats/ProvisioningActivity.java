@@ -45,7 +45,6 @@ import java.util.Objects;
  *
  * @author ogondza.
  */
-@Restricted(NoExternalUse.class) // Until we gain more confidence in this API
 public final class ProvisioningActivity implements ModelObject, Comparable<ProvisioningActivity> {
 
     /**
