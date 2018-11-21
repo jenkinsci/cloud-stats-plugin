@@ -112,7 +112,7 @@ public final class PhaseExecution implements ModelObject {
         attachments.add(phaseExecutionAttachment);
     }
 
-    @Restricted(DoNotUse.class)
+    @Restricted(NoExternalUse.class)
     public @CheckForNull String getUrlName(@Nonnull PhaseExecutionAttachment attachment) {
         String urlName = attachment.getUrlName();
         if (urlName == null) return null;

@@ -378,7 +378,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
     }
 
-    @Override @Restricted(DoNotUse.class) // Stapler only
+    @Override
     public @Nonnull String getDisplayName() {
         return "Activity " + getName();
     }

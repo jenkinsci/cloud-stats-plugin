@@ -24,7 +24,9 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import hudson.model.HealthReport;
+import jenkins.util.NonLocalizable;
 
+import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -111,7 +113,7 @@ public final class Health {
 
         private final float percent;
 
-        public Report(@Nonnull float percent) {
+        public Report(@Nonnegative float percent) {
             this.percent = percent;
         }
 
@@ -145,7 +147,7 @@ public final class Health {
         }
 
         public HealthReport getWeather() {
-            return new HealthReport(round(percent), "Cloud Statistics");
+            return new HealthReport(round(percent), new NonLocalizable("Cloud Statistics"));
         }
     }
 }
