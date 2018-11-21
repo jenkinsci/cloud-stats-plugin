@@ -20,7 +20,7 @@ HealthReport hr = report.weather
 h2 {
     l.icon("class": "${hr.iconClassName} icon-md", alt: hr.score)
     st.nbsp()
-    text("${action.displayName} (${report})")
+    text("${action.displayName} (Health ${report})")
 }
 
 int provisioning = launching = operating = 0
@@ -53,6 +53,6 @@ table {
 }
 
 if (!noteworthy.empty) {
-    h3("Recent Problems")
+    h2("Recent Problems")
     cs.attempts(activities: noteworthy, stats: action.cloudStatistics)
 }

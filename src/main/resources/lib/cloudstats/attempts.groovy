@@ -59,13 +59,22 @@ table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
 
   DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
+  String[] computerNames = j.getComputers().collect { it.name }
+
   acts.reverseEach { ProvisioningActivity activity ->
     def activityStatus = activity.status
     List<PhaseExecution> executions = new ArrayList<>(activity.phaseExecutions.values())
     tr("class": "status-${activityStatus}") {
       td(activity.id.cloudName)
       td(activity.id.templateName)
-      td(activity.name)
+      td{
+        def n = activity.name
+        if (computerNames.contains(n)) {
+          a(href: j.getRootUrl() + "computer/" + n + "/") { text(n) }
+        } else {
+          text(n)
+        }
+      }
       td(data: executions[0].startedTimestamp) {
         text(df.format(executions[0].started))
       }
