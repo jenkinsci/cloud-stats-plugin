@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -71,5 +72,40 @@ public class ActivityIndexTest {
         assertThat(index.forCloud("X").size(), equalTo(0));
         assertThat(index.forTemplate("X", "a").size(), equalTo(0));
         assertThat(index.forTemplate("A", "x").size(), equalTo(0));
+    }
+
+    @Test
+    public void activitiesNotCompletedOrOperatingAreIgnoredForHealth() {
+        ActivityIndex index = new ActivityIndex(Arrays.asList(
+                enter(new ProvisioningActivity(new ProvisioningActivity.Id("P", "p")), ProvisioningActivity.Phase.PROVISIONING),
+                enter(new ProvisioningActivity(new ProvisioningActivity.Id("L", "l")), ProvisioningActivity.Phase.LAUNCHING),
+                enter(new ProvisioningActivity(new ProvisioningActivity.Id("O", "o")), ProvisioningActivity.Phase.OPERATING),
+                enter(new ProvisioningActivity(new ProvisioningActivity.Id("C", "c")), ProvisioningActivity.Phase.COMPLETED)
+        ));
+
+        Map<String, Health> hc = index.healthByCloud();
+        assertThat(hc.get("P").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(index.cloudHealth("P").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(hc.get("L").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(index.cloudHealth("L").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(hc.get("O").getOverall().getPercentage(), equalTo(100F));
+        assertThat(index.cloudHealth("O").getOverall().getPercentage(), equalTo(100F));
+        assertThat(hc.get("C").getOverall().getPercentage(), equalTo(100F));
+        assertThat(index.cloudHealth("C").getOverall().getPercentage(), equalTo(100F));
+
+        Map<String, Map<String, Health>> ht = index.healthByTemplate();
+        assertThat(ht.get("P").get("p").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(index.templateHealth("P", "p").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(ht.get("L").get("l").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(index.templateHealth("L", "l").getOverall().getPercentage(), equalTo(Float.NaN));
+        assertThat(ht.get("O").get("o").getOverall().getPercentage(), equalTo(100F));
+        assertThat(index.templateHealth("O", "o").getOverall().getPercentage(), equalTo(100F));
+        assertThat(ht.get("C").get("c").getOverall().getPercentage(), equalTo(100F));
+        assertThat(index.templateHealth("C", "c").getOverall().getPercentage(), equalTo(100F));
+    }
+
+    private ProvisioningActivity enter(ProvisioningActivity provisioningActivity, ProvisioningActivity.Phase p) {
+        provisioningActivity.enterIfNotAlready(p);
+        return provisioningActivity;
     }
 }
