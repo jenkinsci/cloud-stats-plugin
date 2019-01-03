@@ -32,6 +32,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERATING;
+
 /**
  * Indexed view of statistics snapshot.
  *
@@ -42,16 +45,13 @@ import java.util.Map;
  */
 public final class ActivityIndex {
     public static final List<ProvisioningActivity> EMPTY = Collections.emptyList();
-    private final @Nonnull List<ProvisioningActivity> activities;
     private final @Nonnull Map<String, Collection<ProvisioningActivity>> byCloud;
     private final @Nonnull Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate;
 
     /*package*/ ActivityIndex(@Nonnull List<ProvisioningActivity> activities) {
-        this.activities = new ArrayList<>(activities);
-
         Map<String, Collection<ProvisioningActivity>> byCloud = new HashMap<>();
         Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate = new HashMap<>();
-        for (ProvisioningActivity a: this.activities) {
+        for (ProvisioningActivity a: activities) {
             ProvisioningActivity.Id id = a.getId();
             String cloudName = id.getCloudName();
             String templateName = id.getTemplateName();
@@ -122,7 +122,7 @@ public final class ActivityIndex {
     public @Nonnull Map<String, Health> healthByCloud() {
         HashMap<String, Health> ret = new HashMap<>(byCloud.size());
         for (Map.Entry<String, Collection<ProvisioningActivity>> entry : byCloud.entrySet()) {
-            ret.put(entry.getKey(), new Health(entry.getValue()));
+            ret.put(entry.getKey(), new Health(filterForHealth(entry.getValue())));
         }
 
         return ret;
@@ -133,7 +133,7 @@ public final class ActivityIndex {
         for (Map.Entry<String, Map<String, Collection<ProvisioningActivity>>> entry : byTemplate.entrySet()) {
             HashMap<String, Health> tmpltret = new HashMap<>(entry.getValue().size());
             for (Map.Entry<String, Collection<ProvisioningActivity>> template : entry.getValue().entrySet()) {
-                tmpltret.put(template.getKey(), new Health(template.getValue()));
+                tmpltret.put(template.getKey(), new Health(filterForHealth(template.getValue())));
             }
             ret.put(entry.getKey(), tmpltret);
         }
@@ -142,10 +142,20 @@ public final class ActivityIndex {
     }
 
     public @Nonnull Health cloudHealth(@Nonnull String cloud) {
-        return new Health(forCloud(cloud));
+        return new Health(filterForHealth(forCloud(cloud)));
     }
 
     public @Nonnull Health templateHealth(@Nonnull String cloud, @Nullable String template) {
-        return new Health(forTemplate(cloud, template));
+        return new Health(filterForHealth(forTemplate(cloud, template)));
+    }
+
+    private Collection<ProvisioningActivity> filterForHealth(Collection<ProvisioningActivity> as) {
+        List<ProvisioningActivity> samples = new ArrayList<>(as.size());
+        for (ProvisioningActivity sample : as) {
+            ProvisioningActivity.Phase currentPhase = sample.getCurrentPhase();
+            if (currentPhase != COMPLETED && currentPhase != OPERATING) continue;
+            samples.add(sample);
+        }
+        return samples;
     }
 }

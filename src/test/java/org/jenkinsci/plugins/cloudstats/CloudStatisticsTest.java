@@ -84,7 +84,7 @@ import static org.junit.Assert.assertNull;
 /**
  * @author ogondza.
  */
-public class    CloudStatisticsTest {
+public class CloudStatisticsTest {
 
     public @Rule JenkinsRule j = new JenkinsRule();
     private NodeProvisioner.NodeProvisionerInvoker provisionerInvoker;
@@ -268,8 +268,8 @@ public class    CloudStatisticsTest {
         assertEquals(WARN, warnedLaunch.getStatus());
         assertEquals(WARNING_MESSAGE, warnedLaunch.getAttachments().get(0).getTitle());
 
-        assertEquals(CloudStatistics.get().getIndex().cloudHealth("MyCloud").getOverall().getPercentage(), 50D, 0);
-        assertEquals(CloudStatistics.get().getIndex().cloudHealth("PickyCloud").getOverall().getPercentage(), 100D, 0);
+        assertEquals(50D, CloudStatistics.get().getIndex().cloudHealth("MyCloud").getOverall().getPercentage(), 0);
+        assertEquals(100D, CloudStatistics.get().getIndex().cloudHealth("PickyCloud").getOverall().getPercentage(), 0);
 
         //j.interactiveBreak();
     }
