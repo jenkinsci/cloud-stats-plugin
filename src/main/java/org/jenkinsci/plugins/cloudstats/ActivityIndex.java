@@ -48,7 +48,7 @@ public final class ActivityIndex {
     private final @Nonnull Map<String, Collection<ProvisioningActivity>> byCloud;
     private final @Nonnull Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate;
 
-    /*package*/ ActivityIndex(@Nonnull List<ProvisioningActivity> activities) {
+    public ActivityIndex(@Nonnull List<ProvisioningActivity> activities) {
         Map<String, Collection<ProvisioningActivity>> byCloud = new HashMap<>();
         Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate = new HashMap<>();
         for (ProvisioningActivity a: activities) {
