@@ -126,12 +126,24 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
     }
 
-    // This does not provide strong guarantee all of them was completed as the bookkeeping is done in listener. Manual
-    // phase entering will be detected with delay.
-    public Collection<ProvisioningActivity> getNotCompletedActivities() {
+    /**
+     * Get activities that was not completed yet.
+     */
+    public @Nonnull Collection<ProvisioningActivity> getNotCompletedActivities() {
+        ArrayList<ProvisioningActivity> activeCopy;
         synchronized (active) {
-            return new ArrayList<>(active);
+            activeCopy = new ArrayList<>(this.active);
         }
+
+        // Perform explicit removal of completed activities as `active` is not guaranteed to contain not completed activities only.
+        ArrayList<ProvisioningActivity> ret = new ArrayList<>(activeCopy.size());
+        for (ProvisioningActivity activity : activeCopy) {
+            if (activity.getCurrentPhase() != ProvisioningActivity.Phase.COMPLETED) {
+                ret.add(activity);
+            }
+        }
+
+        return ret;
     }
 
     @Override
@@ -262,7 +274,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 log.clear();
                 for (ProvisioningActivity activity: toSort) {
                     assert activity != null;
-                    if (activity.getPhaseExecution(ProvisioningActivity.Phase.COMPLETED) != null) {
+                    if (activity.getPhaseExecution(ProvisioningActivity.Phase.COMPLETED) == null) {
                         active.add(activity);
                     } else {
                         log.add(activity);
@@ -504,7 +516,6 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 completed.add(activity);
             }
             if (!completed.isEmpty()) {
-                // Periodically ensure the completed activities will be removed from active list, whether they ware completed or not.
                 synchronized (stats.active) {
                     stats.log.addAll(completed);
                     stats.active.removeAll(completed);
