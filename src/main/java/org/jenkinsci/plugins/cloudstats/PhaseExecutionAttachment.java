@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
 
@@ -32,7 +33,9 @@ import javax.annotation.Nonnull;
 import hudson.model.Action;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
 
+import java.io.FileNotFoundException;
 import java.io.Serializable;
+import java.nio.file.NoSuchFileException;
 
 /**
  * Additional information attached to the {@link PhaseExecution}.
@@ -114,12 +117,21 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             this.text = Functions.printThrowable(throwable);
         }
 
-        private static String extractTitle(@Nonnull Throwable throwable) {
+        /**
+         * Extract meaningful message from an exception
+         */
+        @VisibleForTesting /*package*/ static String extractTitle(@Nonnull Throwable throwable) {
             String message = throwable.getMessage();
-            if (message != null) return message;
 
             // The message might be empty (NPE for example) so get the type at least
-            return throwable.getClass().getName();
+            if (message == null) return throwable.getClass().getSimpleName();
+
+            // "NoSuchFileException: /foo/bar"
+            if (throwable instanceof NoSuchFileException || throwable instanceof FileNotFoundException) {
+                return throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
+            }
+
+            return message;
         }
 
         public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
