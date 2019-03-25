@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.model.ModelObject;
 import org.kohsuke.accmod.Restricted;
@@ -323,17 +324,34 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * @throws IllegalArgumentException In case phases are entered repeatedly.
      */
+    @SuppressFBWarnings(value="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     public void enter(@Nonnull Phase phase) {
         synchronized (progress) {
             if (progress.get(phase) != null) throw new IllegalStateException(
                     "The phase " + phase + " has already started"
             );
 
-            if (getCurrentPhase().compareTo(phase) >= 0) throw new IllegalStateException(
+            final Phase currentPhase = getCurrentPhase();
+            if (currentPhase.compareTo(phase) >= 0) throw new IllegalStateException(
                     "The phase " + getCurrentPhase() + " has already started"
             );
 
             progress.put(phase, new PhaseExecution(phase));
+
+            if (phase.compareTo(Phase.COMPLETED) == 0 && !currentPhase.equals(Phase.OPERATING)) {
+                PhaseExecution pe = progress.get(Phase.PROVISIONING);
+                if (pe == null || (pe != null && pe.getStatus().equals(Status.OK))) {
+                    pe = progress.get(Phase.LAUNCHING);
+                    if (pe == null || (pe != null && pe.getStatus().equals(Status.OK))) {
+                        assert progress.get(Phase.COMPLETED) != null;
+                        PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(
+                                Status.WARN,
+                                "Provisioning activity has been completed in an un-common way, this might be a sign of an issue"
+                        );
+                        progress.get(Phase.COMPLETED).attach(attachment);
+                    }
+                }
+            }
         }
     }
 
