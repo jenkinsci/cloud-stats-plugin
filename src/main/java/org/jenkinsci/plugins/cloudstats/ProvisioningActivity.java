@@ -324,7 +324,6 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * @throws IllegalArgumentException In case phases are entered repeatedly.
      */
-    @SuppressFBWarnings(value="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     public void enter(@Nonnull Phase phase) {
         synchronized (progress) {
             if (progress.get(phase) != null) throw new IllegalStateException(
@@ -338,11 +337,11 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
             progress.put(phase, new PhaseExecution(phase));
 
-            if (phase.compareTo(Phase.COMPLETED) == 0 && !currentPhase.equals(Phase.OPERATING)) {
+            if (phase == Phase.COMPLETED && currentPhase != Phase.OPERATING) {
                 PhaseExecution pe = progress.get(Phase.PROVISIONING);
-                if (pe == null || (pe != null && pe.getStatus().equals(Status.OK))) {
+                if (pe == null || pe.getStatus() == Status.OK) {
                     pe = progress.get(Phase.LAUNCHING);
-                    if (pe == null || (pe != null && pe.getStatus().equals(Status.OK))) {
+                    if (pe == null || pe.getStatus() == Status.OK) {
                         assert progress.get(Phase.COMPLETED) != null;
                         PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(
                                 Status.WARN,

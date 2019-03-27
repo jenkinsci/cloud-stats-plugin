@@ -213,6 +213,11 @@ public class ProvisioningActivityTest {
     @Test
     public void enteringCompletedPhaseWithoutOperationShouldBeWarningState() throws Exception {
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
+        final PhaseExecutionAttachment failedAttachment = new PhaseExecutionAttachment(
+                ProvisioningActivity.Status.FAIL,
+                "Failed intentionally"
+        );
+
         pa.enter(COMPLETED);
         assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
@@ -220,11 +225,7 @@ public class ProvisioningActivityTest {
                 equalTo("Provisioning activity has been completed in an un-common way, this might be a sign of an issue"));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
-        final PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(
-                ProvisioningActivity.Status.FAIL,
-                "Fail"
-        );
-        pa.getPhaseExecution(PROVISIONING).attach(attachment);
+        pa.getPhaseExecution(PROVISIONING).attach(failedAttachment);
         pa.enter(COMPLETED);
         assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
@@ -239,7 +240,7 @@ public class ProvisioningActivityTest {
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld1"));
         pa.enter(LAUNCHING);
-        pa.getPhaseExecution(LAUNCHING).attach(attachment);
+        pa.getPhaseExecution(LAUNCHING).attach(failedAttachment);
         pa.enter(COMPLETED);
         assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
