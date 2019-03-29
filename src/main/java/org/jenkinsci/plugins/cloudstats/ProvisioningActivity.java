@@ -23,11 +23,9 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.model.ModelObject;
 import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import javax.annotation.CheckForNull;
@@ -47,6 +45,8 @@ import java.util.Objects;
  * @author ogondza.
  */
 public final class ProvisioningActivity implements ModelObject, Comparable<ProvisioningActivity> {
+
+    public static final String PREMATURE_COMPLETION_DETECTED = "Provisioning activity was completed before reaching OPERATING phase without reporting a problem";
 
     /**
      * Progress of an activity.
@@ -337,19 +337,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
             progress.put(phase, new PhaseExecution(phase));
 
-            if (phase == Phase.COMPLETED && currentPhase != Phase.OPERATING) {
-                PhaseExecution pe = progress.get(Phase.PROVISIONING);
-                if (pe == null || pe.getStatus() == Status.OK) {
-                    pe = progress.get(Phase.LAUNCHING);
-                    if (pe == null || pe.getStatus() == Status.OK) {
-                        assert progress.get(Phase.COMPLETED) != null;
-                        PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(
-                                Status.WARN,
-                                "Provisioning activity has been completed in an un-common way, this might be a sign of an issue"
-                        );
-                        progress.get(Phase.COMPLETED).attach(attachment);
-                    }
-                }
+            if (phase == Phase.COMPLETED && currentPhase != Phase.OPERATING && getStatus() == Status.OK) {
+                PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(Status.WARN, PREMATURE_COMPLETION_DETECTED);
+                progress.get(Phase.COMPLETED).attach(attachment);
             }
         }
     }

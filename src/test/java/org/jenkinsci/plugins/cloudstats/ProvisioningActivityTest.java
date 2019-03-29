@@ -211,7 +211,7 @@ public class ProvisioningActivityTest {
     }
 
     @Test
-    public void enteringCompletedPhaseWithoutOperationShouldBeWarningState() throws Exception {
+    public void enteringCompletedPhaseWithoutOperationShouldBeWarningState() {
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         final PhaseExecutionAttachment failedAttachment = new PhaseExecutionAttachment(
                 ProvisioningActivity.Status.FAIL,
@@ -222,7 +222,7 @@ public class ProvisioningActivityTest {
         assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
-                equalTo("Provisioning activity has been completed in an un-common way, this might be a sign of an issue"));
+                equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         pa.getPhaseExecution(PROVISIONING).attach(failedAttachment);
@@ -236,7 +236,7 @@ public class ProvisioningActivityTest {
         assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
-                equalTo("Provisioning activity has been completed in an un-common way, this might be a sign of an issue"));
+                equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld1"));
         pa.enter(LAUNCHING);
