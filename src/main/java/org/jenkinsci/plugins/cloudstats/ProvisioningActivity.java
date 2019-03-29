@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.model.ModelObject;
 import org.kohsuke.accmod.Restricted;
@@ -329,11 +330,27 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
                     "The phase " + phase + " has already started"
             );
 
-            if (getCurrentPhase().compareTo(phase) >= 0) throw new IllegalStateException(
+            final Phase currentPhase = getCurrentPhase();
+            if (currentPhase.compareTo(phase) >= 0) throw new IllegalStateException(
                     "The phase " + getCurrentPhase() + " has already started"
             );
 
             progress.put(phase, new PhaseExecution(phase));
+
+            if (phase == Phase.COMPLETED && currentPhase != Phase.OPERATING) {
+                PhaseExecution pe = progress.get(Phase.PROVISIONING);
+                if (pe == null || pe.getStatus() == Status.OK) {
+                    pe = progress.get(Phase.LAUNCHING);
+                    if (pe == null || pe.getStatus() == Status.OK) {
+                        assert progress.get(Phase.COMPLETED) != null;
+                        PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(
+                                Status.WARN,
+                                "Provisioning activity has been completed in an un-common way, this might be a sign of an issue"
+                        );
+                        progress.get(Phase.COMPLETED).attach(attachment);
+                    }
+                }
+            }
         }
     }
 

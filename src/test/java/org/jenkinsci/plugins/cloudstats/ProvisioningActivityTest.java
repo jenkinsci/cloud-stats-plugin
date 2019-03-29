@@ -31,6 +31,8 @@ import org.jvnet.hudson.test.Issue;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.*;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
 import static org.junit.Assert.*;
@@ -206,6 +208,49 @@ public class ProvisioningActivityTest {
             assertEquals("The phase COMPLETED has already started", ex.getMessage());
         }
         assertFalse("Entering phase entered already", pa.enterIfNotAlready(OPERATING));
+    }
+
+    @Test
+    public void enteringCompletedPhaseWithoutOperationShouldBeWarningState() throws Exception {
+        ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
+        final PhaseExecutionAttachment failedAttachment = new PhaseExecutionAttachment(
+                ProvisioningActivity.Status.FAIL,
+                "Failed intentionally"
+        );
+
+        pa.enter(COMPLETED);
+        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
+        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
+        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
+                equalTo("Provisioning activity has been completed in an un-common way, this might be a sign of an issue"));
+
+        pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
+        pa.getPhaseExecution(PROVISIONING).attach(failedAttachment);
+        pa.enter(COMPLETED);
+        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
+
+        pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld1"));
+        pa.enter(LAUNCHING);
+        pa.enter(COMPLETED);
+        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
+        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
+        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
+                equalTo("Provisioning activity has been completed in an un-common way, this might be a sign of an issue"));
+
+        pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld1"));
+        pa.enter(LAUNCHING);
+        pa.getPhaseExecution(LAUNCHING).attach(failedAttachment);
+        pa.enter(COMPLETED);
+        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
+
+        pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld2"));
+        pa.enter(LAUNCHING);
+        pa.enter(OPERATING);
+        pa.enter(COMPLETED);
+        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
     }
 
     private PhaseExecution enter(ProvisioningActivity activity, ProvisioningActivity.Phase phase, long started) {
