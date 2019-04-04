@@ -117,8 +117,9 @@ public class CloudStatisticsTest {
         triggerProvisioning();
 
         ProvisioningActivity activity;
+        CloudStatistics cs = CloudStatistics.get();
         for (;;) {
-            List<ProvisioningActivity> activities = CloudStatistics.get().getActivities();
+            List<ProvisioningActivity> activities = cs.getActivities();
             if (activities.size() > 0) {
                 activity = activities.get(0);
 
@@ -135,6 +136,8 @@ public class CloudStatisticsTest {
         assertEquals(FAIL, activity.getStatus());
 
         assertNotNull(activity.getPhaseExecution(COMPLETED));
+
+        assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     @Test
@@ -194,6 +197,8 @@ public class CloudStatisticsTest {
         assertEquals(OK, activity.getStatus());
         assertNotNull(activity.getCurrentPhase().toString(), activity.getPhaseExecution(COMPLETED));
         assertThat(cs.getNotCompletedActivities(), not(contains(activity)));
+
+        assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     @Test
@@ -317,6 +322,8 @@ public class CloudStatisticsTest {
         CloudStatistics cs = CloudStatistics.get();
         assertEquals(2, cs.getActivities().size());
         assertEquals(1, cs.getNotCompletedActivities().size());
+
+        assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     @Test @Issue("JENKINS-41037")
@@ -340,6 +347,8 @@ public class CloudStatisticsTest {
         assertThat(serialized, containsString("PAOriginal"));
         assertThat(serialized, containsString("PAModifying"));
         assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
+
+        assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     @Test
@@ -391,6 +400,8 @@ public class CloudStatisticsTest {
         wc.getOptions().setPrintContentOnFailingStatusCode(false);
         //noinspection deprecation
         assertEquals(404, wc.getPage(numberedUrl.replaceAll(":1", ":17")).getWebResponse().getStatusCode());
+
+        assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     @Test
@@ -405,12 +416,15 @@ public class CloudStatisticsTest {
         String serialized = cs.getConfigFile().asString();
         assertThat(serialized, not(containsString("active class=\"linked-hash-set\"")));
         assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
+
+        assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     @Test
     @LocalData
     public void migrateToV013() throws Exception {
-        ProvisioningActivity activity = CloudStatistics.get().getActivities().iterator().next();
+        CloudStatistics cs = CloudStatistics.get();
+        ProvisioningActivity activity = cs.getActivities().iterator().next();
         List<PhaseExecutionAttachment.ExceptionAttachment> attachments = activity.getPhaseExecution(PROVISIONING).getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class);
         PhaseExecutionAttachment.ExceptionAttachment partial = attachments.get(0);
         assertThat(partial.getDisplayName(), equalTo("EXCEPTION_MESSAGE"));
@@ -432,8 +446,10 @@ public class CloudStatisticsTest {
         }
         assertThat(subStr, startsWith("at org.jenkinsci.plugins.cloudstats.CloudStatisticsTest.migrateToV013"));
 
-        CloudStatistics.get().persist();
-        assertThat(CloudStatistics.get().getConfigFile().asString(), not(containsString("suppressedExceptions")));
+        cs.persist();
+        assertThat(cs.getConfigFile().asString(), not(containsString("suppressedExceptions")));
+
+        assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     // Test ConcurrentModificationException in CloudStatistics.save()
