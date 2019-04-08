@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
+import com.google.common.annotations.VisibleForTesting;
 import hudson.BulkChange;
 import hudson.Extension;
 import hudson.FilePath;
@@ -146,6 +147,13 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         return ret;
     }
 
+    @VisibleForTesting
+    /*package*/ @Nonnull Collection<ProvisioningActivity> getRetainedActivities() {
+        synchronized (active) {
+            return new ArrayList<>(this.active);
+        }
+    }
+
     @Override
     public String getUrlName() {
         return "cloud-stats";
@@ -241,9 +249,16 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     /**
      * Attach information to activity's phase execution.
      */
+    // Enforce attach goes through this class to complete the activity upon first failure and persist as needed
     public void attach(@Nonnull ProvisioningActivity activity, @Nonnull ProvisioningActivity.Phase phase, @Nonnull PhaseExecutionAttachment attachment) {
         activity.attach(phase, attachment);
-        // Enforce attachment going through this class so we know when to save
+
+        if (attachment.getStatus() == ProvisioningActivity.Status.FAIL) {
+            boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
+            if (entered) {
+                archive(activity);
+            }
+        }
         persist();
     }
 
@@ -267,7 +282,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             file.unmarshal(this);
         }
 
-        // Migrate config from version 0.2 - non-completed activities ware in log collection
+        boolean changed = false;
+
+        // Migrate config from version 0.2 - even non-completed activities ware in log collection
         synchronized (active) {
             if (active.isEmpty()) {
                 List<ProvisioningActivity> toSort = log.toList();
@@ -276,14 +293,29 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                     assert activity != null;
                     if (activity.getPhaseExecution(ProvisioningActivity.Phase.COMPLETED) == null) {
                         active.add(activity);
+                        changed = true;
                     } else {
                         log.add(activity);
                     }
                 }
-                if (!active.isEmpty()) {
-                    persist();
+            }
+        }
+
+        // Migrate config from version 0.22, the guarantee of everything in active is not completed is now strict
+        // Making old data tostrictly follow that. Note this does not alter the structure of the data, but only their semantics
+        synchronized (active) {
+            Collection<ProvisioningActivity> defensiveCopyOfActiveField = getRetainedActivities();
+            for (ProvisioningActivity pa: defensiveCopyOfActiveField) {
+                if (pa.getCurrentPhase() == ProvisioningActivity.Phase.COMPLETED) {
+                    active.remove(pa);
+                    log.add(pa);
+                    changed = true;
                 }
             }
+        }
+
+        if (changed) {
+            persist();
         }
     }
 
@@ -324,6 +356,13 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 jenkins().root,
                 getClass().getCanonicalName() + ".xml"
         ).getAbsolutePath()));
+    }
+
+    private void archive(ProvisioningActivity activity) {
+        synchronized (this.active) {
+            this.log.add(activity);
+            this.active.remove(activity);
+        }
     }
 
     /**
@@ -497,7 +536,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             }
 
             ArrayList<ProvisioningActivity> completed = new ArrayList<>();
-            for (ProvisioningActivity activity: stats.getNotCompletedActivities()) {
+            for (ProvisioningActivity activity: stats.getRetainedActivities()) {
                 Map<ProvisioningActivity.Phase, PhaseExecution> executions = activity.getPhaseExecutions();
 
                 if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) {
@@ -560,13 +599,11 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             // The state might already been entered as deletion was not detected by this plugin reliably/on time so clients had to do that manually.
             boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
             if (entered) {
-                synchronized (stats.active) {
-                    stats.log.add(activity);
-                    stats.active.remove(activity);
-                }
+                stats.archive(activity);
                 stats.persist();
             }
         }
+
     }
 
     private static @CheckForNull ProvisioningActivity.Id getIdFor(NodeProvisioner.PlannedNode plannedNode) {

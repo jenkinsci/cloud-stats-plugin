@@ -42,7 +42,7 @@ public class RestartTest {
     public RestartableJenkinsRule j = new RestartableJenkinsRule();
 
     @Test
-    public void loadEmpty() throws Exception {
+    public void loadEmpty() {
         j.addStep(new Statement() {
             @Override public void evaluate() throws Throwable {
                 CloudStatistics cs = CloudStatistics.get();
@@ -52,7 +52,7 @@ public class RestartTest {
         });
 
         j.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
+            @Override public void evaluate() {
                 CloudStatistics cs = CloudStatistics.get();
                 assertThat(cs.getActivities(), Matchers.<ProvisioningActivity>emptyIterable());
             }
@@ -78,7 +78,7 @@ public class RestartTest {
         });
 
         j.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
+            @Override public void evaluate() {
                 final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
                 final CloudStatistics stats = CloudStatistics.get();
 
@@ -96,17 +96,21 @@ public class RestartTest {
                 assertNotNull(s.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
                 assertEquals(ProvisioningActivity.Status.OK, s.getStatus());
                 listener.onFailure(started, new Exception());
+
+                assertEquals(stats.getRetainedActivities(), stats.getNotCompletedActivities());
             }
         });
 
         j.addStep(new Statement() {
-            @Override public void evaluate() throws Throwable {
+            @Override public void evaluate() {
                 final CloudStatistics stats = CloudStatistics.get();
 
                 assertThat(stats.getActivities(), Matchers.<ProvisioningActivity>iterableWithSize(3));
 
                 ProvisioningActivity s = stats.getActivityFor(started);
                 assertEquals(ProvisioningActivity.Status.FAIL, s.getStatus());
+
+                assertEquals(stats.getRetainedActivities(), stats.getNotCompletedActivities());
             }
         });
     }

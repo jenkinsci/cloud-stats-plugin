@@ -367,16 +367,14 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         return true;
     }
 
+    /**
+     * Only to be invoked from {@link CloudStatistics#attach(ProvisioningActivity, ProvisioningActivity.Phase, PhaseExecutionAttachment)}.
+     */
     @Restricted(NoExternalUse.class)
     /*package*/ void attach(Phase phase, PhaseExecutionAttachment attachment) {
         PhaseExecution execution = getPhaseExecution(phase);
         if (execution == null) throw new IllegalArgumentException("Phase " + phase + " not entered yet");
         execution.attach(attachment);
-
-        // Enforce attach goes through this class to complete the activity upon first failure
-        if (attachment.getStatus() == Status.FAIL) {
-            enterIfNotAlready(Phase.COMPLETED);
-        }
     }
 
     public @CheckForNull String getName() {
