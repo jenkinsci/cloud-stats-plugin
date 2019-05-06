@@ -592,11 +592,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity == null) return;
 
-            if (activity.getPhaseExecution(ProvisioningActivity.Phase.COMPLETED) != null) {
-                LOGGER.log(Level.WARNING, "Activity for deleted node " + node.getNodeName() + " already completed", new Exception());
-            }
-
-            // The state might already been entered as deletion was not detected by this plugin reliably/on time so clients had to do that manually.
+            // The phase might already been entered in case cloud plugins needed to to add an attachment to the phase.
+            // Also deletion was not detected by this plugin on time in the past so some plugins opted in to get more
+            // accurate times.
             boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
             if (entered) {
                 stats.archive(activity);
