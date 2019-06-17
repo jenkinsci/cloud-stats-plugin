@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
+import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
@@ -80,6 +81,7 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.WARN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 /**
  * @author ogondza.
@@ -277,6 +279,15 @@ public class CloudStatisticsTest {
         assertEquals(100D, CloudStatistics.get().getIndex().cloudHealth("PickyCloud").getOverall().getPercentage(), 0);
 
         //j.interactiveBreak();
+
+        assertNotNull(wc.goTo("").getAnchorByText("MyCloud"));
+        j.jenkins.clouds.replace(new TestCloud("new")); // Remove used clouds
+        try {
+            wc.goTo("").getAnchorByText("MyCloud");
+            fail("Dead link found");
+        } catch (ElementNotFoundException e) {
+            // Expected
+        }
     }
 
     @Test

@@ -66,8 +66,8 @@
   </pluginRepositories>
 
   <properties>
-    <jenkins.version>2.8</jenkins.version><!-- Node listener -->
-    <java.level>7</java.level>
+    <jenkins.version>2.73.3</jenkins.version>
+    <java.level>8</java.level>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.useFile>false</surefire.useFile>

@@ -51,7 +51,7 @@ if (widget.displayed) {
                 td(colspan: 2) {
                     l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
                     st.nbsp()
-                    if (cloudViews) {
+                    if (cloudViews && j.getCloud(cloudName) != null) {
                         a(href: j.rootUrl + "cloud/" + cloudName) {
                             text(cloudName)
                         }
