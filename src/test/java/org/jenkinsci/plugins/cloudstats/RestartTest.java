@@ -29,7 +29,15 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.iterableWithSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -113,5 +121,80 @@ public class RestartTest {
                 assertEquals(stats.getRetainedActivities(), stats.getNotCompletedActivities());
             }
         });
+    }
+
+    @Test
+    public void resizeStatsCountOnRestart() {
+        CloudStatistics.ARCHIVE_RECORDS = 1;
+        j.addStep(new Statement() { // Capacity is set correctly initially
+            @Override public void evaluate() {
+                final CloudStatistics stats = CloudStatistics.get();
+                addCompletedActivity(2);
+                assertStats(stats, 1);
+                CloudStatistics.ARCHIVE_RECORDS = 2;
+                assertStats(stats, 1);
+            }
+        });
+
+        j.addStep(new Statement() { // Capacity is extended
+            @Override public void evaluate() {
+                final CloudStatistics stats = CloudStatistics.get();
+                assertStats(stats, 1);
+                addCompletedActivity(2);
+                assertStats(stats, 2, 3);
+                CloudStatistics.ARCHIVE_RECORDS = 1;
+            }
+        });
+
+        j.addStep(new Statement() { // Capacity is trimmed below current size truncating the log
+            @Override public void evaluate() {
+                final CloudStatistics stats = CloudStatistics.get();
+                assertStats(stats, 3);
+                addCompletedActivity(1);
+                assertStats(stats, 4);
+                CloudStatistics.ARCHIVE_RECORDS = 10;
+            }
+        });
+
+        j.addStep(new Statement() { // Capacity is shrunk but above current log size
+            @Override public void evaluate() {
+                final CloudStatistics stats = CloudStatistics.get();
+                addCompletedActivity(2);
+                assertStats(stats, 4, 5, 6);
+                CloudStatistics.ARCHIVE_RECORDS = 5;
+            }
+        });
+        j.addStep(new Statement() {
+            @Override public void evaluate() {
+                final CloudStatistics stats = CloudStatistics.get();
+                assertStats(stats, 4, 5, 6);
+                addCompletedActivity(3);
+                assertStats(stats, 5, 6, 7, 8, 9);
+            }
+        });
+    }
+
+    private static AtomicInteger sequence = new AtomicInteger(0);
+    private static void addCompletedActivity(int count) {
+        final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
+        for (int i = 0; i < count; i++) {
+            ProvisioningActivity.Id id = new ProvisioningActivity.Id("Cloud", "template", Integer.toString(sequence.getAndIncrement()));
+            listener.onStarted(id);
+            listener.onFailure(id, new Error());
+        }
+    }
+
+    private static void assertStats(CloudStatistics stats, int... expected) {
+        List<Integer> statSequences = stats.getActivities().stream().map(pa -> Integer.parseInt(pa.getName())).collect(Collectors.toList());
+        List<Integer> expectedList = Arrays.stream(expected).boxed().collect(Collectors.toList());
+        assertEquals(expectedList, statSequences);
+
+        // Verify the order remain preserved
+        long last = 0;
+        for (ProvisioningActivity activity : stats.getActivities()) {
+            long sequenceNumber = Long.parseLong(activity.getName());
+            assertThat(sequenceNumber, greaterThan(last));
+            last = sequenceNumber;
+        }
     }
 }

@@ -71,10 +71,12 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
 
+    /*package*/ static final String ARCHIVE_RECORDS_PROPERTY_NAME = "org.jenkinsci.plugins.cloudstats.CloudStatistics.ARCHIVE_RECORDS";
+
     /**
      * The number of completed records to be stored.
      */
-    public static final int ARCHIVE_RECORDS = Integer.getInteger("org.jenkinsci.plugins.cloudstats.CloudStatistics.ARCHIVE_RECORDS", 100);
+    public static /*final*/ int ARCHIVE_RECORDS = Integer.getInteger(ARCHIVE_RECORDS_PROPERTY_NAME, 100);
 
     /**
      * All activities that are not in completed state.
@@ -345,6 +347,18 @@ public class CloudStatistics extends ManagementLink implements Saveable {
                 }
             } catch (IOException | InterruptedException ex) {
                 LOGGER.log(Level.SEVERE, msg + " Unable to capture the old config.", ex);
+            }
+        }
+
+        // Resize the collection
+        if (ARCHIVE_RECORDS != log.capacity()) {
+            CyclicThreadSafeCollection<ProvisioningActivity> existing = log;
+            log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
+            int added = 0;
+            for (ProvisioningActivity pa : existing) {
+                if (added > ARCHIVE_RECORDS) break; // Prevent adding more when shrinking
+                log.add(pa);
+                added++;
             }
         }
 

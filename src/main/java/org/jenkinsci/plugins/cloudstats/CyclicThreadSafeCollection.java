@@ -107,10 +107,17 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
      * Number of contained elements, never more than capacity.
      */
     @Override
-    public int size() {
+    public @Nonnegative int size() {
         synchronized (data) {
             return size;
         }
+    }
+
+    /**
+     * Maximal collection capacity.
+     */
+    public @Nonnegative int capacity() {
+        return data.length;
     }
 
     @Override
