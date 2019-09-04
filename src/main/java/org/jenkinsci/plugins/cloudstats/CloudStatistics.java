@@ -43,6 +43,7 @@ import hudson.slaves.ComputerListener;
 import hudson.slaves.NodeProvisioner;
 import jenkins.model.Jenkins;
 import jenkins.model.NodeListener;
+import jenkins.util.Timer;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -60,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -384,6 +386,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      *
      * All activities that are triggered by Jenkins queue load (those that goes through {@link NodeProvisioner}) are
      * reported by Jenkins core. This api needs to be called by plugin if and only if the slaves are provisioned differently.
+     *
+     * Implementation note: onComplete and onFailure are being called while holding the queue lock from NodeProvisioner,
+     * so the work is extracted to separate thread.
      */
     @Extension
     public static class ProvisioningListener extends CloudProvisioningListener {
@@ -431,7 +436,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         public void onComplete(NodeProvisioner.PlannedNode plannedNode, Node node) {
             ProvisioningActivity.Id id = getIdFor(plannedNode);
             if (id != null) {
-                onComplete(id, node);
+                Timer.get().schedule(() -> { // run in different thread not to block queue lock
+                    onComplete(id, node);
+                }, 0, TimeUnit.SECONDS);
             }
         }
 
@@ -453,7 +460,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         public void onFailure(NodeProvisioner.PlannedNode plannedNode, Throwable t) {
             ProvisioningActivity.Id id = getIdFor(plannedNode);
             if (id != null) {
-                onFailure(id, t);
+                Timer.get().schedule(() -> { // run in different thread not to block queue lock
+                    onFailure(id, t);
+                }, 0, TimeUnit.SECONDS);
             }
         }
 
