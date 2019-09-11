@@ -70,7 +70,7 @@ table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
       td{
         def n = activity.name
         if (computerNames.contains(n)) {
-          a(href: j.getRootUrl() + "computer/" + n + "/") { text(n) }
+          a(href: rootURL + "/computer/" + n + "/") { text(n) }
         } else {
           text(n)
         }
@@ -113,7 +113,7 @@ table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
                     text(attachment.title)
                   } else {
                     // It is OK to shorten the text as we have the whole page for the details
-                    a(href: j.getRootUrl() + url) { text(attachment.displayName) }
+                    a(href: rootURL + url) { text(attachment.displayName) }
                   }
                 }
               }

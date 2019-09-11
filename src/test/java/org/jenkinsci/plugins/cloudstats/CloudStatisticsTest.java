@@ -48,6 +48,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
+import jenkins.model.JenkinsLocationConfiguration;
 import jenkins.model.NodeListener;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,6 +60,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -253,7 +255,7 @@ public class CloudStatisticsTest {
         JenkinsRule.WebClient wc = j.createWebClient();
         j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
 
-        Page page = wc.goTo("cloud-stats").getAnchorByHref(j.jenkins.getRootUrl() + cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
+        Page page = wc.goTo("cloud-stats").getAnchorByHref("/jenkins" + cs.getUrl(failedToProvision, failedProvisioning, exception)).click();
         assertThat(page.getWebResponse().getContentAsString(), containsString(EXCEPTION_MESSAGE));
 
         ProvisioningActivity ok = cs.getActivityFor(okId);
@@ -402,10 +404,10 @@ public class CloudStatisticsTest {
             assertThat(attPage.getWebResponse().getContentAsString(), containsString("java.lang.Error"));
         }
 
-        //noinspection deprecation
-        wc.getPage(numberedUrl);
-        //noinspection deprecation
-        wc.getPage(numberedUrl.replaceAll(":1", ":0"));
+        URL url = j.getURL();
+        numberedUrl = url.getProtocol() + "://" + url.getAuthority() + numberedUrl;
+        wc.getPage(new URL(url, numberedUrl));
+        wc.getPage(new URL(url, numberedUrl.replaceAll(":1", ":0")));
 
         wc.getOptions().setThrowExceptionOnFailingStatusCode(false);
         wc.getOptions().setPrintContentOnFailingStatusCode(false);

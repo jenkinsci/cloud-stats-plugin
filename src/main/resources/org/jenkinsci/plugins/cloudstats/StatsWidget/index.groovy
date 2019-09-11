@@ -24,6 +24,7 @@
 
 package org.jenkinsci.plugins.cloudstats.StatsWidget
 
+import hudson.Util
 import hudson.model.Actionable
 import hudson.slaves.Cloud
 import jenkins.model.Jenkins
@@ -42,7 +43,7 @@ boolean cloudViews = Actionable.class.isAssignableFrom(Cloud.class)
 if (widget.displayed) {
    style("#cloudstats { margin-bottom: 20px; }")
    CloudStatistics stats = CloudStatistics.get()
-    def title = "<a href='${j.rootUrl}/${stats.getUrlName()}'>Cloud Statistics</a>"
+    def title = "<a href='${rootURL}/${stats.getUrlName()}'>Cloud Statistics</a>"
     l.pane(id: "cloudstats", width: 2, title: title) {
         def index = stats.index
         index.healthByTemplate().each { String cloudName, Map<String, Health> templates ->
@@ -52,7 +53,7 @@ if (widget.displayed) {
                     l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
                     st.nbsp()
                     if (cloudViews && j.getCloud(cloudName) != null) {
-                        a(href: j.rootUrl + "cloud/" + cloudName) {
+                        a(href: rootURL + "/cloud/" + cloudName) {
                             text(cloudName)
                         }
                     } else {
@@ -62,7 +63,7 @@ if (widget.displayed) {
                 td(score)
             }
             // If the only template is the fake one there is no reason to report it as it represents the cloud
-            if (!(templates.size() == 1 && templates.get(null) != null)) {
+            if (templates.keySet() != [null] as Set) {
                 templates.each { String templateName, Health health ->
                     tr {
                         td()
