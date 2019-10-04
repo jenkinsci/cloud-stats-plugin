@@ -306,7 +306,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
 
         // Migrate config from version 0.22, the guarantee of everything in active is not completed is now strict
-        // Making old data tostrictly follow that. Note this does not alter the structure of the data, but only their semantics
+        // Making old data to strictly follow that. Note this does not alter the structure of the data, but only their semantics
         synchronized (active) {
             Collection<ProvisioningActivity> defensiveCopyOfActiveField = getRetainedActivities();
             for (ProvisioningActivity pa: defensiveCopyOfActiveField) {
