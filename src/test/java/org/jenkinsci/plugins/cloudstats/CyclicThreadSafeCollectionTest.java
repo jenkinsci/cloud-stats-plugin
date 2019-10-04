@@ -46,7 +46,7 @@ public class CyclicThreadSafeCollectionTest {
         try {
             new CyclicThreadSafeCollection<Float>(-1);
             fail();
-        } catch (IllegalArgumentException ex) {} // expected
+        } catch (IllegalArgumentException ignored) {} // expected
     }
 
     @Test
@@ -251,7 +251,7 @@ public class CyclicThreadSafeCollectionTest {
             }
 
             Thread.sleep(10000);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
             // terminate after interrupting all children in finally
         } finally {
             for (Thread thread: threads) {
