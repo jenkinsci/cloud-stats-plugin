@@ -137,7 +137,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     public @Nonnull Collection<ProvisioningActivity> getNotCompletedActivities() {
         ArrayList<ProvisioningActivity> activeCopy;
         synchronized (active) {
-            activeCopy = new ArrayList<>(this.active);
+            activeCopy = new ArrayList<>(active);
         }
 
         // Perform explicit removal of completed activities as `active` is not guaranteed to contain not completed activities only.
@@ -154,7 +154,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     @VisibleForTesting
     /*package*/ @Nonnull Collection<ProvisioningActivity> getRetainedActivities() {
         synchronized (active) {
-            return new ArrayList<>(this.active);
+            return new ArrayList<>(active);
         }
     }
 
@@ -375,9 +375,9 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     private void archive(ProvisioningActivity activity) {
-        synchronized (this.active) {
-            this.log.add(activity);
-            this.active.remove(activity);
+        synchronized (active) {
+            log.add(activity);
+            active.remove(activity);
         }
     }
 
