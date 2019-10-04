@@ -665,5 +665,5 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             loggedUnsupportedTypes.add(type);
         }
     }
-    private static final Set<Class> loggedUnsupportedTypes = Collections.synchronizedSet(new HashSet<Class>());
+    private static final Set<Class> loggedUnsupportedTypes = Collections.synchronizedSet(new HashSet<>());
 }

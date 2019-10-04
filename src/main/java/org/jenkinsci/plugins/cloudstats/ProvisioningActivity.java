@@ -200,7 +200,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     private final Map<Phase, PhaseExecution> progress;
     {
-        progress = Collections.synchronizedMap(new LinkedHashMap<Phase, PhaseExecution>(Phase.values().length));
+        progress = Collections.synchronizedMap(new LinkedHashMap<>(Phase.values().length));
         progress.put(Phase.PROVISIONING, null);
         progress.put(Phase.LAUNCHING, null);
         progress.put(Phase.OPERATING, null);
