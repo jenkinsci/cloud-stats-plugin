@@ -24,7 +24,6 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import hudson.Extension;
-import hudson.slaves.Cloud;
 import hudson.widgets.Widget;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
