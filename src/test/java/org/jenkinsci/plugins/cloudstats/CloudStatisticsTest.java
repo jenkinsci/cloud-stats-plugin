@@ -100,7 +100,7 @@ public class CloudStatisticsTest {
     public void before() throws Exception {
         // Pretend we are out of slaves
         j.jenkins.setNumExecutors(0);
-        j.jenkins.setNodes(Collections.<Node>emptyList());
+        j.jenkins.setNodes(Collections.emptyList());
 
         // Do not provision when not expected
         ExtensionList<NodeProvisioner.NodeProvisionerInvoker> extensionList = j.jenkins.getExtensionList(NodeProvisioner.NodeProvisionerInvoker.class);
@@ -579,7 +579,7 @@ public class CloudStatisticsTest {
             private final ProvisioningActivity.Id id;
 
             public TrackedSlave(ProvisioningActivity.Id id, JenkinsRule j, String name) throws Exception {
-                super(name == null ? id.getNodeName() : name, "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+                super(name == null ? id.getNodeName() : name, "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.emptyList());
                 this.id = id;
             }
 

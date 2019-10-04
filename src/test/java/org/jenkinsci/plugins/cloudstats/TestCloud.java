@@ -65,7 +65,7 @@ public final class TestCloud extends Cloud {
         int i = seq.getAndIncrement();
         provision.id = new ProvisioningActivity.Id(name, null, name + "-slave-" + i);
 
-        return Collections.<NodeProvisioner.PlannedNode>singletonList(new TrackedPlannedNode(
+        return Collections.singletonList(new TrackedPlannedNode(
                 provision.id, 1, Computer.threadPoolForRemoting.submit(provision)
         ));
     }
