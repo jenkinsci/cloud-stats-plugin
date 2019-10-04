@@ -242,8 +242,8 @@ public class CloudStatisticsTest {
         ProvisioningActivity failedToProvision = cs.getActivityFor(failId);
         assertEquals(failId, failedToProvision.getId());
         assertEquals(FAIL, failedToProvision.getStatus());
-        assertEquals(null, failedToProvision.getPhaseExecution(LAUNCHING));
-        assertEquals(null, failedToProvision.getPhaseExecution(OPERATING));
+        assertNull(failedToProvision.getPhaseExecution(LAUNCHING));
+        assertNull(failedToProvision.getPhaseExecution(OPERATING));
         assertNotNull(failedToProvision.getPhaseExecution(COMPLETED));
         PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());

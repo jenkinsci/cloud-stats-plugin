@@ -219,7 +219,7 @@ public class ProvisioningActivityTest {
         );
 
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
+        assertEquals(WARN, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
                 equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
@@ -227,13 +227,13 @@ public class ProvisioningActivityTest {
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         pa.getPhaseExecution(PROVISIONING).attach(failedAttachment);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertEquals(OK, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld1"));
         pa.enter(LAUNCHING);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
+        assertEquals(WARN, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
                 equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
@@ -242,14 +242,14 @@ public class ProvisioningActivityTest {
         pa.enter(LAUNCHING);
         pa.getPhaseExecution(LAUNCHING).attach(failedAttachment);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertEquals(OK, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld2"));
         pa.enter(LAUNCHING);
         pa.enter(OPERATING);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertEquals(OK, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
     }
 
