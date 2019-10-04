@@ -37,6 +37,6 @@ public class StatsWidget extends Widget {
 
     public boolean isDisplayed() {
         Jenkins instance = Jenkins.getInstance();
-        return instance != null && !instance.clouds.isEmpty() && instance.hasPermission(Jenkins.ADMINISTER);
+        return !instance.clouds.isEmpty() && instance.hasPermission(Jenkins.ADMINISTER);
     }
 }

@@ -100,7 +100,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      * Get the singleton instance.
      */
     public static @Nonnull CloudStatistics get() {
-        return jenkins().getExtensionList(CloudStatistics.class).get(0);
+        return Jenkins.getInstance().getExtensionList(CloudStatistics.class).get(0);
     }
 
     @Restricted(NoExternalUse.class)
@@ -119,7 +119,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     @Override
     public String getIconFileName() {
         // This _needs_ to be done in getIconFileName only because of JENKINS-33683.
-        Jenkins jenkins = jenkins();
+        Jenkins jenkins = Jenkins.getInstance();
         if (!jenkins.hasPermission(Jenkins.ADMINISTER)) return null;
         if (jenkins.clouds.isEmpty() && isEmpty()) return null;
         return "graph.png";
@@ -369,7 +369,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     /*package for testing*/ XmlFile getConfigFile() {
         return new XmlFile(Jenkins.XSTREAM, new File(new File(
-                jenkins().root,
+                Jenkins.getInstance().root,
                 getClass().getCanonicalName() + ".xml"
         ).getAbsolutePath()));
     }
@@ -482,14 +482,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
 
         public static ProvisioningListener get() {
-            return jenkins().getExtensionList(ProvisioningListener.class).get(0);
+            return Jenkins.getInstance().getExtensionList(ProvisioningListener.class).get(0);
         }
-    }
-
-    private static @Nonnull Jenkins jenkins() {
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) throw new IllegalStateException();
-        return jenkins;
     }
 
     @Extension @Restricted(NoExternalUse.class)
@@ -552,7 +546,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         @Override
         protected void doRun() {
             List<ProvisioningActivity.Id> trackedExisting = new ArrayList<>();
-            for (Computer computer : jenkins().getComputers()) {
+            for (Computer computer : Jenkins.getInstance().getComputers()) {
                 if (computer instanceof TrackedItem) {
                     trackedExisting.add(((TrackedItem) computer).getId());
                 }
