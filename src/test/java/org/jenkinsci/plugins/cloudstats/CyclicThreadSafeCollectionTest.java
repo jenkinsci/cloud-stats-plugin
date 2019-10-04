@@ -186,7 +186,7 @@ public class CyclicThreadSafeCollectionTest {
             public void run() {
                 for (;;) {
                     for (Integer d : data) {
-                        assert d != null;
+                        assertNotNull(d);
                     }
 
                     if (Thread.interrupted()) break;
@@ -198,7 +198,7 @@ public class CyclicThreadSafeCollectionTest {
             @Override
             public void run() {
                 for (;;) {
-                    assert data.add(data.size() + 42);
+                    assertTrue(data.add(data.size() + 42));
 
                     if (Thread.interrupted()) break;
                 }
@@ -251,7 +251,7 @@ public class CyclicThreadSafeCollectionTest {
             // terminate after interrupting all children in finally
         } finally {
             for (Thread thread: threads) {
-                assert thread.isAlive(); // Died with exception
+                assertTrue(thread.isAlive()); // Died with exception
                 thread.interrupt();
             }
         }
