@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>3.25</version>
+    <version>3.50</version>
   </parent>
 
   <artifactId>cloud-stats</artifactId>
@@ -68,9 +68,7 @@
   <properties>
     <jenkins.version>2.73.3</jenkins.version>
     <java.level>8</java.level>
-
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.useFile>false</surefire.useFile>
-    <findbugs.failOnError>false</findbugs.failOnError>
+    <spotbugs.failOnError>false</spotbugs.failOnError>
   </properties>
 </project>
