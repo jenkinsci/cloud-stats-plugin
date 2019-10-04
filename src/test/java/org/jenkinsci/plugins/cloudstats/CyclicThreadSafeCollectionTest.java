@@ -175,11 +175,7 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     private <T> List<T> it2list(Collection<T> it) {
-        ArrayList<T> ret = new ArrayList<>();
-        for (T t : it) {
-            ret.add(t);
-        }
-        return ret;
+        return new ArrayList<>(it);
     }
 
     @Test
