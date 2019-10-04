@@ -98,7 +98,7 @@ public class CloudStatisticsTest {
 
     @Before
     public void before() throws Exception {
-        // Pretend we are out of slaves
+        // Pretend we are out of agents
         j.jenkins.setNumExecutors(0);
         j.jenkins.setNodes(Collections.emptyList());
 
@@ -161,8 +161,8 @@ public class CloudStatisticsTest {
         }
         for (ProvisioningActivity a : activities) {
             assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
-            assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-slave-"));
-            assertThat(activities.toString(), a.getName(), startsWith("dummy-slave-"));
+            assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-agent-"));
+            assertThat(activities.toString(), a.getName(), startsWith("dummy-agent-"));
         }
 
         ProvisioningActivity activity = activities.get(0);
@@ -183,11 +183,11 @@ public class CloudStatisticsTest {
         }
 
         while (activity.getPhaseExecution(OPERATING) == null) {
-            System.out.println("Waiting for slave to launch");
+            System.out.println("Waiting for agent to launch");
             Thread.sleep(100);
         }
 
-        System.out.println("Waiting for slave to launch");
+        System.out.println("Waiting for agent to launch");
         computer.waitUntilOnline();
         assertNull(activity.getPhaseExecution(COMPLETED));
 
@@ -219,7 +219,7 @@ public class CloudStatisticsTest {
         provisioningListener.onStarted(failId);
         provisioningListener.onFailure(failId, new Exception(EXCEPTION_MESSAGE));
 
-        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "slave");
+        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "agent");
         provisioningListener.onStarted(warnId);
         Node slave = createTrackedSlave(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
@@ -228,7 +228,7 @@ public class CloudStatisticsTest {
 
         slave.toComputer().waitUntilOnline();
 
-        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-slave");
+        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-agent");
         provisioningListener.onStarted(okId);
         slave = createTrackedSlave(okId, j);
         provisioningListener.onComplete(okId, slave);

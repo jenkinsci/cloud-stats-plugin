@@ -53,15 +53,15 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     public enum Phase {
         /**
-         * Acquiring the slave is in progress.
+         * Acquiring the agent is in progress.
          */
         PROVISIONING,
         /**
-         * Slave agent is being launched,
+         * Agent is being launched,
          */
         LAUNCHING,
         /**
-         * The node is connected as Jenkins slave, possibly running builds.
+         * The node is connected as Jenkins agent, possibly running builds.
          */
         OPERATING,
         /**
@@ -84,7 +84,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
          */
         WARN,
         /**
-         * The activity was aborted because of a problem so it never delivered functional slave.
+         * The activity was aborted because of a problem so it never delivered functional agent.
          *
          * The identification of the cause should be in attachment.
          */
@@ -109,7 +109,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         /**
          * @param cloudName Name of the cloud that initiated this activity.
          * @param templateName Name of the template that initiated this activity.
-         * @param nodeName Name of the slave to be provisioned. Of the name of the slave is not known ahead, it can
+         * @param nodeName Name of the agent to be provisioned. Of the name of the agent is not known ahead, it can
          *                    be <tt>null</tt> cloud stats plugin will update it once it will be known.
          */
         public Id(@Nonnull String cloudName, @CheckForNull String templateName, @CheckForNull String nodeName) {
@@ -151,14 +151,14 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
 
         /**
-         * Name of the template used to provision this slave. <tt>null</tt> if no further distinction is needed except for cloud name.
+         * Name of the template used to provision this agent. <tt>null</tt> if no further distinction is needed except for cloud name.
          */
         public @CheckForNull String getTemplateName() {
             return templateName;
         }
 
         /**
-         * Name of the slave to be provisioned by this activity. <tt>null</tt> if not known ahead.
+         * Name of the agent to be provisioned by this activity. <tt>null</tt> if not known ahead.
          */
         public @CheckForNull String getNodeName() {
             return nodeName;

@@ -11,12 +11,12 @@ The statistics are presented on **Manage Jenkins > Cloud Statistics**.
 ## Essentials
 
 - The plugin tracks the N most recent provisioning activities. One such
-activity covers the whole lifecycle from provisioning to slave deletion.
+activity covers the whole lifecycle from provisioning to agent deletion.
 
 - The activities have 4 hard-coded phases: `provisioning`, `launching`,
 `operating` and `completed`. Operation starts with first successful launch and
-ends with slave deletion (it is the only productive phase). The activity
-is completed once the slave is gone and the activity is effectively a
+ends with agent deletion (it is the only productive phase). The activity
+is completed once the agent is gone and the activity is effectively a
 history.
 
 - Each phase execution tracks start time and a list of attachments. The attachment
@@ -26,7 +26,7 @@ etc.
 
 - Each attachment has a state: `ok`, `warn` or `fail`. The worst of all
 attached states is propagated to the phase execution and activity level. (If
-slave fails to launch, and exception will be attached explaining why the
+agent fails to launch, and exception will be attached explaining why the
 launch phase and thus the whole activity has failed).
 
 ## Integrating cloud plugin with cloud-stats-plugin
@@ -42,10 +42,10 @@ activity. Therefore, `PlannedNode`, `Computer` and `Node` are expected to provid
 the same instance of the `Id`. Note that there is a convenient abstract class
 `TrackedPlannedNode` that creates the `Id` so a plugin merely needs to pass it around.
 
-- In case there is a way to provision slaves that does not go through Jenkins
+- In case there is a way to provision agents that does not go through Jenkins
 core (`NodeProvisioner`), plugins are expected to notify cloud-stats about such
-activity. This often happens when slaves are provisioned manually in the Jenkins UI.
-Provided the slave gets attached to Jenkins, cloud-stats will track it just fine from launching
+activity. This often happens when agents are provisioned manually in the Jenkins UI.
+Provided the agent gets attached to Jenkins, cloud-stats will track it just fine from launching
 phase on without any explicit notifications from a provisioning plugin.
 
 - Optionally, a plugin can attach any kind of information to any phase.

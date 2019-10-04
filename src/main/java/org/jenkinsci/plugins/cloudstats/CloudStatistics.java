@@ -385,7 +385,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      * Listen to ongoing provisioning activities.
      *
      * All activities that are triggered by Jenkins queue load (those that goes through {@link NodeProvisioner}) are
-     * reported by Jenkins core. This api needs to be called by plugin if and only if the slaves are provisioned differently.
+     * reported by Jenkins core. This api needs to be called by plugin if and only if the agents are provisioned differently.
      *
      * Implementation note: onComplete and onFailure are being called while holding the queue lock from NodeProvisioner,
      * so the work is extracted to separate thread.
@@ -586,7 +586,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
         private final CloudStatistics stats = CloudStatistics.get();
 
-        // Reflect renames so the name of the activity tracks the slave name
+        // Reflect renames so the name of the activity tracks the agent name
         @Override
         protected void onUpdated(@Nonnull Node oldOne, @Nonnull Node newOne) {
             if (oldOne.getNodeName().equals(newOne.getNodeName())) return; // Not renamed
