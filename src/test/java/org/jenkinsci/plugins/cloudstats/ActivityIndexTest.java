@@ -41,7 +41,7 @@ public class ActivityIndexTest {
 
     @Test
     public void empty() {
-        ActivityIndex index = new ActivityIndex(Collections.<ProvisioningActivity>emptyList());
+        ActivityIndex index = new ActivityIndex(Collections.emptyList());
         assertThat(index.byCloud().size(), equalTo(0));
         assertThat(index.byTemplate().size(), equalTo(0));
         assertThat(index.forCloud("asdf"), Matchers.emptyIterable());

@@ -150,7 +150,7 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(completed);
             fail();
-        } catch (IllegalArgumentException _) {}
+        } catch (IllegalArgumentException ignored) {}
 
         // In progress
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
@@ -162,7 +162,7 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(pa.getPhaseExecution(COMPLETED));
             fail();
-        } catch (NullPointerException _) {}
+        } catch (NullPointerException ignored) {}
 
         // Completed prematurely
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
@@ -173,11 +173,11 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(pa.getPhaseExecution(LAUNCHING));
             fail();
-        } catch (NullPointerException _) {}
+        } catch (NullPointerException ignored) {}
         try {
             pa.getDuration(pa.getPhaseExecution(OPERATING));
             fail();
-        } catch (NullPointerException _) {}
+        } catch (NullPointerException ignored) {}
     }
 
     @Test @Issue("https://github.com/jenkinsci/cloud-stats-plugin/issues/4")
@@ -219,7 +219,7 @@ public class ProvisioningActivityTest {
         );
 
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
+        assertEquals(WARN, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
                 equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
@@ -227,13 +227,13 @@ public class ProvisioningActivityTest {
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         pa.getPhaseExecution(PROVISIONING).attach(failedAttachment);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertEquals(OK, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld1"));
         pa.enter(LAUNCHING);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.WARN));
+        assertEquals(WARN, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
                 equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
@@ -242,14 +242,14 @@ public class ProvisioningActivityTest {
         pa.enter(LAUNCHING);
         pa.getPhaseExecution(LAUNCHING).attach(failedAttachment);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertEquals(OK, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld2"));
         pa.enter(LAUNCHING);
         pa.enter(OPERATING);
         pa.enter(COMPLETED);
-        assertTrue(pa.getPhaseExecution(COMPLETED).getStatus().equals(ProvisioningActivity.Status.OK));
+        assertEquals(OK, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
     }
 

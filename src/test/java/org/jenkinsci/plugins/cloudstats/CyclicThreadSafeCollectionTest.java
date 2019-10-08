@@ -46,7 +46,7 @@ public class CyclicThreadSafeCollectionTest {
         try {
             new CyclicThreadSafeCollection<Float>(-1);
             fail();
-        } catch (IllegalArgumentException ex) {} // expected
+        } catch (IllegalArgumentException ignored) {} // expected
     }
 
     @Test
@@ -175,11 +175,7 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     private <T> List<T> it2list(Collection<T> it) {
-        ArrayList<T> ret = new ArrayList<>();
-        for (T t : it) {
-            ret.add(t);
-        }
-        return ret;
+        return new ArrayList<>(it);
     }
 
     @Test
@@ -190,7 +186,7 @@ public class CyclicThreadSafeCollectionTest {
             public void run() {
                 for (;;) {
                     for (Integer d : data) {
-                        assert d != null;
+                        assertNotNull(d);
                     }
 
                     if (Thread.interrupted()) break;
@@ -202,7 +198,7 @@ public class CyclicThreadSafeCollectionTest {
             @Override
             public void run() {
                 for (;;) {
-                    assert data.add(data.size() + 42);
+                    assertTrue(data.add(data.size() + 42));
 
                     if (Thread.interrupted()) break;
                 }
@@ -251,11 +247,11 @@ public class CyclicThreadSafeCollectionTest {
             }
 
             Thread.sleep(10000);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
             // terminate after interrupting all children in finally
         } finally {
             for (Thread thread: threads) {
-                assert thread.isAlive(); // Died with exception
+                assertTrue(thread.isAlive()); // Died with exception
                 thread.interrupt();
             }
         }

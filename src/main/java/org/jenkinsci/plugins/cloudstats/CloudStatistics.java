@@ -100,7 +100,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
      * Get the singleton instance.
      */
     public static @Nonnull CloudStatistics get() {
-        return jenkins().getExtensionList(CloudStatistics.class).get(0);
+        return Jenkins.getInstance().getExtensionList(CloudStatistics.class).get(0);
     }
 
     @Restricted(NoExternalUse.class)
@@ -119,7 +119,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     @Override
     public String getIconFileName() {
         // This _needs_ to be done in getIconFileName only because of JENKINS-33683.
-        Jenkins jenkins = jenkins();
+        Jenkins jenkins = Jenkins.getInstance();
         if (!jenkins.hasPermission(Jenkins.ADMINISTER)) return null;
         if (jenkins.clouds.isEmpty() && isEmpty()) return null;
         return "graph.png";
@@ -137,7 +137,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     public @Nonnull Collection<ProvisioningActivity> getNotCompletedActivities() {
         ArrayList<ProvisioningActivity> activeCopy;
         synchronized (active) {
-            activeCopy = new ArrayList<>(this.active);
+            activeCopy = new ArrayList<>(active);
         }
 
         // Perform explicit removal of completed activities as `active` is not guaranteed to contain not completed activities only.
@@ -154,7 +154,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     @VisibleForTesting
     /*package*/ @Nonnull Collection<ProvisioningActivity> getRetainedActivities() {
         synchronized (active) {
-            return new ArrayList<>(this.active);
+            return new ArrayList<>(active);
         }
     }
 
@@ -306,7 +306,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
 
         // Migrate config from version 0.22, the guarantee of everything in active is not completed is now strict
-        // Making old data tostrictly follow that. Note this does not alter the structure of the data, but only their semantics
+        // Making old data to strictly follow that. Note this does not alter the structure of the data, but only their semantics
         synchronized (active) {
             Collection<ProvisioningActivity> defensiveCopyOfActiveField = getRetainedActivities();
             for (ProvisioningActivity pa: defensiveCopyOfActiveField) {
@@ -369,15 +369,15 @@ public class CloudStatistics extends ManagementLink implements Saveable {
 
     /*package for testing*/ XmlFile getConfigFile() {
         return new XmlFile(Jenkins.XSTREAM, new File(new File(
-                jenkins().root,
+                Jenkins.getInstance().root,
                 getClass().getCanonicalName() + ".xml"
         ).getAbsolutePath()));
     }
 
     private void archive(ProvisioningActivity activity) {
-        synchronized (this.active) {
-            this.log.add(activity);
-            this.active.remove(activity);
+        synchronized (active) {
+            log.add(activity);
+            active.remove(activity);
         }
     }
 
@@ -482,14 +482,8 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         }
 
         public static ProvisioningListener get() {
-            return jenkins().getExtensionList(ProvisioningListener.class).get(0);
+            return Jenkins.getInstance().getExtensionList(ProvisioningListener.class).get(0);
         }
-    }
-
-    private static @Nonnull Jenkins jenkins() {
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) throw new IllegalStateException();
-        return jenkins;
     }
 
     @Extension @Restricted(NoExternalUse.class)
@@ -552,7 +546,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         @Override
         protected void doRun() {
             List<ProvisioningActivity.Id> trackedExisting = new ArrayList<>();
-            for (Computer computer : jenkins().getComputers()) {
+            for (Computer computer : Jenkins.getInstance().getComputers()) {
                 if (computer instanceof TrackedItem) {
                     trackedExisting.add(((TrackedItem) computer).getId());
                 }
@@ -665,5 +659,5 @@ public class CloudStatistics extends ManagementLink implements Saveable {
             loggedUnsupportedTypes.add(type);
         }
     }
-    private static final Set<Class> loggedUnsupportedTypes = Collections.synchronizedSet(new HashSet<Class>());
+    private static final Set<Class> loggedUnsupportedTypes = Collections.synchronizedSet(new HashSet<>());
 }

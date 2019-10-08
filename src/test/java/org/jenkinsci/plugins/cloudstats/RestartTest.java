@@ -29,7 +29,6 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.iterableWithSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -55,14 +53,14 @@ public class RestartTest {
             @Override public void evaluate() throws Throwable {
                 CloudStatistics cs = CloudStatistics.get();
                 cs.save();
-                assertThat(cs.getActivities(), Matchers.<ProvisioningActivity>emptyIterable());
+                assertThat(cs.getActivities(), Matchers.emptyIterable());
             }
         });
 
         j.addStep(new Statement() {
             @Override public void evaluate() {
                 CloudStatistics cs = CloudStatistics.get();
-                assertThat(cs.getActivities(), Matchers.<ProvisioningActivity>emptyIterable());
+                assertThat(cs.getActivities(), Matchers.emptyIterable());
             }
         });
     }
@@ -90,7 +88,7 @@ public class RestartTest {
                 final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
                 final CloudStatistics stats = CloudStatistics.get();
 
-                assertThat(stats.getActivities(), Matchers.<ProvisioningActivity>iterableWithSize(3));
+                assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
 
                 ProvisioningActivity c = stats.getActivityFor(completed);
                 assertNotNull(c.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
@@ -113,7 +111,7 @@ public class RestartTest {
             @Override public void evaluate() {
                 final CloudStatistics stats = CloudStatistics.get();
 
-                assertThat(stats.getActivities(), Matchers.<ProvisioningActivity>iterableWithSize(3));
+                assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
 
                 ProvisioningActivity s = stats.getActivityFor(started);
                 assertEquals(ProvisioningActivity.Status.FAIL, s.getStatus());
