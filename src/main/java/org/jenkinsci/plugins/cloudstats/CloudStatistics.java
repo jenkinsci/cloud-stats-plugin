@@ -122,7 +122,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     public String getIconFileName() {
         // This _needs_ to be done in getIconFileName only because of JENKINS-33683.
         Jenkins jenkins = Jenkins.get();
-        if (!jenkins.hasPermission(SystemReadPermission.SYSTEM_READ)) return null;
+        if (!jenkins.hasPermission(getRequiredPermission())) return null;
         if (jenkins.clouds.isEmpty() && isEmpty()) return null;
         return "graph.png";
     }
