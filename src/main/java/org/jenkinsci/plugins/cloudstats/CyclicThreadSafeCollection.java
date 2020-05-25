@@ -145,7 +145,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     @Override
     public @Nonnull E[] toArray() {
         synchronized (data) { // size() and toArray() needs to be consistent
-            return toArray(CyclicThreadSafeCollection.<E>newArray(size()));
+            return toArray(CyclicThreadSafeCollection.newArray(size()));
         }
     }
 

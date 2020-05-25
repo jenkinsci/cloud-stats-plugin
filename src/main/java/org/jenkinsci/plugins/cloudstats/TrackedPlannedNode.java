@@ -35,7 +35,7 @@ import static hudson.slaves.NodeProvisioner.*;
 /**
  * Convenient subclass of {@link PlannedNode} to simplify tracking the activity.
  *
- * {@link Cloud#provision(Label, int)} needs to return {@link PlannedNode} implmenting {@link TrackedItem} to have the
+ * {@link Cloud#provision(Label, int)} needs to return {@link PlannedNode} implementing {@link TrackedItem} to have the
  * provisioning activity tracked.
  *
  * @author ogondza.

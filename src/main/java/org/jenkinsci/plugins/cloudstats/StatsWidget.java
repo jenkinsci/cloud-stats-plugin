@@ -39,6 +39,6 @@ public class StatsWidget extends Widget {
     public boolean isDisplayed() {
         Jenkins instance = Jenkins.get();
         //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
-        return instance != null && !instance.clouds.isEmpty() && instance.hasPermission(SystemReadPermission.SYSTEM_READ);
+        return !instance.clouds.isEmpty() && instance.hasPermission(SystemReadPermission.SYSTEM_READ);
     }
 }

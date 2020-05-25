@@ -53,14 +53,14 @@ public class RestartTest {
             @Override public void evaluate() throws Throwable {
                 CloudStatistics cs = CloudStatistics.get();
                 cs.save();
-                assertThat(cs.getActivities(), Matchers.<ProvisioningActivity>emptyIterable());
+                assertThat(cs.getActivities(), Matchers.emptyIterable());
             }
         });
 
         j.addStep(new Statement() {
             @Override public void evaluate() {
                 CloudStatistics cs = CloudStatistics.get();
-                assertThat(cs.getActivities(), Matchers.<ProvisioningActivity>emptyIterable());
+                assertThat(cs.getActivities(), Matchers.emptyIterable());
             }
         });
     }
@@ -88,7 +88,7 @@ public class RestartTest {
                 final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
                 final CloudStatistics stats = CloudStatistics.get();
 
-                assertThat(stats.getActivities(), Matchers.<ProvisioningActivity>iterableWithSize(3));
+                assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
 
                 ProvisioningActivity c = stats.getActivityFor(completed);
                 assertNotNull(c.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
@@ -111,7 +111,7 @@ public class RestartTest {
             @Override public void evaluate() {
                 final CloudStatistics stats = CloudStatistics.get();
 
-                assertThat(stats.getActivities(), Matchers.<ProvisioningActivity>iterableWithSize(3));
+                assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
 
                 ProvisioningActivity s = stats.getActivityFor(started);
                 assertEquals(ProvisioningActivity.Status.FAIL, s.getStatus());

@@ -48,7 +48,6 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.RetentionStrategy;
-import jenkins.model.JenkinsLocationConfiguration;
 import jenkins.model.NodeListener;
 import org.junit.Before;
 import org.junit.Rule;
@@ -99,9 +98,9 @@ public class CloudStatisticsTest {
 
     @Before
     public void before() throws Exception {
-        // Pretend we are out of slaves
+        // Pretend we are out of agents
         j.jenkins.setNumExecutors(0);
-        j.jenkins.setNodes(Collections.<Node>emptyList());
+        j.jenkins.setNodes(Collections.emptyList());
 
         // Do not provision when not expected
         ExtensionList<NodeProvisioner.NodeProvisionerInvoker> extensionList = j.jenkins.getExtensionList(NodeProvisioner.NodeProvisionerInvoker.class);
@@ -162,8 +161,8 @@ public class CloudStatisticsTest {
         }
         for (ProvisioningActivity a : activities) {
             assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
-            assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-slave-"));
-            assertThat(activities.toString(), a.getName(), startsWith("dummy-slave-"));
+            assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-agent-"));
+            assertThat(activities.toString(), a.getName(), startsWith("dummy-agent-"));
         }
 
         ProvisioningActivity activity = activities.get(0);
@@ -184,11 +183,11 @@ public class CloudStatisticsTest {
         }
 
         while (activity.getPhaseExecution(OPERATING) == null) {
-            System.out.println("Waiting for slave to launch");
+            System.out.println("Waiting for agent to launch");
             Thread.sleep(100);
         }
 
-        System.out.println("Waiting for slave to launch");
+        System.out.println("Waiting for agent to launch");
         computer.waitUntilOnline();
         assertNull(activity.getPhaseExecution(COMPLETED));
 
@@ -220,7 +219,7 @@ public class CloudStatisticsTest {
         provisioningListener.onStarted(failId);
         provisioningListener.onFailure(failId, new Exception(EXCEPTION_MESSAGE));
 
-        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "slave");
+        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "agent");
         provisioningListener.onStarted(warnId);
         Node slave = createTrackedSlave(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
@@ -229,7 +228,7 @@ public class CloudStatisticsTest {
 
         slave.toComputer().waitUntilOnline();
 
-        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-slave");
+        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-agent");
         provisioningListener.onStarted(okId);
         slave = createTrackedSlave(okId, j);
         provisioningListener.onComplete(okId, slave);
@@ -243,8 +242,8 @@ public class CloudStatisticsTest {
         ProvisioningActivity failedToProvision = cs.getActivityFor(failId);
         assertEquals(failId, failedToProvision.getId());
         assertEquals(FAIL, failedToProvision.getStatus());
-        assertEquals(null, failedToProvision.getPhaseExecution(LAUNCHING));
-        assertEquals(null, failedToProvision.getPhaseExecution(OPERATING));
+        assertNull(failedToProvision.getPhaseExecution(LAUNCHING));
+        assertNull(failedToProvision.getPhaseExecution(OPERATING));
         assertNotNull(failedToProvision.getPhaseExecution(COMPLETED));
         PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
@@ -580,7 +579,7 @@ public class CloudStatisticsTest {
             private final ProvisioningActivity.Id id;
 
             public TrackedSlave(ProvisioningActivity.Id id, JenkinsRule j, String name) throws Exception {
-                super(name == null ? id.getNodeName() : name, "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+                super(name == null ? id.getNodeName() : name, "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.emptyList());
                 this.id = id;
             }
 
