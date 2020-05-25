@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.cloudstats.CloudStatistics
 
 import org.jenkinsci.plugins.cloudstats.CloudStatistics
 import org.jenkinsci.plugins.cloudstats.Health
+import hudson.plugins.extendedread.SystemReadPermission
 
 def l = namespace(lib.LayoutTagLib)
 def cs = namespace("lib/cloudstats")
@@ -40,7 +41,8 @@ style("""
         }
 """)
 
-l.layout(permission: app.ADMINISTER) {
+//Move to app.SYSTEM_READ when baseline is above 2.222
+l.layout(permission: SystemReadPermission.SYSTEM_READ) {
     l.header(title: stats.displayName)
     l.main_panel {
         h1(stats.displayName)

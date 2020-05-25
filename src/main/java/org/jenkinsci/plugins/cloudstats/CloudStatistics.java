@@ -36,6 +36,8 @@ import hudson.model.Node;
 import hudson.model.PeriodicWork;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
+import hudson.plugins.extendedread.SystemReadPermission;
+import hudson.security.Permission;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.Cloud;
 import hudson.slaves.CloudProvisioningListener;
@@ -120,9 +122,15 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     public String getIconFileName() {
         // This _needs_ to be done in getIconFileName only because of JENKINS-33683.
         Jenkins jenkins = jenkins();
-        if (!jenkins.hasPermission(Jenkins.ADMINISTER)) return null;
+        if (!jenkins.hasPermission(SystemReadPermission.SYSTEM_READ)) return null;
         if (jenkins.clouds.isEmpty() && isEmpty()) return null;
         return "graph.png";
+    }
+
+    @Override
+    public Permission getRequiredPermission() {
+        //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
+        return SystemReadPermission.SYSTEM_READ;
     }
 
     private boolean isEmpty() {

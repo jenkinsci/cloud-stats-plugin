@@ -150,7 +150,7 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(completed);
             fail();
-        } catch (IllegalArgumentException _) {}
+        } catch (IllegalArgumentException e) {}
 
         // In progress
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
@@ -162,7 +162,7 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(pa.getPhaseExecution(COMPLETED));
             fail();
-        } catch (NullPointerException _) {}
+        } catch (NullPointerException e) {}
 
         // Completed prematurely
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
@@ -173,11 +173,11 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(pa.getPhaseExecution(LAUNCHING));
             fail();
-        } catch (NullPointerException _) {}
+        } catch (NullPointerException e) {}
         try {
             pa.getDuration(pa.getPhaseExecution(OPERATING));
             fail();
-        } catch (NullPointerException _) {}
+        } catch (NullPointerException e) {}
     }
 
     @Test @Issue("https://github.com/jenkinsci/cloud-stats-plugin/issues/4")

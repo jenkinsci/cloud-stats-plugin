@@ -412,7 +412,7 @@ public class CloudStatisticsTest {
         wc.getOptions().setThrowExceptionOnFailingStatusCode(false);
         wc.getOptions().setPrintContentOnFailingStatusCode(false);
         //noinspection deprecation
-        assertEquals(404, wc.getPage(numberedUrl.replaceAll(":1", ":17")).getWebResponse().getStatusCode());
+        assertEquals(404, wc.getPage(new URL(url, numberedUrl.replaceAll(":1", ":17"))).getWebResponse().getStatusCode());
 
         assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }

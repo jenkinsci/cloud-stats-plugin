@@ -29,7 +29,6 @@ import org.junit.Test;
 import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.iterableWithSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -174,7 +172,7 @@ public class RestartTest {
         });
     }
 
-    private static AtomicInteger sequence = new AtomicInteger(0);
+    private transient static AtomicInteger sequence = new AtomicInteger(0);
     private static void addCompletedActivity(int count) {
         final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
         for (int i = 0; i < count; i++) {
