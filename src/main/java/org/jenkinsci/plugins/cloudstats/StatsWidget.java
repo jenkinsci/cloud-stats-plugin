@@ -24,7 +24,6 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import hudson.Extension;
-import hudson.plugins.extendedread.SystemReadPermission;
 import hudson.widgets.Widget;
 import jenkins.model.Jenkins;
 import org.kohsuke.accmod.Restricted;
@@ -39,6 +38,6 @@ public class StatsWidget extends Widget {
     public boolean isDisplayed() {
         Jenkins instance = Jenkins.get();
         //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
-        return !instance.clouds.isEmpty() && instance.hasPermission(SystemReadPermission.SYSTEM_READ);
+        return !instance.clouds.isEmpty() && instance.hasPermission(CloudStatistics.get().getRequiredPermission());
     }
 }
