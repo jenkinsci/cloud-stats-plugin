@@ -36,7 +36,8 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 public class StatsWidget extends Widget {
 
     public boolean isDisplayed() {
-        Jenkins instance = Jenkins.getInstance();
-        return !instance.clouds.isEmpty() && instance.hasPermission(Jenkins.ADMINISTER);
+        Jenkins instance = Jenkins.get();
+        //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
+        return !instance.clouds.isEmpty() && instance.hasPermission(CloudStatistics.get().getRequiredPermission());
     }
 }

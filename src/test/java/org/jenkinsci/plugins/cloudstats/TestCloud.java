@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class TestCloud extends Cloud {
     private transient final Launcher provision;
     private transient final JenkinsRule j;
-    private final AtomicInteger seq = new AtomicInteger();
+    private transient final AtomicInteger seq = new AtomicInteger();
 
     public TestCloud(String name) {
         super(name);

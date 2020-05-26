@@ -172,7 +172,7 @@ public class RestartTest {
         });
     }
 
-    private static AtomicInteger sequence = new AtomicInteger(0);
+    private transient static AtomicInteger sequence = new AtomicInteger(0);
     private static void addCompletedActivity(int count) {
         final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
         for (int i = 0; i < count; i++) {
