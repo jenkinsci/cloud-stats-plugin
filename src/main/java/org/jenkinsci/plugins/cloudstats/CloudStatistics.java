@@ -176,6 +176,19 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         return "Report of current and past provisioning activities";
     }
 
+    /**
+     * Name of the category for this management link. Exists so that plugins with core dependency pre-dating the version
+     * when this was introduced can define a category.
+     *
+     * TODO when the core version is &gt;2.226 change this to override {@code getCategory()} instead
+     *
+     * @return name of the desired category, one of the enum values of Category, e.g. {@code STATUS}.
+     * @since 2.226 of Jenkins core
+     */
+    public String getCategoryName() {
+        return "STATUS";
+    }
+
     public List<ProvisioningActivity> getActivities() {
         synchronized (active) {
             ArrayList<ProvisioningActivity> out = new ArrayList<>(active.size() + log.size());
