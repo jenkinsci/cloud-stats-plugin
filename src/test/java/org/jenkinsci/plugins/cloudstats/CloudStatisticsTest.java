@@ -29,25 +29,17 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.BulkChange;
-import hudson.EnvVars;
 import hudson.ExtensionList;
 import hudson.Functions;
 import hudson.model.Computer;
-import hudson.model.Descriptor;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Label;
 import hudson.model.LoadStatistics;
 import hudson.model.Node;
-import hudson.model.TaskListener;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.security.AuthorizationStrategy;
-import hudson.slaves.AbstractCloudComputer;
-import hudson.slaves.AbstractCloudSlave;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.NodeProperty;
 import hudson.slaves.NodeProvisioner;
-import hudson.slaves.RetentionStrategy;
 import jenkins.model.NodeListener;
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,7 +49,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -221,7 +212,7 @@ public class CloudStatisticsTest {
 
         ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "agent");
         provisioningListener.onStarted(warnId);
-        Node slave = createTrackedSlave(warnId, j);
+        Node slave = TrackedAgent.create(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
         final String WARNING_MESSAGE = "There is something attention worthy. There is something attention worthy.";
         a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, WARNING_MESSAGE));
@@ -230,7 +221,7 @@ public class CloudStatisticsTest {
 
         ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-agent");
         provisioningListener.onStarted(okId);
-        slave = createTrackedSlave(okId, j);
+        slave = TrackedAgent.create(okId, j);
         provisioningListener.onComplete(okId, slave);
         slave.toComputer().waitUntilOnline();
         Thread.sleep(500);
@@ -304,8 +295,8 @@ public class CloudStatisticsTest {
         assertEquals("incorrectName", fActivity.getName());
         assertEquals("template", aActivity.getName());
 
-        LaunchSuccessfully.TrackedSlave fSlave = new LaunchSuccessfully.TrackedSlave(fixup, j, "correct-name");
-        LaunchSuccessfully.TrackedSlave aSlave = new LaunchSuccessfully.TrackedSlave(assign, j, "Some Name");
+        TrackedAgent fSlave = new TrackedAgent(fixup, j, "correct-name");
+        TrackedAgent aSlave = new TrackedAgent(assign, j, "Some Name");
 
         l.onComplete(fixup, fSlave);
         l.onComplete(assign, aSlave);
@@ -316,7 +307,7 @@ public class CloudStatisticsTest {
         // Node update
         // Until `jenkins.getNodesObject.replaceNode(..., ...);` is exposed
         j.jenkins.removeNode(aSlave);
-        LaunchSuccessfully.TrackedSlave replacement = new LaunchSuccessfully.TrackedSlave(assign, j, "Updated Name");
+        TrackedAgent replacement = new TrackedAgent(assign, j, "Updated Name");
         j.jenkins.addNode(replacement);
 
         NodeListener.fireOnUpdated(aSlave, replacement);
@@ -561,64 +552,11 @@ public class CloudStatisticsTest {
         j.jenkins.getExtensionList(CloudStatistics.DanglingSlaveScavenger.class).get(0).doRun();
     }
 
-    @Nonnull
-    private static LaunchSuccessfully.TrackedSlave createTrackedSlave(ProvisioningActivity.Id id, JenkinsRule j) throws Exception {
-        LaunchSuccessfully.TrackedSlave slave = new LaunchSuccessfully.TrackedSlave(id, j, null);
-        j.jenkins.addNode(slave);
-        return slave;
-    }
-
     private static class LaunchSuccessfully extends TestCloud.Launcher {
 
         @Override
         public Node call() throws Exception {
-            return createTrackedSlave(id, j);
-        }
-
-        private static final class TrackedSlave extends AbstractCloudSlave implements TrackedItem {
-            private final ProvisioningActivity.Id id;
-
-            public TrackedSlave(ProvisioningActivity.Id id, JenkinsRule j, String name) throws Exception {
-                super(name == null ? id.getNodeName() : name, "dummy", j.createTmpDir().getPath(), "1", Node.Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.emptyList());
-                this.id = id;
-            }
-
-            public TrackedSlave(
-                    String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, ProvisioningActivity.Id id
-            ) throws IOException, Descriptor.FormException {
-                super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
-                this.id = id;
-            }
-
-            @Override
-            public AbstractCloudComputer createComputer() {
-                return new TrackedComputer(this, id);
-            }
-
-            @Override
-            protected void _terminate(TaskListener listener) {
-
-            }
-
-            @Override
-            public ProvisioningActivity.Id getId() {
-                return id;
-            }
-        }
-
-        private static final class TrackedComputer extends AbstractCloudComputer<TrackedSlave> implements TrackedItem {
-
-            private final ProvisioningActivity.Id id;
-
-            public TrackedComputer(TrackedSlave slave, ProvisioningActivity.Id id) {
-                super(slave);
-                this.id = id;
-            }
-
-            @Override
-            public ProvisioningActivity.Id getId() {
-                return id;
-            }
+            return TrackedAgent.create(id, j);
         }
     }
 }

@@ -23,6 +23,12 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.model.Node;
+import hudson.slaves.ComputerListener;
+import hudson.slaves.DumbSlave;
+import hudson.slaves.RetentionStrategy;
 import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,12 +36,14 @@ import org.junit.runners.model.Statement;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -78,14 +86,17 @@ public class RestartTest {
                 listener.onStarted(started);
                 listener.onStarted(failed);
                 listener.onFailure(failed, new Exception());
+
+                TrackedAgent node = TrackedAgent.create(completed, j.j);
                 listener.onStarted(completed);
-                listener.onComplete(completed, j.j.createOnlineSlave());
+                listener.onComplete(completed, node);
+                ExtensionList.lookup(CloudStatistics.OperationListener.class).get(0).onOnline(node.createComputer(), null);
+                ExtensionList.lookup(CloudStatistics.SlaveCompletionDetector.class).get(0).onDeleted(node);
             }
         });
 
         j.addStep(new Statement() {
             @Override public void evaluate() {
-                final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
                 final CloudStatistics stats = CloudStatistics.get();
 
                 assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
@@ -93,30 +104,18 @@ public class RestartTest {
                 ProvisioningActivity c = stats.getActivityFor(completed);
                 assertNotNull(c.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
                 assertEquals(ProvisioningActivity.Status.OK, c.getStatus());
+                assertEquals(COMPLETED, c.getCurrentPhase());
 
                 ProvisioningActivity f = stats.getActivityFor(failed);
                 assertNotNull(f.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
                 assertEquals(ProvisioningActivity.Status.FAIL, f.getStatus());
+                assertEquals(COMPLETED, f.getCurrentPhase());
 
                 ProvisioningActivity s = stats.getActivityFor(started);
                 assertNotNull(s.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
-                assertEquals(ProvisioningActivity.Status.OK, s.getStatus());
-                listener.onFailure(started, new Exception());
 
-                assertEquals(stats.getRetainedActivities(), stats.getNotCompletedActivities());
-            }
-        });
-
-        j.addStep(new Statement() {
-            @Override public void evaluate() {
-                final CloudStatistics stats = CloudStatistics.get();
-
-                assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
-
-                ProvisioningActivity s = stats.getActivityFor(started);
-                assertEquals(ProvisioningActivity.Status.FAIL, s.getStatus());
-
-                assertEquals(stats.getRetainedActivities(), stats.getNotCompletedActivities());
+                assertEquals(ProvisioningActivity.Status.WARN, s.getStatus());
+                assertEquals(COMPLETED, f.getCurrentPhase());
             }
         });
     }
