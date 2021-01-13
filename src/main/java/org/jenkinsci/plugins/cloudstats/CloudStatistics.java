@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.BulkChange;
 import hudson.Extension;
 import hudson.FilePath;
@@ -80,6 +81,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     /**
      * The number of completed records to be stored.
      */
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL", justification = "Not final for testing")
     public static /*final*/ int ARCHIVE_RECORDS = Integer.getInteger(ARCHIVE_RECORDS_PROPERTY_NAME, 100);
 
     /**
@@ -143,7 +145,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     @Override
-    public Permission getRequiredPermission() {
+    public @Nonnull Permission getRequiredPermission() {
         //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
         return SystemReadPermission.SYSTEM_READ;
     }
