@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.BulkChange;
 import hudson.Extension;
 import hudson.FilePath;
@@ -80,6 +81,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     /**
      * The number of completed records to be stored.
      */
+    @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL", justification = "Not final for testing")
     public static /*final*/ int ARCHIVE_RECORDS = Integer.getInteger(ARCHIVE_RECORDS_PROPERTY_NAME, 100);
 
     /**
@@ -112,6 +114,21 @@ public class CloudStatistics extends ManagementLink implements Saveable {
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Unable to load stored statistics", e);
         }
+
+        // Complete activities that survived restart in provisioning state as that is a symptom of a restart while NodeProvisioner
+        // was tracking the provisioning. However, that is interrupted by restart so such activities are never completed
+        // unless we intervene here.
+        for (ProvisioningActivity activity : getActivities()) {
+            if (activity.getCurrentPhase() == ProvisioningActivity.Phase.PROVISIONING) {
+                PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(
+                        ProvisioningActivity.Status.OK, "Provisioning interrupted by restart"
+                );
+                activity.enter(ProvisioningActivity.Phase.COMPLETED);
+                attach(activity, ProvisioningActivity.Phase.COMPLETED, attachment);
+                archive(activity);
+                LOGGER.info("Closing dangling provisioning activity " + activity);
+            }
+        }
     }
 
     public String getDisplayName() {
@@ -128,7 +145,7 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     }
 
     @Override
-    public Permission getRequiredPermission() {
+    public @Nonnull Permission getRequiredPermission() {
         //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
         return SystemReadPermission.SYSTEM_READ;
     }
