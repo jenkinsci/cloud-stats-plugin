@@ -50,6 +50,7 @@ import jenkins.util.Timer;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.StaplerProxy;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
@@ -72,7 +73,7 @@ import java.util.logging.Logger;
  * Statistics of provisioning activities.
  */
 @Extension
-public class CloudStatistics extends ManagementLink implements Saveable {
+public class CloudStatistics extends ManagementLink implements Saveable, StaplerProxy {
 
     private static final Logger LOGGER = Logger.getLogger(CloudStatistics.class.getName());
 
@@ -148,6 +149,12 @@ public class CloudStatistics extends ManagementLink implements Saveable {
     public @Nonnull Permission getRequiredPermission() {
         //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
         return SystemReadPermission.SYSTEM_READ;
+    }
+
+    @Override
+    public Object getTarget() {
+        Jenkins.get().checkPermission(getRequiredPermission());
+        return this;
     }
 
     private boolean isEmpty() {

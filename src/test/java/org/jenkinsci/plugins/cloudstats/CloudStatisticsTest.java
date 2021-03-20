@@ -40,12 +40,17 @@ import hudson.model.Node;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.security.AuthorizationStrategy;
 import hudson.slaves.NodeProvisioner;
+import jenkins.model.Jenkins;
 import jenkins.model.NodeListener;
+import org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener;
+import org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment.ExceptionAttachment;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Id;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import javax.annotation.Nonnull;
@@ -63,6 +68,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener.get;
+import static org.jenkinsci.plugins.cloudstats.CloudStatistics.get;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.LAUNCHING;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERATING;
@@ -70,6 +77,7 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.PROVIS
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.FAIL;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.OK;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.WARN;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -124,7 +132,7 @@ public class CloudStatisticsTest {
 
         PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, activity.getStatus());
-        PhaseExecutionAttachment.ExceptionAttachment attachment = prov.getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class).get(0);
+        ExceptionAttachment attachment = prov.getAttachments(ExceptionAttachment.class).get(0);
         assertEquals(Functions.printThrowable(TestCloud.ThrowException.EXCEPTION), attachment.getText());
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
@@ -202,15 +210,15 @@ public class CloudStatisticsTest {
 
         final String EXCEPTION_MESSAGE = "Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened. Something bad happened.";
         CloudStatistics cs = CloudStatistics.get();
-        CloudStatistics.ProvisioningListener provisioningListener = CloudStatistics.ProvisioningListener.get();
+        ProvisioningListener provisioningListener = ProvisioningListener.get();
 
         // When
 
-        ProvisioningActivity.Id failId = new ProvisioningActivity.Id("MyCloud", "broken-template");
+        Id failId = new Id("MyCloud", "broken-template");
         provisioningListener.onStarted(failId);
         provisioningListener.onFailure(failId, new Exception(EXCEPTION_MESSAGE));
 
-        ProvisioningActivity.Id warnId = new ProvisioningActivity.Id("PickyCloud", null, "agent");
+        Id warnId = new Id("PickyCloud", null, "agent");
         provisioningListener.onStarted(warnId);
         Node slave = TrackedAgent.create(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
@@ -219,7 +227,7 @@ public class CloudStatisticsTest {
 
         slave.toComputer().waitUntilOnline();
 
-        ProvisioningActivity.Id okId = new ProvisioningActivity.Id("MyCloud", "working-template", "future-agent");
+        Id okId = new Id("MyCloud", "working-template", "future-agent");
         provisioningListener.onStarted(okId);
         slave = TrackedAgent.create(okId, j);
         provisioningListener.onComplete(okId, slave);
@@ -238,7 +246,7 @@ public class CloudStatisticsTest {
         assertNotNull(failedToProvision.getPhaseExecution(COMPLETED));
         PhaseExecution failedProvisioning = failedToProvision.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, failedProvisioning.getStatus());
-        PhaseExecutionAttachment.ExceptionAttachment exception = (PhaseExecutionAttachment.ExceptionAttachment) failedProvisioning.getAttachments().get(0);
+        ExceptionAttachment exception = (ExceptionAttachment) failedProvisioning.getAttachments().get(0);
         assertEquals(EXCEPTION_MESSAGE, exception.getTitle());
         assertThat(exception.getText(), startsWith("java.lang.Exception: " + EXCEPTION_MESSAGE));
 
@@ -285,10 +293,10 @@ public class CloudStatisticsTest {
     @Test
     public void renameActivity() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
-        CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
+        ProvisioningListener l = ProvisioningListener.get();
 
-        ProvisioningActivity.Id fixup = new ProvisioningActivity.Id("Cloud", "template", "incorrectName");
-        ProvisioningActivity.Id assign = new ProvisioningActivity.Id("Cloud", "template");
+        Id fixup = new Id("Cloud", "template", "incorrectName");
+        Id assign = new Id("Cloud", "template");
         ProvisioningActivity fActivity = l.onStarted(fixup);
         ProvisioningActivity aActivity = l.onStarted(assign);
 
@@ -332,8 +340,8 @@ public class CloudStatisticsTest {
     @Test @Issue("JENKINS-41037")
     public void modifiedWhileSerialized() throws Exception {
         final CloudStatistics cs = CloudStatistics.get();
-        final CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
-        final ProvisioningActivity activity = l.onStarted(new ProvisioningActivity.Id("Cloud", "template", "PAOriginal"));
+        final ProvisioningListener l = ProvisioningListener.get();
+        final ProvisioningActivity activity = l.onStarted(new Id("Cloud", "template", "PAOriginal"));
         final StatsModifyingAttachment blocker = new StatsModifyingAttachment(OK, "Blocker");
         Computer.threadPoolForRemoting.submit(new Callable<Object>() {
             @Override public Object call() {
@@ -357,21 +365,21 @@ public class CloudStatisticsTest {
     @Test
     public void multipleAttachmentsForPhase() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
-        CloudStatistics.ProvisioningListener provisioningListener = CloudStatistics.ProvisioningListener.get();
+        ProvisioningListener provisioningListener = ProvisioningListener.get();
 
-        ProvisioningActivity.Id pid = new ProvisioningActivity.Id("cloud", "template");
+        Id pid = new Id("cloud", "template");
         ProvisioningActivity pa = provisioningListener.onStarted(pid);
-        cs.attach(pa, PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(OK, new Error("OKmsg")));
-        cs.attach(pa, PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(WARN, new Error("WARNmsg")));
+        cs.attach(pa, PROVISIONING, new ExceptionAttachment(OK, new Error("OKmsg")));
+        cs.attach(pa, PROVISIONING, new ExceptionAttachment(WARN, new Error("WARNmsg")));
 
         pa.enter(LAUNCHING);
 
-        cs.attach(pa, LAUNCHING, new PhaseExecutionAttachment.ExceptionAttachment(WARN, new Error("WARNmsg")));
-        cs.attach(pa, LAUNCHING, new PhaseExecutionAttachment.ExceptionAttachment(FAIL, new Error("FAILmsg")));
+        cs.attach(pa, LAUNCHING, new ExceptionAttachment(WARN, new Error("WARNmsg")));
+        cs.attach(pa, LAUNCHING, new ExceptionAttachment(FAIL, new Error("FAILmsg")));
 
         // Attaching failure caused the activity to complete
-        cs.attach(pa, COMPLETED, new PhaseExecutionAttachment.ExceptionAttachment(OK, new Error("OKmsg1")));
-        cs.attach(pa, COMPLETED, new PhaseExecutionAttachment.ExceptionAttachment(OK, new Error("OKmsg2")));
+        cs.attach(pa, COMPLETED, new ExceptionAttachment(OK, new Error("OKmsg1")));
+        cs.attach(pa, COMPLETED, new ExceptionAttachment(OK, new Error("OKmsg2")));
 
         // All 6 attachments can be navigated to
         JenkinsRule.WebClient wc = j.createWebClient();
@@ -407,6 +415,33 @@ public class CloudStatisticsTest {
         assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
+    @Test @Issue("SECURITY-2246")
+    public void denyAccessToStatsDetails() throws Exception {
+        CloudStatistics cs = CloudStatistics.get();
+        ProvisioningListener provisioningListener = ProvisioningListener.get();
+
+        Id pid = new Id("cloud", "template");
+        ProvisioningActivity pa = provisioningListener.onStarted(pid);
+        cs.attach(pa, PROVISIONING, new ExceptionAttachment(WARN, new Error("WARNmsg")));
+
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        j.jenkins.setAuthorizationStrategy(
+                new MockAuthorizationStrategy()
+                        .grant(Jenkins.READ).everywhere().to("user")
+                        .grant(Jenkins.ADMINISTER).everywhere().to("boss")
+        );
+
+        PhaseExecution phaseExecution = pa.getPhaseExecution(PROVISIONING);
+        String url = cs.getUrl(pa, phaseExecution, phaseExecution.getAttachment("exception")).substring(1);
+
+        JenkinsRule.WebClient adminWc = j.createWebClient().login("boss", "boss");
+        adminWc.goTo(url);
+
+        JenkinsRule.WebClient userWc = j.createWebClient().login("user", "user");
+        userWc.setThrowExceptionOnFailingStatusCode(false);
+        assertEquals(403, userWc.goTo(url).getWebResponse().getStatusCode());
+    }
+
     @Test
     @LocalData
     @Issue("JENKINS-41037")
@@ -428,12 +463,12 @@ public class CloudStatisticsTest {
     public void migrateToV013() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
         ProvisioningActivity activity = cs.getActivities().iterator().next();
-        List<PhaseExecutionAttachment.ExceptionAttachment> attachments = activity.getPhaseExecution(PROVISIONING).getAttachments(PhaseExecutionAttachment.ExceptionAttachment.class);
-        PhaseExecutionAttachment.ExceptionAttachment partial = attachments.get(0);
+        List<ExceptionAttachment> attachments = activity.getPhaseExecution(PROVISIONING).getAttachments(ExceptionAttachment.class);
+        ExceptionAttachment partial = attachments.get(0);
         assertThat(partial.getDisplayName(), equalTo("EXCEPTION_MESSAGE"));
         assertThat(partial.getText(), equalTo("Plugin was unable to deserialize the exception from version 0.12 or older"));
 
-        PhaseExecutionAttachment.ExceptionAttachment full = attachments.get(1);
+        ExceptionAttachment full = attachments.get(1);
 
         final String EX_MSG = "java.lang.NullPointerException";
         assertThat(full.getDisplayName(), equalTo(EX_MSG));
@@ -464,7 +499,7 @@ public class CloudStatisticsTest {
             public void run() {
                 for (;;) {
                     try {
-                        ProvisioningActivity activity = CloudStatistics.ProvisioningListener.get().onStarted(new ProvisioningActivity.Id("test1", null, "test1"));
+                        ProvisioningActivity activity = ProvisioningListener.get().onStarted(new Id("test1", null, "test1"));
                         activity.enterIfNotAlready(LAUNCHING);
                         Thread.sleep(new Random().nextInt(50));
                         activity.enterIfNotAlready(OPERATING);
@@ -538,8 +573,8 @@ public class CloudStatisticsTest {
             try {
                 // Avoid saving as it is a) not related to test and b) spins infinite recursion of saving
                 BulkChange bc = new BulkChange(CloudStatistics.get());
-                final CloudStatistics.ProvisioningListener l = CloudStatistics.ProvisioningListener.get();
-                l.onStarted(new ProvisioningActivity.Id("Cloud", "template", "PAModifying"));
+                final ProvisioningListener l = ProvisioningListener.get();
+                l.onStarted(new Id("Cloud", "template", "PAModifying"));
                 bc.abort();
             } catch (Throwable e) {
                 return e;
