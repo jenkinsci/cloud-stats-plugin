@@ -37,7 +37,6 @@ import hudson.model.Node;
 import hudson.model.PeriodicWork;
 import hudson.model.Saveable;
 import hudson.model.TaskListener;
-import hudson.plugins.extendedread.SystemReadPermission;
 import hudson.security.Permission;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.Cloud;
@@ -147,8 +146,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
     @Override
     public @Nonnull Permission getRequiredPermission() {
-        //Move to Jenkins.SYSTEM_READ when baseline is above 2.222
-        return SystemReadPermission.SYSTEM_READ;
+        return Jenkins.SYSTEM_READ;
     }
 
     @Override
