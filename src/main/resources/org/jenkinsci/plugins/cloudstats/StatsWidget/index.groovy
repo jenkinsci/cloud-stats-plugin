@@ -50,7 +50,7 @@ if (widget.displayed) {
             tr {
                 def score = index.cloudHealth(cloudName).getCurrent()
                 td(colspan: 2) {
-                    l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                    l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score + "")
                     st.nbsp()
                     if (cloudViews && j.getCloud(cloudName) != null) {
                         a(href: rootURL + "/cloud/" + cloudName) {
@@ -68,7 +68,7 @@ if (widget.displayed) {
                     tr {
                         td()
                         td {
-                            l.icon("class": "${health.current.weather.iconClassName} icon-sm", alt: health.current.weather.score)
+                            l.icon("class": "${health.current.weather.iconClassName} icon-sm", alt: health.current.weather.score + "")
                             st.nbsp()
                             text(templateName)
                         }
