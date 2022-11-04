@@ -24,7 +24,7 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,7 +49,7 @@ import java.util.List;
 @ThreadSafe
 public class CyclicThreadSafeCollection<E> implements Collection<E> {
 
-    private final @Nonnull E[] data;
+    private final @NonNull E[] data;
     private @Nonnegative int next = 0;
     private @Nonnegative int size = 0;
 
@@ -77,7 +77,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
      * It is not guaranteed the elements will be consecutive in the collection (other thread can add elements in between) but it is guaranteed to preserve order.
      */
     @Override
-    public boolean addAll(@Nonnull Collection<? extends E> c) {
+    public boolean addAll(@NonNull Collection<? extends E> c) {
         for (E e : c) {
             add(e);
         }
@@ -99,7 +99,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
      * Iterated elements represent a snapshot of the collection.
      */
     @Override
-    public @Nonnull Iterator<E> iterator() {
+    public @NonNull Iterator<E> iterator() {
         return toList().iterator();
     }
 
@@ -131,19 +131,19 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     @Override
-    public boolean containsAll(@Nonnull Collection<?> c) {
+    public boolean containsAll(@NonNull Collection<?> c) {
         return toList().containsAll(c);
     }
 
     /**
      * Get elements in separate collection.
      */
-    public @Nonnull List<E> toList() {
+    public @NonNull List<E> toList() {
         return Arrays.asList(toArray());
     }
 
     @Override
-    public @Nonnull E[] toArray() {
+    public @NonNull E[] toArray() {
         synchronized (data) { // size() and toArray() needs to be consistent
             return toArray(CyclicThreadSafeCollection.newArray(size()));
         }
@@ -151,7 +151,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
 
     @SuppressWarnings("SuspiciousSystemArraycopy")
     @Override
-    public @Nonnull <T> T[] toArray(@Nonnull T[] ret) {
+    public @NonNull <T> T[] toArray(@NonNull T[] ret) {
         synchronized (data) {
             int size = size();
             if (ret.length < size) {
@@ -184,12 +184,12 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     }
 
     @Override
-    public boolean removeAll(@Nonnull Collection<?> c) {
+    public boolean removeAll(@NonNull Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean retainAll(@Nonnull Collection<?> c) {
+    public boolean retainAll(@NonNull Collection<?> c) {
         throw new UnsupportedOperationException();
     }
 }

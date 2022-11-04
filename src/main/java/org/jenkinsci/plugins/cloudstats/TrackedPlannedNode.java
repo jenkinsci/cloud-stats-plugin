@@ -27,7 +27,7 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.Future;
 
 import static hudson.slaves.NodeProvisioner.*;
@@ -43,9 +43,9 @@ import static hudson.slaves.NodeProvisioner.*;
  */
 public class TrackedPlannedNode extends PlannedNode implements TrackedItem {
 
-    private final @Nonnull ProvisioningActivity.Id id;
+    private final @NonNull ProvisioningActivity.Id id;
 
-    public TrackedPlannedNode(@Nonnull ProvisioningActivity.Id id, int numExecutors, @Nonnull Future<Node> future) {
+    public TrackedPlannedNode(@NonNull ProvisioningActivity.Id id, int numExecutors, @NonNull Future<Node> future) {
         super(extractTemporaryName(id), future, numExecutors);
 
         this.id = id;
@@ -63,7 +63,7 @@ public class TrackedPlannedNode extends PlannedNode implements TrackedItem {
         return name;
     }
 
-    public @Nonnull ProvisioningActivity.Id getId() {
+    public @NonNull ProvisioningActivity.Id getId() {
         return id;
     }
 }

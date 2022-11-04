@@ -27,8 +27,8 @@ import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import hudson.model.Action;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
@@ -42,10 +42,10 @@ import java.nio.file.NoSuchFileException;
  */
 public class PhaseExecutionAttachment implements Action, Serializable {
 
-    private final @Nonnull ProvisioningActivity.Status status;
-    private final @Nonnull String title;
+    private final @NonNull ProvisioningActivity.Status status;
+    private final @NonNull String title;
 
-    public PhaseExecutionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title) {
+    public PhaseExecutionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull String title) {
         this.status = status;
         this.title = title;
     }
@@ -57,14 +57,14 @@ public class PhaseExecutionAttachment implements Action, Serializable {
      * something worth attention on this attachment anyway or {@link Status#FAIL} in case provisioning failed with this attachment
      * explaining the cause.
      */
-    public @Nonnull ProvisioningActivity.Status getStatus() {
+    public @NonNull ProvisioningActivity.Status getStatus() {
         return status;
     }
 
     /**
      * Single line description of the attachment nature.
      */
-    public @Nonnull String getTitle() {
+    public @NonNull String getTitle() {
         return title.replaceAll("\n", " ");
     }
 
@@ -74,7 +74,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
     }
 
     @Override
-    public @Nonnull String getDisplayName() {
+    public @NonNull String getDisplayName() {
         String title = getTitle();
         return title.length() < 50 ? title: (title.substring(0, 49) + "…");
     }
@@ -96,7 +96,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         // Replaced by text field
         @Deprecated private transient Throwable throwable;
 
-        private /*final*/ @Nonnull String text;
+        private /*final*/ @NonNull String text;
 
         @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
         private Object readResolve() {
@@ -112,7 +112,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return this;
         }
 
-        public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull Throwable throwable) {
+        public ExceptionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull Throwable throwable) {
             super(status, extractTitle(throwable));
             this.text = Functions.printThrowable(throwable);
         }
@@ -120,7 +120,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         /**
          * Extract meaningful message from an exception
          */
-        @VisibleForTesting /*package*/ static String extractTitle(@Nonnull Throwable throwable) {
+        @VisibleForTesting /*package*/ static String extractTitle(@NonNull Throwable throwable) {
             String message = throwable.getMessage();
 
             // The message might be empty (NPE for example) so get the type at least
@@ -134,7 +134,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return message;
         }
 
-        public ExceptionAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title, @Nonnull Throwable throwable) {
+        public ExceptionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull String title, @NonNull Throwable throwable) {
             super(status, title);
             this.text = Functions.printThrowable(throwable);
         }
@@ -147,7 +147,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return throwable;
         }
 
-        public @Nonnull String getText() {
+        public @NonNull String getText() {
             return text;
         }
 
@@ -156,7 +156,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         }
 
         @Override
-        public @Nonnull String getUrlName() {
+        public @NonNull String getUrlName() {
             return "exception";
         }
     }

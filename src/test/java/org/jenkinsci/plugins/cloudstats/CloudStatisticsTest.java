@@ -48,7 +48,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.ObjectStreamException;
 import java.net.URL;
 import java.time.Duration;
@@ -564,7 +564,7 @@ public class CloudStatisticsTest {
     // Activity that adds another one while being written to simulate concurrent iteration and update
     private static final class StatsModifyingAttachment extends PhaseExecutionAttachment  {
 
-        public StatsModifyingAttachment(@Nonnull ProvisioningActivity.Status status, @Nonnull String title) {
+        public StatsModifyingAttachment(@NonNull ProvisioningActivity.Status status, @NonNull String title) {
             super(status, title);
         }
 

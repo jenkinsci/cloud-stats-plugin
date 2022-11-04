@@ -30,8 +30,8 @@ import jenkins.model.TransientActionFactory;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -71,7 +71,7 @@ public class CloudAction implements Action {
             return Cloud.class;
         }
 
-        @Nonnull @Override public Collection<? extends Action> createFor(@Nonnull Cloud cloud) {
+        @NonNull @Override public Collection<? extends Action> createFor(@NonNull Cloud cloud) {
             return Collections.singletonList(new CloudAction(cloud));
         }
     }

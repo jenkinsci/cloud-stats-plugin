@@ -28,8 +28,8 @@ import hudson.model.ModelObject;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.Serializable;
@@ -97,7 +97,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      * Used to a) uniquely identify the activity throughout the lifecycle and b) map Computer/Node/PlannedNode to its cloud/template.
      */
     public static final class Id implements Serializable {
-        private final @Nonnull String cloudName;
+        private final @NonNull String cloudName;
         private final @CheckForNull String templateName;
         private final @CheckForNull String nodeName;
 
@@ -112,18 +112,18 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
          * @param nodeName Name of the agent to be provisioned. Of the name of the agent is not known ahead, it can
          *                    be <code>null</code> cloud stats plugin will update it once it will be known.
          */
-        public Id(@Nonnull String cloudName, @CheckForNull String templateName, @CheckForNull String nodeName) {
+        public Id(@NonNull String cloudName, @CheckForNull String templateName, @CheckForNull String nodeName) {
             this.cloudName = cloudName;
             this.templateName = templateName;
             this.nodeName = nodeName;
             this.fingerprint = System.identityHashCode(this) ^ (int) System.currentTimeMillis();
         }
 
-        public Id(@Nonnull String cloudName, @CheckForNull String templateName) {
+        public Id(@NonNull String cloudName, @CheckForNull String templateName) {
             this(cloudName, templateName, null);
         }
 
-        public Id(@Nonnull String cloudName) {
+        public Id(@NonNull String cloudName) {
             this(cloudName, null);
         }
 
@@ -132,11 +132,11 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
          *
          * The created Id is equal to this one.
          */
-        public @Nonnull Id named(@Nonnull String name) {
+        public @NonNull Id named(@NonNull String name) {
             return new Id(this, name);
         }
 
-        private Id(@Nonnull Id id, @Nonnull String name) {
+        private Id(@NonNull Id id, @NonNull String name) {
             cloudName = id.cloudName;
             templateName = id.templateName;
             fingerprint = id.fingerprint;
@@ -146,7 +146,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         /**
          * Name of the cloud that initiated this activity.
          */
-        public @Nonnull String getCloudName() {
+        public @NonNull String getCloudName() {
             return cloudName;
         }
 
@@ -190,7 +190,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
     }
 
-    private final @Nonnull Id id;
+    private final @NonNull Id id;
 
     @GuardedBy("id")
     private @Nullable String name;
@@ -207,7 +207,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         progress.put(Phase.COMPLETED, null);
     }
 
-    public ProvisioningActivity(@Nonnull Id id) {
+    public ProvisioningActivity(@NonNull Id id) {
         this.id = id;
         enter(new PhaseExecution(Phase.PROVISIONING));
 
@@ -222,7 +222,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         this.name = name;
     }
 
-    /*package for testing*/ ProvisioningActivity(@Nonnull Id id, long started) {
+    /*package for testing*/ ProvisioningActivity(@NonNull Id id, long started) {
         this.id = id;
         enter(new PhaseExecution(Phase.PROVISIONING, started));
 
@@ -237,11 +237,11 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         this.name = name;
     }
 
-    public @Nonnull Id getId() {
+    public @NonNull Id getId() {
         return id;
     }
 
-    public @Nonnull Date getStarted() {
+    public @NonNull Date getStarted() {
         synchronized (progress) {
             return progress.get(Phase.PROVISIONING).getStarted();
         }
@@ -256,7 +256,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     /**
      * {@link PhaseExecution} or null in case it is/was not executed.
      */
-    public @CheckForNull PhaseExecution getPhaseExecution(@Nonnull Phase phase) {
+    public @CheckForNull PhaseExecution getPhaseExecution(@NonNull Phase phase) {
         synchronized (progress) {
             return progress.get(phase);
         }
@@ -267,7 +267,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * @return Map of {@link Phase} and nullable {@link PhaseExecution}.
      */
-    public @Nonnull Map<Phase, PhaseExecution> getPhaseExecutions() {
+    public @NonNull Map<Phase, PhaseExecution> getPhaseExecutions() {
         // progress is threadsafe here
         return Collections.unmodifiableMap(progress);
     }
@@ -275,7 +275,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     /**
      * Get current {@link PhaseExecution}.
      */
-    public @Nonnull PhaseExecution getCurrentPhaseExecution() {
+    public @NonNull PhaseExecution getCurrentPhaseExecution() {
         synchronized (progress) {
             PhaseExecution ex = progress.get(Phase.COMPLETED);
             if (ex != null) return ex;
@@ -296,7 +296,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     /**
      * Get current {@link Phase}.
      */
-    public @Nonnull Phase getCurrentPhase() {
+    public @NonNull Phase getCurrentPhase() {
         return getCurrentPhaseExecution().getPhase();
     }
 
@@ -305,7 +305,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * It is the works status of any of the phases, OK by default.
      */
-    public @Nonnull Status getStatus() {
+    public @NonNull Status getStatus() {
         synchronized (progress) {
             Status status = Status.OK;
             for (PhaseExecution e : progress.values()) {
@@ -324,7 +324,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * @throws IllegalArgumentException In case phases are entered repeatedly.
      */
-    public void enter(@Nonnull Phase phase) {
+    public void enter(@NonNull Phase phase) {
         synchronized (progress) {
             if (progress.get(phase) != null) throw new IllegalStateException(
                     "The phase " + phase + " has already started"
@@ -344,7 +344,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
     }
 
-    /*package for testing*/ void enter(@Nonnull PhaseExecution pe) {
+    /*package for testing*/ void enter(@NonNull PhaseExecution pe) {
         synchronized (progress) {
             progress.put(pe.getPhase(), pe);
         }
@@ -358,7 +358,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * @return {@code true} is phase was entered.
      */
-    public boolean enterIfNotAlready(@Nonnull Phase phase) {
+    public boolean enterIfNotAlready(@NonNull Phase phase) {
         synchronized (progress) {
             // Entered or skipped
             if (progress.get(phase) != null || getCurrentPhase().compareTo(phase) >= 0) return false;
@@ -384,7 +384,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     }
 
     @Override
-    public @Nonnull String getDisplayName() {
+    public @NonNull String getDisplayName() {
         return "Activity " + getName();
     }
 
@@ -395,7 +395,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      * time and during rename.
      */
     @Restricted(NoExternalUse.class)
-    /*package*/ void rename(@Nonnull String newName) {
+    /*package*/ void rename(@NonNull String newName) {
         if (Util.fixEmptyAndTrim(newName) == null) throw new IllegalArgumentException("Unable to rename to empty string");
         synchronized (id) {
             name = newName;
@@ -403,7 +403,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     }
 
     @Restricted(NoExternalUse.class) // Stapler only
-    public PhaseExecution getPhase(@Nonnull String phaseName) {
+    public PhaseExecution getPhase(@NonNull String phaseName) {
         Phase phase = Phase.valueOf(phaseName);
         return getPhaseExecution(phase);
     }
@@ -414,7 +414,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      * @return Positive integer in case the phase is completed, negative in case it is in progress
      */
     @Restricted(NoExternalUse.class) // Stapler only
-    public long getDuration(@Nonnull PhaseExecution execution) {
+    public long getDuration(@NonNull PhaseExecution execution) {
         Phase phase = execution.getPhase();
         if (phase == Phase.COMPLETED) throw new IllegalArgumentException();
 
@@ -438,7 +438,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     }
 
     @Override
-    public int compareTo(@Nonnull ProvisioningActivity o) {
+    public int compareTo(@NonNull ProvisioningActivity o) {
         return Long.compare(o.getStartedTimestamp(), getStartedTimestamp());
     }
 

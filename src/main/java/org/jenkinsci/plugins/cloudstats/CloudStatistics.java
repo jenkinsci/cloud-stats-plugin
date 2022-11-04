@@ -51,8 +51,8 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.StaplerProxy;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +90,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
      * The consistency between 'active' and 'log' is ensured by active monitor.
      */
     @GuardedBy("active") // JENKINS-41037: XStream can iterate while it is written
-    private /*final except for serialization*/ @Nonnull Collection<ProvisioningActivity> active = new CopyOnWriteArrayList<>();
+    private /*final except for serialization*/ @NonNull Collection<ProvisioningActivity> active = new CopyOnWriteArrayList<>();
 
     /**
      * Activities that are in completed state. The oldest entries (least recently completed) are rotated.
@@ -98,12 +98,12 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
      * The collection itself uses synchronized collection, to manipulate single entry it needs to be explicitly synchronized.
      */
     @GuardedBy("active")
-    private /*final except for serialization*/ @Nonnull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
+    private /*final except for serialization*/ @NonNull CyclicThreadSafeCollection<ProvisioningActivity> log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
 
     /**
      * Get the singleton instance.
      */
-    public static @Nonnull CloudStatistics get() {
+    public static @NonNull CloudStatistics get() {
         return Jenkins.getInstance().getExtensionList(CloudStatistics.class).get(0);
     }
 
@@ -145,7 +145,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     }
 
     @Override
-    public @Nonnull Permission getRequiredPermission() {
+    public @NonNull Permission getRequiredPermission() {
         return Jenkins.SYSTEM_READ;
     }
 
@@ -164,7 +164,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     /**
      * Get activities that was not completed yet.
      */
-    public @Nonnull Collection<ProvisioningActivity> getNotCompletedActivities() {
+    public @NonNull Collection<ProvisioningActivity> getNotCompletedActivities() {
         ArrayList<ProvisioningActivity> activeCopy;
         synchronized (active) {
             activeCopy = new ArrayList<>(active);
@@ -182,7 +182,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     }
 
     @VisibleForTesting
-    /*package*/ @Nonnull Collection<ProvisioningActivity> getRetainedActivities() {
+    /*package*/ @NonNull Collection<ProvisioningActivity> getRetainedActivities() {
         synchronized (active) {
             return new ArrayList<>(active);
         }
@@ -258,7 +258,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     }
 
     @Restricted(NoExternalUse.class) // view only
-    public ProvisioningActivity getActivity(@Nonnull String hashString) {
+    public ProvisioningActivity getActivity(@NonNull String hashString) {
         int hash;
         try {
             hash = Integer.parseInt(hashString);
@@ -277,9 +277,9 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
     @Restricted(NoExternalUse.class) // view only
     public @CheckForNull String getUrl(
-            @Nonnull ProvisioningActivity activity,
-            @Nonnull PhaseExecution phaseExecution,
-            @Nonnull PhaseExecutionAttachment attachment
+            @NonNull ProvisioningActivity activity,
+            @NonNull PhaseExecution phaseExecution,
+            @NonNull PhaseExecutionAttachment attachment
     ) {
         activity.getClass(); phaseExecution.getClass(); attachment.getClass();
 
@@ -297,7 +297,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
      * Attach information to activity's phase execution.
      */
     // Enforce attach goes through this class to complete the activity upon first failure and persist as needed
-    public void attach(@Nonnull ProvisioningActivity activity, @Nonnull ProvisioningActivity.Phase phase, @Nonnull PhaseExecutionAttachment attachment) {
+    public void attach(@NonNull ProvisioningActivity activity, @NonNull ProvisioningActivity.Phase phase, @NonNull PhaseExecutionAttachment attachment) {
         activity.attach(phase, attachment);
 
         if (attachment.getStatus() == ProvisioningActivity.Status.FAIL) {
@@ -466,7 +466,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
          * @param id Unique identifier of the activity. The plugin is responsible for this to be unique and all subsequent
          *           calls are identified by the same Id instance.
          */
-        public @Nonnull ProvisioningActivity onStarted(@Nonnull ProvisioningActivity.Id id) {
+        public @NonNull ProvisioningActivity onStarted(@NonNull ProvisioningActivity.Id id) {
             ProvisioningActivity activity = new ProvisioningActivity(id);
             synchronized (stats.active) {
                 stats.active.add(activity);
@@ -490,7 +490,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
          *
          * The method should be called before the node is added to Jenkins.
          */
-        public @CheckForNull ProvisioningActivity onComplete(@Nonnull ProvisioningActivity.Id id, @Nonnull Node node) {
+        public @CheckForNull ProvisioningActivity onComplete(@NonNull ProvisioningActivity.Id id, @NonNull Node node) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
                 activity.rename(node.getDisplayName());
@@ -514,7 +514,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
          *
          * No node with {@code id} should be added added to jenkins.
          */
-        public @CheckForNull ProvisioningActivity onFailure(@Nonnull ProvisioningActivity.Id id, @Nonnull Throwable throwable) {
+        public @CheckForNull ProvisioningActivity onFailure(@NonNull ProvisioningActivity.Id id, @NonNull Throwable throwable) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
                 stats.attach(activity, ProvisioningActivity.Phase.PROVISIONING, new PhaseExecutionAttachment.ExceptionAttachment(
@@ -631,7 +631,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
         // Reflect renames so the name of the activity tracks the agent name
         @Override
-        protected void onUpdated(@Nonnull Node oldOne, @Nonnull Node newOne) {
+        protected void onUpdated(@NonNull Node oldOne, @NonNull Node newOne) {
             if (oldOne.getNodeName().equals(newOne.getNodeName())) return; // Not renamed
 
             ProvisioningActivity.Id id = getIdFor(oldOne);
@@ -645,7 +645,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         }
 
         @Override
-        protected void onDeleted(@Nonnull Node node) {
+        protected void onDeleted(@NonNull Node node) {
             ProvisioningActivity.Id id = getIdFor(node);
             if (id == null) return; // Not tracked
 

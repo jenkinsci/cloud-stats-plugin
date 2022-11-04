@@ -27,7 +27,7 @@ import hudson.model.HealthReport;
 import jenkins.util.NonLocalizable;
 
 import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,9 +49,9 @@ import static java.lang.Math.round;
  */
 public final class Health {
 
-    private final @Nonnull List<ProvisioningActivity> samples;
+    private final @NonNull List<ProvisioningActivity> samples;
 
-    public Health(@Nonnull Collection<ProvisioningActivity> samples) {
+    public Health(@NonNull Collection<ProvisioningActivity> samples) {
         this.samples = new ArrayList<>(samples);
         Collections.sort(this.samples);
     }
@@ -122,7 +122,7 @@ public final class Health {
         }
 
         @Override
-        public int compareTo(@Nonnull Report o) {
+        public int compareTo(@NonNull Report o) {
             return Float.compare(this.percent, o.percent);
         }
 
