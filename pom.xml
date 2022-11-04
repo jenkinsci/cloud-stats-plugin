@@ -29,7 +29,7 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/cloud-stats-plugin.git</connection>
+    <connection>scm:git:https://github.com/jenkinsci/cloud-stats-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/cloud-stats-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/cloud-stats-plugin</url>
     <tag>HEAD</tag>
