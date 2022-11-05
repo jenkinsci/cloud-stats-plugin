@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Report Jenkins dynamic provisioning activities and statistics
+</div>

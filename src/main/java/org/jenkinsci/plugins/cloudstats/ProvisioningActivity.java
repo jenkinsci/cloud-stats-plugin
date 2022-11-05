@@ -110,7 +110,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
          * @param cloudName Name of the cloud that initiated this activity.
          * @param templateName Name of the template that initiated this activity.
          * @param nodeName Name of the agent to be provisioned. Of the name of the agent is not known ahead, it can
-         *                    be <tt>null</tt> cloud stats plugin will update it once it will be known.
+         *                    be <code>null</code> cloud stats plugin will update it once it will be known.
          */
         public Id(@Nonnull String cloudName, @CheckForNull String templateName, @CheckForNull String nodeName) {
             this.cloudName = cloudName;
@@ -151,14 +151,14 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
 
         /**
-         * Name of the template used to provision this agent. <tt>null</tt> if no further distinction is needed except for cloud name.
+         * Name of the template used to provision this agent. <code>null</code> if no further distinction is needed except for cloud name.
          */
         public @CheckForNull String getTemplateName() {
             return templateName;
         }
 
         /**
-         * Name of the agent to be provisioned by this activity. <tt>null</tt> if not known ahead.
+         * Name of the agent to be provisioned by this activity. <code>null</code> if not known ahead.
          */
         public @CheckForNull String getNodeName() {
             return nodeName;
