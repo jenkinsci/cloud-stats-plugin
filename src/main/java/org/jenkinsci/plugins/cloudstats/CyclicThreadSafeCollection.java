@@ -34,14 +34,14 @@ import java.util.List;
 /**
  * Circular thread-safe Collection.
  *
- * At most <tt>capacity</tt> elements are preserved and when more added, oldest elements are deleted. Collection preserves
+ * At most <code>capacity</code> elements are preserved and when more added, oldest elements are deleted. Collection preserves
  * insertion order of the elements so the oldest is the first one.
  *
- * The class does not implement selective deletion operations (<tt>remove()</tt>, <tt>removeAll()</tt>, <tt>retainAll()</tt>) but it implements <tt>clear()</tt>.
+ * The class does not implement selective deletion operations (<code>remove()</code>, <code>removeAll()</code>, <code>retainAll()</code>) but it implements <code>clear()</code>.
  *
- * All operations, including iteration, are thread safe. Operations <tt>add()</tt>, <tt>size()</tt> and <tt>isEmpty()</tt>
+ * All operations, including iteration, are thread safe. Operations <code>add()</code>, <code>size()</code> and <code>isEmpty()</code>
  * performs in constant time. The rest of the operations have linear time complexity, while never holding the lock to
- * perform any custom logic (such as calling <tt>contains()</tt> on elements) or entering <tt>synchronized</tt> section
+ * perform any custom logic (such as calling <code>contains()</code> on elements) or entering <code>synchronized</code> section
  * on any other monitor except for the internal lock. In such cases, lock is used only to make the copy of the content.
  *
  * @author ogondza.
@@ -159,7 +159,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
             } else if (ret.length > size) {
                 // javadoc: If this collection fits in the specified array with room to spare
                 // (i.e., the array has more elements than this collection), the element
-                // in the array immediately following the end of the collection is set to <tt>null</tt>
+                // in the array immediately following the end of the collection is set to <code>null</code>
                 ret[size] = null;
             }
             if (size < data.length) { // Initial fill
