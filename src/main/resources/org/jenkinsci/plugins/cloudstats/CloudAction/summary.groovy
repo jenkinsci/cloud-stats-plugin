@@ -18,7 +18,7 @@ Health.Report report = index.cloudHealth(action.cloud.name).current
 HealthReport hr = report.weather
 
 h2 {
-    l.icon("class": "${hr.iconClassName} icon-md", alt: hr.score)
+    l.icon("class": "${hr.iconClassName} icon-md", alt: hr.score + "")
     st.nbsp()
     text("${action.displayName} (Health ${report})")
 }

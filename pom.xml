@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>cloud-stats</artifactId>
-  <version>0.28-SNAPSHOT</version>
+  <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
   <name>Cloud Statistics Plugin</name>
   <url>https://github.com/jenkinsci/cloud-stats-plugin</url>
@@ -28,17 +28,17 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/cloud-stats-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/cloud-stats-plugin.git</developerConnection>
-    <url>https://github.com/jenkinsci/cloud-stats-plugin</url>
-    <tag>HEAD</tag>
+    <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+    <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+    <url>https://github.com/${gitHubRepo}</url>
+    <tag>${scmTag}</tag>
   </scm>
 
   <dependencies>
     <dependency> <!-- Needed by JTH -->
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>matrix-auth</artifactId>
-      <version>2.3</version>
+      <version>2.6.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -71,8 +71,10 @@
   </pluginRepositories>
 
   <properties>
+    <revision>0.28</revision>
+    <changelist>-SNAPSHOT</changelist>
+    <gitHubRepo>jenkinsci/cloud-stats-plugin</gitHubRepo>
     <jenkins.version>2.346.3</jenkins.version>
-    <java.level>8</java.level>
     <surefire.useFile>false</surefire.useFile>
     <useBeta>true</useBeta>
     <spotbugs.failOnError>false</spotbugs.failOnError>

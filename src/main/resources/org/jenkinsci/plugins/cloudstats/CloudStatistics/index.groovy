@@ -56,13 +56,13 @@ l.layout(permission: stats.getRequiredPermission()) {
                     td()
                     td {
                         def score = ch.overall
-                        l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                        l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score + "")
                         st.nbsp()
                         text(score)
                     }
                     td {
                         def score = ch.current
-                        l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                        l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score + "")
                         st.nbsp()
                         text(score)
                     }
@@ -76,13 +76,13 @@ l.layout(permission: stats.getRequiredPermission()) {
                             td(template)
                             td {
                                 def score = th.overall
-                                l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                                l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score + "")
                                 st.nbsp()
                                 text(score)
                             }
                             td {
                                 def score = th.current
-                                l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score)
+                                l.icon("class": "${score.weather.iconClassName} icon-sm", alt: score.weather.score + "")
                                 st.nbsp()
                                 text(score)
                             }
