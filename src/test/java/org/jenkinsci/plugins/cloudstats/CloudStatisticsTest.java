@@ -31,12 +31,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.BulkChange;
 import hudson.ExtensionList;
 import hudson.Functions;
-import hudson.model.Computer;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Label;
-import hudson.model.LoadStatistics;
-import hudson.model.Node;
+import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.security.AuthorizationStrategy;
 import hudson.slaves.NodeProvisioner;
@@ -56,12 +51,16 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import javax.annotation.Nonnull;
 import java.io.ObjectStreamException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
@@ -229,13 +228,13 @@ public class CloudStatisticsTest {
 
         Id okId = new Id("MyCloud", "working-template", "future-agent");
         provisioningListener.onStarted(okId);
-        slave = TrackedAgent.create(okId, j);
-        provisioningListener.onComplete(okId, slave);
-        slave.toComputer().waitUntilOnline();
-        Thread.sleep(500);
-        slave.toComputer().doDoDelete();
+        final Node agent = TrackedAgent.create(okId, j);
+        provisioningListener.onComplete(okId, agent);
+        agent.toComputer().waitUntilOnline();
+        Thread.sleep(1000L);
+        agent.toComputer().doDoDelete();
 
-        Thread.sleep(500);
+        await().atMost(10, SECONDS).until(() -> j.jenkins.getNode(agent.getNodeName()) == null);
 
         // Then
         ProvisioningActivity failedToProvision = cs.getActivityFor(failId);
