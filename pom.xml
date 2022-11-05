@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>cloud-stats</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Cloud Statistics Plugin</name>
   <description>Report Jenkins dynamic provisioning activities and statistics</description>
@@ -72,8 +72,7 @@
   </pluginRepositories>
 
   <properties>
-    <revision>0.28</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist>999999-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/cloud-stats-plugin</gitHubRepo>
     <jenkins.version>2.235.1</jenkins.version>
     <java.level>8</java.level>
