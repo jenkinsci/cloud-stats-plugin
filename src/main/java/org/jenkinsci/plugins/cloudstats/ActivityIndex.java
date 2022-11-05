@@ -23,7 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,10 +45,10 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERAT
  */
 public final class ActivityIndex {
     public static final List<ProvisioningActivity> EMPTY = Collections.emptyList();
-    private final @Nonnull Map<String, Collection<ProvisioningActivity>> byCloud;
-    private final @Nonnull Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate;
+    private final @NonNull Map<String, Collection<ProvisioningActivity>> byCloud;
+    private final @NonNull Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate;
 
-    public ActivityIndex(@Nonnull List<ProvisioningActivity> activities) {
+    public ActivityIndex(@NonNull List<ProvisioningActivity> activities) {
         Map<String, Collection<ProvisioningActivity>> byCloud = new HashMap<>();
         Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate = new HashMap<>();
         for (ProvisioningActivity a: activities) {
@@ -84,7 +84,7 @@ public final class ActivityIndex {
      *
      * @return Map where cloud names are the keys.
      */
-    public @Nonnull Map<String, Collection<ProvisioningActivity>> byCloud() {
+    public @NonNull Map<String, Collection<ProvisioningActivity>> byCloud() {
         return byCloud;
     }
 
@@ -94,14 +94,14 @@ public final class ActivityIndex {
      * @return Map where cloud names are the keys, values are maps where keys are template names. Note that template name
      * can be null in case the cloud is not using templates. It should be the only key in such a case.
      */
-    public @Nonnull Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate() {
+    public @NonNull Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate() {
         return byTemplate;
     }
 
     /**
      * Get activities owned by particular cloud.
      */
-    public @Nonnull Collection<ProvisioningActivity> forCloud(@Nonnull String name) {
+    public @NonNull Collection<ProvisioningActivity> forCloud(@NonNull String name) {
         Collection<ProvisioningActivity> ret = byCloud.get(name);
         return ret == null ? EMPTY : ret;
     }
@@ -109,7 +109,7 @@ public final class ActivityIndex {
     /**
      * Get activities owned by particular cloud and template.
      */
-    public @Nonnull Collection<ProvisioningActivity> forTemplate(@Nonnull String cloud, @Nullable String template) {
+    public @NonNull Collection<ProvisioningActivity> forTemplate(@NonNull String cloud, @Nullable String template) {
         Map<String, Collection<ProvisioningActivity>> forCloud = byTemplate.get(cloud);
         if (forCloud == null) return EMPTY;
         Collection<ProvisioningActivity> ret = forCloud.get(template);
@@ -119,7 +119,7 @@ public final class ActivityIndex {
     /**
      * Get map of cloud names to their health metrics.
      */
-    public @Nonnull Map<String, Health> healthByCloud() {
+    public @NonNull Map<String, Health> healthByCloud() {
         HashMap<String, Health> ret = new HashMap<>(byCloud.size());
         for (Map.Entry<String, Collection<ProvisioningActivity>> entry : byCloud.entrySet()) {
             ret.put(entry.getKey(), new Health(filterForHealth(entry.getValue())));
@@ -128,7 +128,7 @@ public final class ActivityIndex {
         return ret;
     }
 
-    public @Nonnull Map<String, Map<String, Health>> healthByTemplate() {
+    public @NonNull Map<String, Map<String, Health>> healthByTemplate() {
         HashMap<String, Map<String, Health>> ret = new HashMap<>(byTemplate.size());
         for (Map.Entry<String, Map<String, Collection<ProvisioningActivity>>> entry : byTemplate.entrySet()) {
             HashMap<String, Health> tmpltret = new HashMap<>(entry.getValue().size());
@@ -141,11 +141,11 @@ public final class ActivityIndex {
         return ret;
     }
 
-    public @Nonnull Health cloudHealth(@Nonnull String cloud) {
+    public @NonNull Health cloudHealth(@NonNull String cloud) {
         return new Health(filterForHealth(forCloud(cloud)));
     }
 
-    public @Nonnull Health templateHealth(@Nonnull String cloud, @Nullable String template) {
+    public @NonNull Health templateHealth(@NonNull String cloud, @Nullable String template) {
         return new Health(filterForHealth(forTemplate(cloud, template)));
     }
 

@@ -28,8 +28,8 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -50,24 +50,24 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * phase begins. IOW, despite the fact the agent already started launching, plugin can still append provisioning log.
  */
 public final class PhaseExecution implements ModelObject {
-    private final @Nonnull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
+    private final @NonNull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
     private final long started;
-    private final @Nonnull ProvisioningActivity.Phase phase;
+    private final @NonNull ProvisioningActivity.Phase phase;
 
-    /*package*/ PhaseExecution(@Nonnull ProvisioningActivity.Phase phase) {
+    /*package*/ PhaseExecution(@NonNull ProvisioningActivity.Phase phase) {
         this(phase, System.currentTimeMillis());
     }
 
-    /*package*/ PhaseExecution(@Nonnull ProvisioningActivity.Phase phase, long started) {
+    /*package*/ PhaseExecution(@NonNull ProvisioningActivity.Phase phase, long started) {
         this.started = started;
         this.phase = phase;
     }
 
-    public @Nonnull List<PhaseExecutionAttachment> getAttachments() {
+    public @NonNull List<PhaseExecutionAttachment> getAttachments() {
         return Collections.unmodifiableList(attachments);
     }
 
-    public @Nonnull <T extends PhaseExecutionAttachment> List<T> getAttachments(@Nonnull Class<T> type) {
+    public @NonNull <T extends PhaseExecutionAttachment> List<T> getAttachments(@NonNull Class<T> type) {
         List<T> out = new ArrayList<>();
         for (PhaseExecutionAttachment attachment : getAttachments()) {
             if (type.isInstance(attachment)) {
@@ -77,7 +77,7 @@ public final class PhaseExecution implements ModelObject {
         return out;
     }
 
-    public @Nonnull ProvisioningActivity.Status getStatus() {
+    public @NonNull ProvisioningActivity.Status getStatus() {
         ProvisioningActivity.Status status = ProvisioningActivity.Status.OK;
         for (PhaseExecutionAttachment a : getAttachments()) {
             if (a.getStatus().ordinal() > status.ordinal()) {
@@ -87,7 +87,7 @@ public final class PhaseExecution implements ModelObject {
         return status;
     }
 
-    public @Nonnull Date getStarted() {
+    public @NonNull Date getStarted() {
         return new Date(started);
     }
 
@@ -95,12 +95,12 @@ public final class PhaseExecution implements ModelObject {
         return started;
     }
 
-    public @Nonnull ProvisioningActivity.Phase getPhase() {
+    public @NonNull ProvisioningActivity.Phase getPhase() {
         return phase;
     }
 
     @Override
-    public @Nonnull String getDisplayName() {
+    public @NonNull String getDisplayName() {
         return phase.toString();
     }
 
@@ -108,12 +108,12 @@ public final class PhaseExecution implements ModelObject {
      * Only to be invoked from {@link CloudStatistics#attach(ProvisioningActivity, ProvisioningActivity.Phase, PhaseExecutionAttachment)}.
      */
     @Restricted(NoExternalUse.class)
-    /*package*/ void attach(@Nonnull PhaseExecutionAttachment phaseExecutionAttachment) {
+    /*package*/ void attach(@NonNull PhaseExecutionAttachment phaseExecutionAttachment) {
         attachments.add(phaseExecutionAttachment);
     }
 
     @Restricted(NoExternalUse.class)
-    public @CheckForNull String getUrlName(@Nonnull PhaseExecutionAttachment attachment) {
+    public @CheckForNull String getUrlName(@NonNull PhaseExecutionAttachment attachment) {
         String urlName = attachment.getUrlName();
         if (urlName == null) return null;
 

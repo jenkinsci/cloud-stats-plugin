@@ -33,7 +33,7 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +56,7 @@ final class TrackedAgent extends AbstractCloudSlave implements TrackedItem {
         this.id = id;
     }
 
-    @Nonnull
+    @NonNull
     public static TrackedAgent create(ProvisioningActivity.Id id, JenkinsRule j) throws Exception {
         TrackedAgent slave = new TrackedAgent(id, j, null);
         j.jenkins.addNode(slave);
