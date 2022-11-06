@@ -38,7 +38,7 @@
     <dependency> <!-- Needed by JTH -->
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>matrix-auth</artifactId>
-      <version>2.6.2</version>
+      <version>3.1.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
