@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>cloud-stats</artifactId>
-  <version>${revision}${changelist}</version>
+  <version>${changelist}</version>
   <packaging>hpi</packaging>
   <name>Cloud Statistics Plugin</name>
   <url>https://github.com/jenkinsci/cloud-stats-plugin</url>
@@ -71,8 +71,7 @@
   </pluginRepositories>
 
   <properties>
-    <revision>0.28</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist>999999-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/cloud-stats-plugin</gitHubRepo>
     <jenkins.version>2.346.3</jenkins.version>
     <surefire.useFile>false</surefire.useFile>
