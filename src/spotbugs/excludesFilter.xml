@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<FindBugsFilter>
+  <!--
+    Exclusions in this section have been triaged and determined to be
+    false positives.
+  -->
+  <Match>
+    <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    <Or>
+      <Class name="org.jenkinsci.plugins.cloudstats.ProvisioningActivity$Id"/>
+      <Class name="org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment"/>
+    </Or>
+  </Match>
+
+  <!--
+    Here lies technical debt. Exclusions in this section have not yet
+    been triaged. When working on this section, pick an exclusion to
+    triage, then:
+
+    - Add a @SuppressFBWarnings(value = "[...]", justification = "[...]")
+      annotation if it is a false positive.  Indicate the reason why
+      it is a false positive, then remove the exclusion from this
+      section.
+
+    - If it is not a false positive, fix the bug, then remove the
+      exclusion from this section.
+  -->
+  <Match>
+    <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
+    <Class name="org.jenkinsci.plugins.cloudstats.CloudAction"/>
+    <Field name="cloud"/>
+  </Match>
+  <Match>
+    <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    <Class name="org.jenkinsci.plugins.cloudstats.CloudStatistics"/>
+  </Match>
+</FindBugsFilter>
