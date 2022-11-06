@@ -204,6 +204,17 @@ public class CloudStatisticsTest {
 
     @Test
     public void ui() throws Exception {
+        if (isWindows()) {
+            /* UI tests are not Windows specific, so it is not a
+             * compelling case to test this on Windows.
+             * 
+             * This test is unreliable on Windows agents on
+             * ci.jenkins.io, so it is better to skip the test and
+             * rely on runnig the test on non-Windows platforms to
+             * verify this functionality.
+             */
+            return;
+        }
         j.jenkins.clouds.add(new TestCloud("MyCloud"));
         j.jenkins.clouds.add(new TestCloud("PickyCloud"));
 
@@ -592,5 +603,10 @@ public class CloudStatisticsTest {
         public Node call() throws Exception {
             return TrackedAgent.create(id, j);
         }
+    }
+
+    /** inline ${@link hudson.Functions#isWindows()} to avoid remote classloader issues */
+    private boolean isWindows() {
+        return java.io.File.pathSeparatorChar==';';
     }
 }
