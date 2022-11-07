@@ -18,6 +18,11 @@
       <name>Oliver Gondža</name>
       <email>ogondza@gmail.com</email>
     </developer>
+    <developer>
+      <id>markewaite</id>
+      <name>Mark Waite</name>
+      <email>mark.earl.waite@gmail.com</email>
+    </developer>
   </developers>
 
   <licenses>
