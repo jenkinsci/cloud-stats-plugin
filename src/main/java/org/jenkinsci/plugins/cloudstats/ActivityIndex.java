@@ -23,22 +23,22 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
+import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERATING;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
-import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERATING;
+import javax.annotation.Nullable;
 
 /**
  * Indexed view of statistics snapshot.
  *
- * Provides access to activities indexed by cloud, template, etc.
+ * <p>Provides access to activities indexed by cloud, template, etc.
  *
  * @author ogondza.
  * @see CloudStatistics#getIndex()
@@ -51,7 +51,7 @@ public final class ActivityIndex {
     public ActivityIndex(@NonNull List<ProvisioningActivity> activities) {
         Map<String, Collection<ProvisioningActivity>> byCloud = new HashMap<>();
         Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate = new HashMap<>();
-        for (ProvisioningActivity a: activities) {
+        for (ProvisioningActivity a : activities) {
             ProvisioningActivity.Id id = a.getId();
             String cloudName = id.getCloudName();
             String templateName = id.getTemplateName();
@@ -73,7 +73,6 @@ public final class ActivityIndex {
                 cl.put(templateName, tmpl);
             }
             tmpl.add(a);
-
         }
         this.byCloud = Collections.unmodifiableMap(byCloud);
         this.byTemplate = Collections.unmodifiableMap(byTemplate);
@@ -91,34 +90,30 @@ public final class ActivityIndex {
     /**
      * Get activities sorted by owning cloud and template
      *
-     * @return Map where cloud names are the keys, values are maps where keys are template names. Note that template name
-     * can be null in case the cloud is not using templates. It should be the only key in such a case.
+     * @return Map where cloud names are the keys, values are maps where keys are template names.
+     *     Note that template name can be null in case the cloud is not using templates. It should
+     *     be the only key in such a case.
      */
     public @NonNull Map<String, Map<String, Collection<ProvisioningActivity>>> byTemplate() {
         return byTemplate;
     }
 
-    /**
-     * Get activities owned by particular cloud.
-     */
+    /** Get activities owned by particular cloud. */
     public @NonNull Collection<ProvisioningActivity> forCloud(@NonNull String name) {
         Collection<ProvisioningActivity> ret = byCloud.get(name);
         return ret == null ? EMPTY : ret;
     }
 
-    /**
-     * Get activities owned by particular cloud and template.
-     */
-    public @NonNull Collection<ProvisioningActivity> forTemplate(@NonNull String cloud, @Nullable String template) {
+    /** Get activities owned by particular cloud and template. */
+    public @NonNull Collection<ProvisioningActivity> forTemplate(
+            @NonNull String cloud, @Nullable String template) {
         Map<String, Collection<ProvisioningActivity>> forCloud = byTemplate.get(cloud);
         if (forCloud == null) return EMPTY;
         Collection<ProvisioningActivity> ret = forCloud.get(template);
-        return ret == null ? EMPTY: ret;
+        return ret == null ? EMPTY : ret;
     }
 
-    /**
-     * Get map of cloud names to their health metrics.
-     */
+    /** Get map of cloud names to their health metrics. */
     public @NonNull Map<String, Health> healthByCloud() {
         HashMap<String, Health> ret = new HashMap<>(byCloud.size());
         for (Map.Entry<String, Collection<ProvisioningActivity>> entry : byCloud.entrySet()) {
@@ -130,9 +125,11 @@ public final class ActivityIndex {
 
     public @NonNull Map<String, Map<String, Health>> healthByTemplate() {
         HashMap<String, Map<String, Health>> ret = new HashMap<>(byTemplate.size());
-        for (Map.Entry<String, Map<String, Collection<ProvisioningActivity>>> entry : byTemplate.entrySet()) {
+        for (Map.Entry<String, Map<String, Collection<ProvisioningActivity>>> entry :
+                byTemplate.entrySet()) {
             HashMap<String, Health> tmpltret = new HashMap<>(entry.getValue().size());
-            for (Map.Entry<String, Collection<ProvisioningActivity>> template : entry.getValue().entrySet()) {
+            for (Map.Entry<String, Collection<ProvisioningActivity>> template :
+                    entry.getValue().entrySet()) {
                 tmpltret.put(template.getKey(), new Health(filterForHealth(template.getValue())));
             }
             ret.put(entry.getKey(), tmpltret);

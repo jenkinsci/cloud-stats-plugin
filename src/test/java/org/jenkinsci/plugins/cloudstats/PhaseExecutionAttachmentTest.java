@@ -24,14 +24,13 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
-import org.junit.Test;
+import static org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment.ExceptionAttachment.extractTitle;
+import static org.junit.Assert.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-
-import static org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment.ExceptionAttachment.extractTitle;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class PhaseExecutionAttachmentTest {
 
@@ -43,7 +42,10 @@ public class PhaseExecutionAttachmentTest {
         assertEquals("NullPointerException", extractTitle(new NullPointerException()));
 
         assertEquals("NoSuchFileException: /foo", extractTitle(new NoSuchFileException("/foo")));
-        assertEquals("NoSuchFileException: /foo: Some reason", extractTitle(new NoSuchFileException("/foo", null, "Some reason")));
-        assertEquals("FileNotFoundException: /foo", extractTitle(new FileNotFoundException("/foo")));
+        assertEquals(
+                "NoSuchFileException: /foo: Some reason",
+                extractTitle(new NoSuchFileException("/foo", null, "Some reason")));
+        assertEquals(
+                "FileNotFoundException: /foo", extractTitle(new FileNotFoundException("/foo")));
     }
 }

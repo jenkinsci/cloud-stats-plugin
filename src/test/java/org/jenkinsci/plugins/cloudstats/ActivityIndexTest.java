@@ -23,16 +23,15 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import org.hamcrest.Matchers;
-import org.junit.Test;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
+import org.hamcrest.Matchers;
+import org.junit.Test;
 
 /**
  * @author ogondza.
@@ -50,13 +49,18 @@ public class ActivityIndexTest {
 
     @Test
     public void content() {
-        ActivityIndex index = new ActivityIndex(Arrays.asList(
-                new ProvisioningActivity(new ProvisioningActivity.Id("A", "a")),
-                new ProvisioningActivity(new ProvisioningActivity.Id("A", "b", "x")),
-                new ProvisioningActivity(new ProvisioningActivity.Id("B", "a", "xxxx")),
-                new ProvisioningActivity(new ProvisioningActivity.Id("C", null, "c")),
-                new ProvisioningActivity(new ProvisioningActivity.Id("C", null, "cc"))
-        ));
+        ActivityIndex index =
+                new ActivityIndex(
+                        Arrays.asList(
+                                new ProvisioningActivity(new ProvisioningActivity.Id("A", "a")),
+                                new ProvisioningActivity(
+                                        new ProvisioningActivity.Id("A", "b", "x")),
+                                new ProvisioningActivity(
+                                        new ProvisioningActivity.Id("B", "a", "xxxx")),
+                                new ProvisioningActivity(
+                                        new ProvisioningActivity.Id("C", null, "c")),
+                                new ProvisioningActivity(
+                                        new ProvisioningActivity.Id("C", null, "cc"))));
         assertThat(index.byCloud().keySet(), containsInAnyOrder("A", "B", "C"));
         assertThat(index.byCloud().get("A").size(), equalTo(2));
         assertThat(index.byCloud().get("B").size(), equalTo(1));
@@ -76,12 +80,25 @@ public class ActivityIndexTest {
 
     @Test
     public void activitiesNotCompletedOrOperatingAreIgnoredForHealth() {
-        ActivityIndex index = new ActivityIndex(Arrays.asList(
-                enter(new ProvisioningActivity(new ProvisioningActivity.Id("P", "p")), ProvisioningActivity.Phase.PROVISIONING),
-                enter(new ProvisioningActivity(new ProvisioningActivity.Id("L", "l")), ProvisioningActivity.Phase.LAUNCHING),
-                enter(new ProvisioningActivity(new ProvisioningActivity.Id("O", "o")), ProvisioningActivity.Phase.OPERATING),
-                enter(new ProvisioningActivity(new ProvisioningActivity.Id("C", "c")), ProvisioningActivity.Phase.COMPLETED)
-        ));
+        ActivityIndex index =
+                new ActivityIndex(
+                        Arrays.asList(
+                                enter(
+                                        new ProvisioningActivity(
+                                                new ProvisioningActivity.Id("P", "p")),
+                                        ProvisioningActivity.Phase.PROVISIONING),
+                                enter(
+                                        new ProvisioningActivity(
+                                                new ProvisioningActivity.Id("L", "l")),
+                                        ProvisioningActivity.Phase.LAUNCHING),
+                                enter(
+                                        new ProvisioningActivity(
+                                                new ProvisioningActivity.Id("O", "o")),
+                                        ProvisioningActivity.Phase.OPERATING),
+                                enter(
+                                        new ProvisioningActivity(
+                                                new ProvisioningActivity.Id("C", "c")),
+                                        ProvisioningActivity.Phase.COMPLETED)));
 
         Map<String, Health> hc = index.healthByCloud();
         assertThat(hc.get("P").getOverall().getPercentage(), equalTo(Float.NaN));
@@ -104,7 +121,8 @@ public class ActivityIndexTest {
         assertThat(index.templateHealth("C", "c").getOverall().getPercentage(), equalTo(100F));
     }
 
-    private ProvisioningActivity enter(ProvisioningActivity provisioningActivity, ProvisioningActivity.Phase p) {
+    private ProvisioningActivity enter(
+            ProvisioningActivity provisioningActivity, ProvisioningActivity.Phase p) {
         provisioningActivity.enterIfNotAlready(p);
         return provisioningActivity;
     }

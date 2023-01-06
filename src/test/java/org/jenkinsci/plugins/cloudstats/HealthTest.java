@@ -23,10 +23,6 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import org.junit.Test;
-
-import java.util.Arrays;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -36,12 +32,16 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.util.Arrays;
+import org.junit.Test;
+
 /**
  * @author ogondza.
  */
 public class HealthTest {
 
-    // Use since moment to base ages on to avoid undesired millisecond differences cased by the speed of test execution
+    // Use since moment to base ages on to avoid undesired millisecond differences cased by the
+    // speed of test execution
     public final long NOW = System.currentTimeMillis();
 
     public static final ProvisioningActivity.Id SUCCESS_ID = new ProvisioningActivity.Id("Success");
@@ -50,7 +50,8 @@ public class HealthTest {
     public static final ProvisioningActivity SUCCESS = new ProvisioningActivity(SUCCESS_ID);
     public static final ProvisioningActivity FAILURE = new ProvisioningActivity(FAILURE_ID);
 
-    public static final PhaseExecutionAttachment FAILED_ATTACHMENT = new PhaseExecutionAttachment(ProvisioningActivity.Status.FAIL, "It failed alright");
+    public static final PhaseExecutionAttachment FAILED_ATTACHMENT =
+            new PhaseExecutionAttachment(ProvisioningActivity.Status.FAIL, "It failed alright");
 
     static {
         FAILURE.attach(ProvisioningActivity.Phase.PROVISIONING, FAILED_ATTACHMENT);
@@ -103,48 +104,60 @@ public class HealthTest {
         assertThat(actual.getPercentage(), equalTo(50F));
 
         assertEquals(
-                health(success(50), failure(10), failure(50), success(10)).getCurrent().getPercentage(),
-                health(success(10), failure(10), success(50), failure(50)).getCurrent().getPercentage(),
-                0D
-        );
+                health(success(50), failure(10), failure(50), success(10))
+                        .getCurrent()
+                        .getPercentage(),
+                health(success(10), failure(10), success(50), failure(50))
+                        .getCurrent()
+                        .getPercentage(),
+                0D);
     }
 
     @Test
     public void currentDifferentAge() throws Exception {
-        // Current implementation considers same sequences equally successful regardless of the latest sample age
+        // Current implementation considers same sequences equally successful regardless of the
+        // latest sample age
         assertThat(health(success(1)).getCurrent(), equalTo(health(success(0)).getCurrent()));
         assertEquals(
                 health(failure(1), failure(11)).getCurrent(),
-                health(failure(100), failure(110)).getCurrent()
-        );
+                health(failure(100), failure(110)).getCurrent());
 
         assertThat(
-                health(success(0), failure(1)).getCurrent(), lessThan(
-                health(success(0), failure(2)).getCurrent()
-        ));
+                health(success(0), failure(1)).getCurrent(),
+                lessThan(health(success(0), failure(2)).getCurrent()));
 
         assertThat(
-                health(success(0), failure(1)).getCurrent(), lessThan(
-                health(success(1), failure(3)).getCurrent()
-        ));
+                health(success(0), failure(1)).getCurrent(),
+                lessThan(health(success(1), failure(3)).getCurrent()));
 
         assertThat(
-                health(success(0), success(1), failure(2)).getCurrent(), greaterThan(
-                health(success(0), failure(1), success(2)).getCurrent()
-        ));
+                health(success(0), success(1), failure(2)).getCurrent(),
+                greaterThan(health(success(0), failure(1), success(2)).getCurrent()));
     }
 
     @Test
     public void timeDecay() throws Exception {
         assertThat(
-                health(success(0), success(1000), success(2000), success(3000), success(4000), success(5000), success(6000)).getCurrent().getPercentage(),
-                equalTo(100F)
-        );
+                health(
+                                success(0),
+                                success(1000),
+                                success(2000),
+                                success(3000),
+                                success(4000),
+                                success(5000),
+                                success(6000))
+                        .getCurrent()
+                        .getPercentage(),
+                equalTo(100F));
 
         assertEquals(0, health(failure(0)).getCurrent().getPercentage(), 0F);
         assertEquals(50, health(success(0), failure(1)).getCurrent().getPercentage(), 1F);
-        assertEquals(66, health(success(0), success(1), failure(2)).getCurrent().getPercentage(), 2F);
-        assertEquals(75, health(success(0), success(1), success(2), failure(3)).getCurrent().getPercentage(), 2F);
+        assertEquals(
+                66, health(success(0), success(1), failure(2)).getCurrent().getPercentage(), 2F);
+        assertEquals(
+                75,
+                health(success(0), success(1), success(2), failure(3)).getCurrent().getPercentage(),
+                2F);
 
         assertEquals(57, health(success(0), failure(10)).getCurrent().getPercentage(), 1F);
         assertEquals(81, health(success(0), failure(100)).getCurrent().getPercentage(), 1F);
@@ -156,11 +169,11 @@ public class HealthTest {
         return new Health(Arrays.asList(pas));
     }
 
-    private ProvisioningActivity success(int age){
+    private ProvisioningActivity success(int age) {
         return new ProvisioningActivity(SUCCESS_ID, NOW - age * 60 * 1000);
     }
 
-    private ProvisioningActivity failure(int age){
+    private ProvisioningActivity failure(int age) {
         ProvisioningActivity pa = new ProvisioningActivity(FAILURE_ID, NOW - age * 60 * 1000);
         pa.attach(ProvisioningActivity.Phase.PROVISIONING, FAILED_ATTACHMENT);
         return pa;

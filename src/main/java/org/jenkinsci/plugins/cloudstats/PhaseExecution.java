@@ -23,34 +23,36 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import hudson.model.ModelObject;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.model.ModelObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
  * Phase execution record.
  *
- * While the phases starts in declared order, they might not complete in that order. Much less previous phase will
- * be completed before next one starts.
+ * <p>While the phases starts in declared order, they might not complete in that order. Much less
+ * previous phase will be completed before next one starts.
  *
- * There are several reasons for that: provisioning listener is called when the results are picked up, the agent
- * might have started launching in the meantime. There are plugins that in fact enforce the launch to complete,
- * before completing the {@link hudson.slaves.NodeProvisioner.PlannedNode#future}. To avoid any problems this can cause,
- * the execution of phases is expected to occur in order, the execution will accept attachments regardless if the
- * next phase started or not. For the time tracking purposes, the phase is considered completed as soon as the next
- * phase begins. IOW, despite the fact the agent already started launching, plugin can still append provisioning log.
+ * <p>There are several reasons for that: provisioning listener is called when the results are
+ * picked up, the agent might have started launching in the meantime. There are plugins that in fact
+ * enforce the launch to complete, before completing the {@link
+ * hudson.slaves.NodeProvisioner.PlannedNode#future}. To avoid any problems this can cause, the
+ * execution of phases is expected to occur in order, the execution will accept attachments
+ * regardless if the next phase started or not. For the time tracking purposes, the phase is
+ * considered completed as soon as the next phase begins. IOW, despite the fact the agent already
+ * started launching, plugin can still append provisioning log.
  */
 public final class PhaseExecution implements ModelObject {
-    private final @NonNull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
+    private final @NonNull List<PhaseExecutionAttachment> attachments =
+            new CopyOnWriteArrayList<>();
     private final long started;
     private final @NonNull ProvisioningActivity.Phase phase;
 
@@ -67,7 +69,8 @@ public final class PhaseExecution implements ModelObject {
         return Collections.unmodifiableList(attachments);
     }
 
-    public @NonNull <T extends PhaseExecutionAttachment> List<T> getAttachments(@NonNull Class<T> type) {
+    public @NonNull <T extends PhaseExecutionAttachment> List<T> getAttachments(
+            @NonNull Class<T> type) {
         List<T> out = new ArrayList<>();
         for (PhaseExecutionAttachment attachment : getAttachments()) {
             if (type.isInstance(attachment)) {
@@ -105,7 +108,8 @@ public final class PhaseExecution implements ModelObject {
     }
 
     /**
-     * Only to be invoked from {@link CloudStatistics#attach(ProvisioningActivity, ProvisioningActivity.Phase, PhaseExecutionAttachment)}.
+     * Only to be invoked from {@link CloudStatistics#attach(ProvisioningActivity,
+     * ProvisioningActivity.Phase, PhaseExecutionAttachment)}.
      */
     @Restricted(NoExternalUse.class)
     /*package*/ void attach(@NonNull PhaseExecutionAttachment phaseExecutionAttachment) {
@@ -117,12 +121,11 @@ public final class PhaseExecution implements ModelObject {
         String urlName = attachment.getUrlName();
         if (urlName == null) return null;
 
-        if (!attachments.contains(attachment)) throw new IllegalArgumentException(
-                "Attachment not present in current execution"
-        );
+        if (!attachments.contains(attachment))
+            throw new IllegalArgumentException("Attachment not present in current execution");
 
         int cntr = 0;
-        for (PhaseExecutionAttachment a: attachments) {
+        for (PhaseExecutionAttachment a : attachments) {
             if (a.equals(attachment)) break;
 
             if (urlName.equals(a.getUrlName())) {
@@ -146,7 +149,8 @@ public final class PhaseExecution implements ModelObject {
                 n = Integer.parseInt(urlName.substring(i + 1));
                 urlName = urlName.substring(0, i);
             } catch (NumberFormatException nan) {
-                // It is not expected that ':' is found in the name, though proceed to fail later as the name will not be found
+                // It is not expected that ':' is found in the name, though proceed to fail later as
+                // the name will not be found
             }
         }
 
@@ -154,7 +158,7 @@ public final class PhaseExecution implements ModelObject {
         if (n > attachments.size()) return null;
 
         int cntr = 0;
-        for (PhaseExecutionAttachment a: attachments) {
+        for (PhaseExecutionAttachment a : attachments) {
             if (!urlName.equals(a.getUrlName())) continue;
 
             if (cntr == n) return a;

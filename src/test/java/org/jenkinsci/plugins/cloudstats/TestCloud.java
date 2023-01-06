@@ -30,20 +30,19 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
-import org.jvnet.hudson.test.JenkinsRule;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * @author ogondza.
  */
 public final class TestCloud extends Cloud {
-    private transient final Launcher provision;
-    private transient final JenkinsRule j;
-    private transient final AtomicInteger seq = new AtomicInteger();
+    private final transient Launcher provision;
+    private final transient JenkinsRule j;
+    private final transient AtomicInteger seq = new AtomicInteger();
 
     public TestCloud(String name) {
         super(name);
@@ -65,9 +64,9 @@ public final class TestCloud extends Cloud {
         int i = seq.getAndIncrement();
         provision.id = new ProvisioningActivity.Id(name, null, name + "-agent-" + i);
 
-        return Collections.singletonList(new TrackedPlannedNode(
-                provision.id, 1, Computer.threadPoolForRemoting.submit(provision)
-        ));
+        return Collections.singletonList(
+                new TrackedPlannedNode(
+                        provision.id, 1, Computer.threadPoolForRemoting.submit(provision)));
     }
 
     @Override
@@ -83,7 +82,7 @@ public final class TestCloud extends Cloud {
         }
     }
 
-    public static abstract class Launcher implements Callable<Node> {
+    public abstract static class Launcher implements Callable<Node> {
         protected transient JenkinsRule j;
         protected ProvisioningActivity.Id id;
     }

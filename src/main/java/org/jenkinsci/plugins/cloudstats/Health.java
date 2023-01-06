@@ -23,27 +23,27 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import hudson.model.HealthReport;
-import jenkins.util.NonLocalizable;
+import static java.lang.Math.round;
 
-import javax.annotation.Nonnegative;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.model.HealthReport;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static java.lang.Math.round;
+import javax.annotation.Nonnegative;
+import jenkins.util.NonLocalizable;
 
 /**
  * Health metric for a series of provisioning attempts.
  *
- * The actual statistics approach is left to the implementation and can be changed freely to fit provisioning reporting
- * and decision making. Use cases:
+ * <p>The actual statistics approach is left to the implementation and can be changed freely to fit
+ * provisioning reporting and decision making. Use cases:
  *
- * - Report that particular cloud/template has its success rate low so it might require attention. ({@link #getOverall()})
- * - Provide data so plugins can pick the more successful cloud/template to fulfil the request. ({@link #getCurrent()})
+ * <p>- Report that particular cloud/template has its success rate low so it might require
+ * attention. ({@link #getOverall()}) - Provide data so plugins can pick the more successful
+ * cloud/template to fulfil the request. ({@link #getCurrent()})
  *
  * @author ogondza.
  */
@@ -56,9 +56,7 @@ public final class Health {
         Collections.sort(this.samples);
     }
 
-    /**
-     * Get Overall success rate of the series.
-     */
+    /** Get Overall success rate of the series. */
     public Report getOverall() {
         int all = samples.size();
         float success = 0;
@@ -74,28 +72,32 @@ public final class Health {
     /**
      * Get projected probability the next provisioning attempt will succeed.
      *
-     * Caution: There is a black magic involved.
+     * <p>Caution: There is a black magic involved.
      *
-     * This implementation computes exponential average adjusting exponent based on the age of the data. This is
-     * to give more wight to data that ware observed recently compared to older ones.
+     * <p>This implementation computes exponential average adjusting exponent based on the age of
+     * the data. This is to give more wight to data that ware observed recently compared to older
+     * ones.
      */
     public Report getCurrent() {
         if (samples.isEmpty()) return new Report(Float.NaN);
 
-        // Base the relative wights on the newest sample. It is important for older samples not to outweight the recent
+        // Base the relative wights on the newest sample. It is important for older samples not to
+        // outweight the recent
         // ones but there is no reason to report bad score just because we do not have recent data.
         double start = samples.iterator().next().getStartedTimestamp();
 
         double success = 1;
         double count = samples.size();
         for (ProvisioningActivity sample : samples) {
-            // Take only negative score into account so old successful samples will not turn the score down
+            // Take only negative score into account so old successful samples will not turn the
+            // score down
             if (sample.getStatus() == ProvisioningActivity.Status.FAIL) {
                 double age = (start - sample.getStartedTimestamp()) / 1000 / 60 / 60;
                 age += 1; // Avoid division by 0 increasing the age linearly
-                assert age > 0: "Illegal sample age " + age;
+                assert age > 0 : "Illegal sample age " + age;
                 double increment = 1D / (count * age);
-                //System.out.printf("age=%s; sample=%s; inc=%s%n", age, sample.getStartedTimestamp(), increment);
+                // System.out.printf("age=%s; sample=%s; inc=%s%n", age,
+                // sample.getStartedTimestamp(), increment);
                 success -= increment;
             }
         }
@@ -138,10 +140,11 @@ public final class Health {
 
         @Override
         public int hashCode() {
-            return (percent != +0.0f ? Float.floatToIntBits(percent): 0);
+            return (percent != +0.0f ? Float.floatToIntBits(percent) : 0);
         }
 
-        @Override public String toString() {
+        @Override
+        public String toString() {
             if (Float.isNaN(percent)) return "?";
             return FORMAT.format(percent);
         }

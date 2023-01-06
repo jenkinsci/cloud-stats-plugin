@@ -23,19 +23,18 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.PresetData;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
-
 public class StatsWidgetTest {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     @Test
     public void showWhenCloudsConfigured() throws Exception {
@@ -50,7 +49,8 @@ public class StatsWidgetTest {
         assertThat(content, containsString("#cloudstats"));
     }
 
-    @Test @PresetData(PresetData.DataSet.ANONYMOUS_READONLY)
+    @Test
+    @PresetData(PresetData.DataSet.ANONYMOUS_READONLY)
     public void doNotShowWhenNotAuthenticated() throws Exception {
         j.jenkins.clouds.add(new TestCloud("asdf"));
         JenkinsRule.WebClient webClient = j.createWebClient();

@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
@@ -31,12 +32,10 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
-import org.jvnet.hudson.test.JenkinsRule;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * @author ogondza.
@@ -45,14 +44,41 @@ final class TrackedAgent extends AbstractCloudSlave implements TrackedItem {
     private final ProvisioningActivity.Id id;
 
     public TrackedAgent(ProvisioningActivity.Id id, JenkinsRule j, String name) throws Exception {
-        super(name == null ? id.getNodeName(): name, "dummy", j.createTmpDir().getPath(), "1", Mode.NORMAL, "label", j.createComputerLauncher(new EnvVars()), RetentionStrategy.NOOP, Collections.<NodeProperty<?>>emptyList());
+        super(
+                name == null ? id.getNodeName() : name,
+                "dummy",
+                j.createTmpDir().getPath(),
+                "1",
+                Mode.NORMAL,
+                "label",
+                j.createComputerLauncher(new EnvVars()),
+                RetentionStrategy.NOOP,
+                Collections.<NodeProperty<?>>emptyList());
         this.id = id;
     }
 
     public TrackedAgent(
-            String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, ProvisioningActivity.Id id
-    ) throws IOException, Descriptor.FormException {
-        super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
+            String name,
+            String nodeDescription,
+            String remoteFS,
+            String numExecutors,
+            Mode mode,
+            String labelString,
+            ComputerLauncher launcher,
+            RetentionStrategy retentionStrategy,
+            List<? extends NodeProperty<?>> nodeProperties,
+            ProvisioningActivity.Id id)
+            throws IOException, Descriptor.FormException {
+        super(
+                name,
+                nodeDescription,
+                remoteFS,
+                numExecutors,
+                mode,
+                labelString,
+                launcher,
+                retentionStrategy,
+                nodeProperties);
         this.id = id;
     }
 
@@ -69,9 +95,7 @@ final class TrackedAgent extends AbstractCloudSlave implements TrackedItem {
     }
 
     @Override
-    protected void _terminate(TaskListener listener) {
-
-    }
+    protected void _terminate(TaskListener listener) {}
 
     @Override
     public ProvisioningActivity.Id getId() {

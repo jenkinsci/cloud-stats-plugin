@@ -23,17 +23,16 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.slaves.Cloud;
+import java.util.Collection;
+import java.util.Collections;
 import jenkins.model.TransientActionFactory;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Attach statistics info to cloud page.
@@ -53,25 +52,34 @@ public class CloudAction implements Action {
         return CloudStatistics.get();
     }
 
-    @CheckForNull @Override public String getIconFileName() {
+    @CheckForNull
+    @Override
+    public String getIconFileName() {
         return "graph.png";
     }
 
-    @CheckForNull @Override public String getDisplayName() {
+    @CheckForNull
+    @Override
+    public String getDisplayName() {
         return "Cloud Statistics";
     }
 
-    @CheckForNull @Override public String getUrlName() {
+    @CheckForNull
+    @Override
+    public String getUrlName() {
         return "/cloud-stats/";
     }
 
     @Extension
     public static final class CloudActionFactory extends TransientActionFactory<Cloud> {
-        @Override public Class<Cloud> type() {
+        @Override
+        public Class<Cloud> type() {
             return Cloud.class;
         }
 
-        @NonNull @Override public Collection<? extends Action> createFor(@NonNull Cloud cloud) {
+        @NonNull
+        @Override
+        public Collection<? extends Action> createFor(@NonNull Cloud cloud) {
             return Collections.singletonList(new CloudAction(cloud));
         }
     }
