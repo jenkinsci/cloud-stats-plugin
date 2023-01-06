@@ -24,12 +24,6 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
-import org.hamcrest.Matchers;
-import org.junit.Test;
-import org.jvnet.hudson.test.Issue;
-
-import java.util.List;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -37,9 +31,15 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.*;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
 import static org.junit.Assert.*;
 
+import java.util.List;
+import org.hamcrest.Matchers;
+import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
+
 public class ProvisioningActivityTest {
 
-    private static final ProvisioningActivity.Id DUMMY_ID = new ProvisioningActivity.Id("Fake cloud");
+    private static final ProvisioningActivity.Id DUMMY_ID =
+            new ProvisioningActivity.Id("Fake cloud");
 
     @Test
     public void id() {
@@ -150,7 +150,8 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(completed);
             fail();
-        } catch (IllegalArgumentException ignored) {}
+        } catch (IllegalArgumentException ignored) {
+        }
 
         // In progress
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
@@ -162,7 +163,8 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(pa.getPhaseExecution(COMPLETED));
             fail();
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
 
         // Completed prematurely
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
@@ -173,14 +175,17 @@ public class ProvisioningActivityTest {
         try {
             pa.getDuration(pa.getPhaseExecution(LAUNCHING));
             fail();
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
         try {
             pa.getDuration(pa.getPhaseExecution(OPERATING));
             fail();
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
     }
 
-    @Test @Issue("https://github.com/jenkinsci/cloud-stats-plugin/issues/4")
+    @Test
+    @Issue("https://github.com/jenkinsci/cloud-stats-plugin/issues/4")
     public void enteringSkippedPhaseShouldFail() throws Exception {
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         try {
@@ -213,15 +218,15 @@ public class ProvisioningActivityTest {
     @Test
     public void enteringCompletedPhaseWithoutOperationShouldBeWarningState() {
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
-        final PhaseExecutionAttachment failedAttachment = new PhaseExecutionAttachment(
-                ProvisioningActivity.Status.FAIL,
-                "Failed intentionally"
-        );
+        final PhaseExecutionAttachment failedAttachment =
+                new PhaseExecutionAttachment(
+                        ProvisioningActivity.Status.FAIL, "Failed intentionally");
 
         pa.enter(COMPLETED);
         assertEquals(WARN, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
-        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
+        assertThat(
+                pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
                 equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
@@ -235,7 +240,8 @@ public class ProvisioningActivityTest {
         pa.enter(COMPLETED);
         assertEquals(WARN, pa.getPhaseExecution(COMPLETED).getStatus());
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(1));
-        assertThat(pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
+        assertThat(
+                pa.getPhaseExecution(COMPLETED).getAttachments().get(0).getTitle(),
                 equalTo(ProvisioningActivity.PREMATURE_COMPLETION_DETECTED));
 
         pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld1"));
@@ -253,7 +259,8 @@ public class ProvisioningActivityTest {
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
     }
 
-    private PhaseExecution enter(ProvisioningActivity activity, ProvisioningActivity.Phase phase, long started) {
+    private PhaseExecution enter(
+            ProvisioningActivity activity, ProvisioningActivity.Phase phase, long started) {
         PhaseExecution execution = new PhaseExecution(phase, started);
         activity.enter(execution);
         return execution;

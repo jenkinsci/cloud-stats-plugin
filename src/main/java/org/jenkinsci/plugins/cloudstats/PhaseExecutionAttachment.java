@@ -24,28 +24,24 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import com.google.common.annotations.VisibleForTesting;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import hudson.Functions;
-
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.Functions;
 import hudson.model.Action;
-import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
-
 import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.nio.file.NoSuchFileException;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
 
-/**
- * Additional information attached to the {@link PhaseExecution}.
- */
+/** Additional information attached to the {@link PhaseExecution}. */
 public class PhaseExecutionAttachment implements Action, Serializable {
 
     private final @NonNull ProvisioningActivity.Status status;
     private final @NonNull String title;
 
-    public PhaseExecutionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull String title) {
+    public PhaseExecutionAttachment(
+            @NonNull ProvisioningActivity.Status status, @NonNull String title) {
         this.status = status;
         this.title = title;
     }
@@ -53,17 +49,16 @@ public class PhaseExecutionAttachment implements Action, Serializable {
     /**
      * Status the execution entered once this got attached.
      *
-     * @return {@link Status#OK} in case of informative attachment, {@link Status#WARN} in case provisioning continued, but there is
-     * something worth attention on this attachment anyway or {@link Status#FAIL} in case provisioning failed with this attachment
-     * explaining the cause.
+     * @return {@link Status#OK} in case of informative attachment, {@link Status#WARN} in case
+     *     provisioning continued, but there is something worth attention on this attachment anyway
+     *     or {@link Status#FAIL} in case provisioning failed with this attachment explaining the
+     *     cause.
      */
     public @NonNull ProvisioningActivity.Status getStatus() {
         return status;
     }
 
-    /**
-     * Single line description of the attachment nature.
-     */
+    /** Single line description of the attachment nature. */
     public @NonNull String getTitle() {
         return title.replaceAll("\n", " ");
     }
@@ -76,7 +71,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
     @Override
     public @NonNull String getDisplayName() {
         String title = getTitle();
-        return title.length() < 50 ? title: (title.substring(0, 49) + "…");
+        return title.length() < 50 ? title : (title.substring(0, 49) + "…");
     }
 
     /**
@@ -112,29 +107,33 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return this;
         }
 
-        public ExceptionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull Throwable throwable) {
+        public ExceptionAttachment(
+                @NonNull ProvisioningActivity.Status status, @NonNull Throwable throwable) {
             super(status, extractTitle(throwable));
             this.text = Functions.printThrowable(throwable);
         }
 
-        /**
-         * Extract meaningful message from an exception
-         */
-        @VisibleForTesting /*package*/ static String extractTitle(@NonNull Throwable throwable) {
+        /** Extract meaningful message from an exception */
+        @VisibleForTesting /*package*/
+        static String extractTitle(@NonNull Throwable throwable) {
             String message = throwable.getMessage();
 
             // The message might be empty (NPE for example) so get the type at least
             if (message == null) return throwable.getClass().getSimpleName();
 
             // "NoSuchFileException: /foo/bar"
-            if (throwable instanceof NoSuchFileException || throwable instanceof FileNotFoundException) {
+            if (throwable instanceof NoSuchFileException
+                    || throwable instanceof FileNotFoundException) {
                 return throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
             }
 
             return message;
         }
 
-        public ExceptionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull String title, @NonNull Throwable throwable) {
+        public ExceptionAttachment(
+                @NonNull ProvisioningActivity.Status status,
+                @NonNull String title,
+                @NonNull Throwable throwable) {
             super(status, title);
             this.text = Functions.printThrowable(throwable);
         }

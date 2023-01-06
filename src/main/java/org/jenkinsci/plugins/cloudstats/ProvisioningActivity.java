@@ -23,21 +23,20 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import hudson.Util;
-import hudson.model.ModelObject;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
-
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
+import hudson.Util;
+import hudson.model.ModelObject;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 /**
  * Record of provisioning attempt lifecycle.
@@ -46,47 +45,38 @@ import java.util.Objects;
  */
 public final class ProvisioningActivity implements ModelObject, Comparable<ProvisioningActivity> {
 
-    public static final String PREMATURE_COMPLETION_DETECTED = "Provisioning activity was completed before reaching OPERATING phase without reporting a problem";
+    public static final String PREMATURE_COMPLETION_DETECTED =
+            "Provisioning activity was completed before reaching OPERATING phase without reporting a problem";
 
-    /**
-     * Progress of an activity.
-     */
+    /** Progress of an activity. */
     public enum Phase {
-        /**
-         * Acquiring the agent is in progress.
-         */
+        /** Acquiring the agent is in progress. */
         PROVISIONING,
-        /**
-         * Agent is being launched,
-         */
+        /** Agent is being launched, */
         LAUNCHING,
-        /**
-         * The node is connected as Jenkins agent, possibly running builds.
-         */
+        /** The node is connected as Jenkins agent, possibly running builds. */
         OPERATING,
         /**
          * The resources (if any) as well as the computer should be gone.
          *
-         * This phase is never terminated.
+         * <p>This phase is never terminated.
          */
         COMPLETED
     }
 
     public enum Status {
-        /**
-         * All went well.
-         */
+        /** All went well. */
         OK,
         /**
          * There was a problem worth looking at, though provisioning managed to proceed.
          *
-         * The identification of the cause should be in attachment.
+         * <p>The identification of the cause should be in attachment.
          */
         WARN,
         /**
          * The activity was aborted because of a problem so it never delivered functional agent.
          *
-         * The identification of the cause should be in attachment.
+         * <p>The identification of the cause should be in attachment.
          */
         FAIL
     }
@@ -94,25 +84,28 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     /**
      * Activity identifier.
      *
-     * Used to a) uniquely identify the activity throughout the lifecycle and b) map Computer/Node/PlannedNode to its cloud/template.
+     * <p>Used to a) uniquely identify the activity throughout the lifecycle and b) map
+     * Computer/Node/PlannedNode to its cloud/template.
      */
     public static final class Id implements Serializable {
         private final @NonNull String cloudName;
         private final @CheckForNull String templateName;
         private final @CheckForNull String nodeName;
 
-        /**
-         * Unique identifier of the activity.
-         */
+        /** Unique identifier of the activity. */
         private final int fingerprint;
 
         /**
          * @param cloudName Name of the cloud that initiated this activity.
          * @param templateName Name of the template that initiated this activity.
-         * @param nodeName Name of the agent to be provisioned. Of the name of the agent is not known ahead, it can
-         *                    be <code>null</code> cloud stats plugin will update it once it will be known.
+         * @param nodeName Name of the agent to be provisioned. Of the name of the agent is not
+         *     known ahead, it can be <code>null</code> cloud stats plugin will update it once it
+         *     will be known.
          */
-        public Id(@NonNull String cloudName, @CheckForNull String templateName, @CheckForNull String nodeName) {
+        public Id(
+                @NonNull String cloudName,
+                @CheckForNull String templateName,
+                @CheckForNull String nodeName) {
             this.cloudName = cloudName;
             this.templateName = templateName;
             this.nodeName = nodeName;
@@ -130,7 +123,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         /**
          * Clone the Id with different name set.
          *
-         * The created Id is equal to this one.
+         * <p>The created Id is equal to this one.
          */
         public @NonNull Id named(@NonNull String name) {
             return new Id(this, name);
@@ -143,30 +136,28 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
             nodeName = name;
         }
 
-        /**
-         * Name of the cloud that initiated this activity.
-         */
+        /** Name of the cloud that initiated this activity. */
         public @NonNull String getCloudName() {
             return cloudName;
         }
 
         /**
-         * Name of the template used to provision this agent. <code>null</code> if no further distinction is needed except for cloud name.
+         * Name of the template used to provision this agent. <code>null</code> if no further
+         * distinction is needed except for cloud name.
          */
         public @CheckForNull String getTemplateName() {
             return templateName;
         }
 
         /**
-         * Name of the agent to be provisioned by this activity. <code>null</code> if not known ahead.
+         * Name of the agent to be provisioned by this activity. <code>null</code> if not known
+         * ahead.
          */
         public @CheckForNull String getNodeName() {
             return nodeName;
         }
 
-        /**
-         * Unique fingerprint of this activity.
-         */
+        /** Unique fingerprint of this activity. */
         public int getFingerprint() {
             return fingerprint;
         }
@@ -186,7 +177,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
         @Override
         public String toString() {
-            return String.format("ProvisioningActivity for %s/%s/%s (%d)", cloudName, templateName, nodeName, fingerprint);
+            return String.format(
+                    "ProvisioningActivity for %s/%s/%s (%d)",
+                    cloudName, templateName, nodeName, fingerprint);
         }
     }
 
@@ -195,10 +188,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     @GuardedBy("id")
     private @Nullable String name;
 
-    /**
-     * All phases the activity has started so far.
-     */
+    /** All phases the activity has started so far. */
     private final Map<Phase, PhaseExecution> progress;
+
     {
         progress = Collections.synchronizedMap(new LinkedHashMap<>(Phase.values().length));
         progress.put(Phase.PROVISIONING, null);
@@ -253,9 +245,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
     }
 
-    /**
-     * {@link PhaseExecution} or null in case it is/was not executed.
-     */
+    /** {@link PhaseExecution} or null in case it is/was not executed. */
     public @CheckForNull PhaseExecution getPhaseExecution(@NonNull Phase phase) {
         synchronized (progress) {
             return progress.get(phase);
@@ -272,9 +262,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         return Collections.unmodifiableMap(progress);
     }
 
-    /**
-     * Get current {@link PhaseExecution}.
-     */
+    /** Get current {@link PhaseExecution}. */
     public @NonNull PhaseExecution getCurrentPhaseExecution() {
         synchronized (progress) {
             PhaseExecution ex = progress.get(Phase.COMPLETED);
@@ -293,9 +281,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
     }
 
-    /**
-     * Get current {@link Phase}.
-     */
+    /** Get current {@link Phase}. */
     public @NonNull Phase getCurrentPhase() {
         return getCurrentPhaseExecution().getPhase();
     }
@@ -303,7 +289,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     /**
      * Status of the activity as a whole.
      *
-     * It is the works status of any of the phases, OK by default.
+     * <p>It is the works status of any of the phases, OK by default.
      */
     public @NonNull Status getStatus() {
         synchronized (progress) {
@@ -326,19 +312,21 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     public void enter(@NonNull Phase phase) {
         synchronized (progress) {
-            if (progress.get(phase) != null) throw new IllegalStateException(
-                    "The phase " + phase + " has already started"
-            );
+            if (progress.get(phase) != null)
+                throw new IllegalStateException("The phase " + phase + " has already started");
 
             final Phase currentPhase = getCurrentPhase();
-            if (currentPhase.compareTo(phase) >= 0) throw new IllegalStateException(
-                    "The phase " + getCurrentPhase() + " has already started"
-            );
+            if (currentPhase.compareTo(phase) >= 0)
+                throw new IllegalStateException(
+                        "The phase " + getCurrentPhase() + " has already started");
 
             progress.put(phase, new PhaseExecution(phase));
 
-            if (phase == Phase.COMPLETED && currentPhase != Phase.OPERATING && getStatus() == Status.OK) {
-                PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(Status.WARN, PREMATURE_COMPLETION_DETECTED);
+            if (phase == Phase.COMPLETED
+                    && currentPhase != Phase.OPERATING
+                    && getStatus() == Status.OK) {
+                PhaseExecutionAttachment attachment =
+                        new PhaseExecutionAttachment(Status.WARN, PREMATURE_COMPLETION_DETECTED);
                 progress.get(Phase.COMPLETED).attach(attachment);
             }
         }
@@ -353,27 +341,30 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     /**
      * Make sure the phase of this activity is entered.
      *
-     * Exposed for convenience of clients that can be invoked repeatedly and have no easier way to tell if phase was
-     * entered already, such as launch listener.
+     * <p>Exposed for convenience of clients that can be invoked repeatedly and have no easier way
+     * to tell if phase was entered already, such as launch listener.
      *
      * @return {@code true} is phase was entered.
      */
     public boolean enterIfNotAlready(@NonNull Phase phase) {
         synchronized (progress) {
             // Entered or skipped
-            if (progress.get(phase) != null || getCurrentPhase().compareTo(phase) >= 0) return false;
+            if (progress.get(phase) != null || getCurrentPhase().compareTo(phase) >= 0)
+                return false;
             progress.put(phase, new PhaseExecution(phase));
         }
         return true;
     }
 
     /**
-     * Only to be invoked from {@link CloudStatistics#attach(ProvisioningActivity, ProvisioningActivity.Phase, PhaseExecutionAttachment)}.
+     * Only to be invoked from {@link CloudStatistics#attach(ProvisioningActivity,
+     * ProvisioningActivity.Phase, PhaseExecutionAttachment)}.
      */
     @Restricted(NoExternalUse.class)
     /*package*/ void attach(Phase phase, PhaseExecutionAttachment attachment) {
         PhaseExecution execution = getPhaseExecution(phase);
-        if (execution == null) throw new IllegalArgumentException("Phase " + phase + " not entered yet");
+        if (execution == null)
+            throw new IllegalArgumentException("Phase " + phase + " not entered yet");
         execution.attach(attachment);
     }
 
@@ -391,12 +382,13 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     /**
      * Attach the name once we know what it is.
      *
-     * Should never be invoked by other plugins as it is only needed when name of the node is discovered for the first
-     * time and during rename.
+     * <p>Should never be invoked by other plugins as it is only needed when name of the node is
+     * discovered for the first time and during rename.
      */
     @Restricted(NoExternalUse.class)
     /*package*/ void rename(@NonNull String newName) {
-        if (Util.fixEmptyAndTrim(newName) == null) throw new IllegalArgumentException("Unable to rename to empty string");
+        if (Util.fixEmptyAndTrim(newName) == null)
+            throw new IllegalArgumentException("Unable to rename to empty string");
         synchronized (id) {
             name = newName;
         }
@@ -420,7 +412,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
         // Find any later nonnull execution
         PhaseExecution next = null;
-        for (Phase p: Phase.values()) {
+        for (Phase p : Phase.values()) {
             if (p.ordinal() <= phase.ordinal()) continue;
             next = getPhaseExecution(p);
             if (next != null) break;
@@ -429,8 +421,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         long started = execution.getStartedTimestamp();
         return next != null
                 ? next.getStartedTimestamp() - started
-                : -(System.currentTimeMillis() - started)
-        ;
+                : -(System.currentTimeMillis() - started);
     }
 
     public boolean isFor(Id id) {

@@ -28,7 +28,8 @@ import javax.annotation.Nullable;
 /**
  * Interface to be implemented by plugins to have their provisioning activities tracked.
  *
- * It is necessary to implement this by {@link hudson.slaves.NodeProvisioner.PlannedNode}, {@link hudson.model.Node} and {@link hudson.model.Computer}.
+ * <p>It is necessary to implement this by {@link hudson.slaves.NodeProvisioner.PlannedNode}, {@link
+ * hudson.model.Node} and {@link hudson.model.Computer}.
  *
  * @author ogondza.
  * @see TrackedPlannedNode
@@ -37,9 +38,11 @@ public interface TrackedItem {
     /**
      * Get unique identifier of the provisioning item.
      *
-     * @return The identifier. Can be null in case the item that is generally tracked opts-out of tracking. Primary use
-     * is to allow null for items that serialized before plugin was integrated and have no id to provide. Implementations
-     * can use this disable tracking selectively on per-item basis.
+     * @return The identifier. Can be null in case the item that is generally tracked opts-out of
+     *     tracking. Primary use is to allow null for items that serialized before plugin was
+     *     integrated and have no id to provide. Implementations can use this disable tracking
+     *     selectively on per-item basis.
      */
-    @Nullable ProvisioningActivity.Id getId();
+    @Nullable
+    ProvisioningActivity.Id getId();
 }

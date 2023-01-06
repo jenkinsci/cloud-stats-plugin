@@ -32,11 +32,13 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 /**
  * @author ogondza.
  */
-@Restricted(DoNotUse.class) @Extension(ordinal = 300) // Above queue
+@Restricted(DoNotUse.class)
+@Extension(ordinal = 300) // Above queue
 public class StatsWidget extends Widget {
 
     public boolean isDisplayed() {
         Jenkins instance = Jenkins.get();
-        return !instance.clouds.isEmpty() && instance.hasPermission(CloudStatistics.get().getRequiredPermission());
+        return !instance.clouds.isEmpty()
+                && instance.hasPermission(CloudStatistics.get().getRequiredPermission());
     }
 }

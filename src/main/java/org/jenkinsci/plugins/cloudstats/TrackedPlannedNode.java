@@ -23,20 +23,19 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import static hudson.slaves.NodeProvisioner.*;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.Future;
-
-import static hudson.slaves.NodeProvisioner.*;
 
 /**
  * Convenient subclass of {@link PlannedNode} to simplify tracking the activity.
  *
- * {@link Cloud#provision(Label, int)} needs to return {@link PlannedNode} implementing {@link TrackedItem} to have the
- * provisioning activity tracked.
+ * <p>{@link Cloud#provision(Label, int)} needs to return {@link PlannedNode} implementing {@link
+ * TrackedItem} to have the provisioning activity tracked.
  *
  * @author ogondza.
  * @see TrackedItem
@@ -45,7 +44,8 @@ public class TrackedPlannedNode extends PlannedNode implements TrackedItem {
 
     private final @NonNull ProvisioningActivity.Id id;
 
-    public TrackedPlannedNode(@NonNull ProvisioningActivity.Id id, int numExecutors, @NonNull Future<Node> future) {
+    public TrackedPlannedNode(
+            @NonNull ProvisioningActivity.Id id, int numExecutors, @NonNull Future<Node> future) {
         super(extractTemporaryName(id), future, numExecutors);
 
         this.id = id;

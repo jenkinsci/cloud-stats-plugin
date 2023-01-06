@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -12,6 +13,13 @@
   <name>Cloud Statistics Plugin</name>
   <url>https://github.com/jenkinsci/cloud-stats-plugin</url>
 
+  <licenses>
+    <license>
+      <name>The MIT license</name>
+      <url>https://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+
   <developers>
     <developer>
       <id>olivergondza</id>
@@ -25,27 +33,24 @@
     </developer>
   </developers>
 
-  <licenses>
-    <license>
-      <name>The MIT license</name>
-      <url>https://opensource.org/licenses/MIT</url>
-    </license>
-  </licenses>
-
   <scm>
     <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
     <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
-    <url>https://github.com/${gitHubRepo}</url>
     <tag>${scmTag}</tag>
+    <url>https://github.com/${gitHubRepo}</url>
   </scm>
 
+  <properties>
+    <changelist>999999-SNAPSHOT</changelist>
+    <gitHubRepo>jenkinsci/cloud-stats-plugin</gitHubRepo>
+    <jenkins.version>2.361.4</jenkins.version>
+    <spotbugs.effort>Max</spotbugs.effort>
+    <spotbugs.threshold>Low</spotbugs.threshold>
+    <surefire.useFile>false</surefire.useFile>
+    <useBeta>true</useBeta>
+  </properties>
+
   <dependencies>
-    <dependency> <!-- Needed by JTH -->
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>matrix-auth</artifactId>
-      <version>3.1.6</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
@@ -58,6 +63,13 @@
           <artifactId>hamcrest</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <!-- Needed by JTH -->
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>matrix-auth</artifactId>
+      <version>3.1.6</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -75,13 +87,65 @@
     </pluginRepository>
   </pluginRepositories>
 
-  <properties>
-    <changelist>999999-SNAPSHOT</changelist>
-    <gitHubRepo>jenkinsci/cloud-stats-plugin</gitHubRepo>
-    <jenkins.version>2.361.4</jenkins.version>
-    <surefire.useFile>false</surefire.useFile>
-    <useBeta>true</useBeta>
-    <spotbugs.effort>Max</spotbugs.effort>
-    <spotbugs.threshold>Low</spotbugs.threshold>
-  </properties>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>2.29.0</version>
+          <configuration>
+            <!-- define a language-specific format -->
+            <java>
+              <!-- no need to specify files, inferred automatically -->
+              <!-- apply a specific flavor of google-java-format -->
+              <googleJavaFormat>
+                <version>1.15.0</version>
+                <style>AOSP</style>
+              </googleJavaFormat>
+              <endWithNewline />
+              <removeUnusedImports />
+            </java>
+            <pom>
+              <indent>
+                <spaces>true</spaces>
+              </indent>
+              <includes>
+                <include>pom.xml</include>
+              </includes>
+              <sortPom>
+                <expandEmptyElements>false</expandEmptyElements>
+                <sortDependencies>groupId,artifactId</sortDependencies>
+                <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
+                <sortExecutions>true</sortExecutions>
+                <sortModules>true</sortModules>
+                <sortPlugins>groupId,artifactId</sortPlugins>
+                <sortProperties>true</sortProperties>
+                <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
+              </sortPom>
+            </pom>
+          </configuration>
+          <executions>
+            <execution>
+              <!-- Runs in verify phase by default -->
+              <goals>
+                <!-- Can be disabled using -Dspotless.check.skip -->
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs>
+            <arg>-Xlint:all</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

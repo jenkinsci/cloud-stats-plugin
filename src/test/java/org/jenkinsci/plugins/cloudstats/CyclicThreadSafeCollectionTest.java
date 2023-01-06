@@ -26,13 +26,12 @@ package org.jenkinsci.plugins.cloudstats;
 
 import static org.junit.Assert.*;
 
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import org.junit.Test;
 
 /**
  * @author ogondza.
@@ -46,7 +45,8 @@ public class CyclicThreadSafeCollectionTest {
         try {
             new CyclicThreadSafeCollection<Float>(-1);
             fail();
-        } catch (IllegalArgumentException ignored) {} // expected
+        } catch (IllegalArgumentException ignored) {
+        } // expected
     }
 
     @Test
@@ -54,48 +54,48 @@ public class CyclicThreadSafeCollectionTest {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(5);
         assertEquals(0, log.size());
         assertTrue(log.isEmpty());
-        assertArrayEquals(new Integer[]{}, log.toArray());
+        assertArrayEquals(new Integer[] {}, log.toArray());
 
         assertTrue(log.add(42));
         assertFalse(log.isEmpty());
         assertEquals(1, log.size());
-        assertArrayEquals(new Integer[]{42}, log.toArray());
+        assertArrayEquals(new Integer[] {42}, log.toArray());
 
         assertTrue(log.add(43));
         assertEquals(2, log.size());
-        assertArrayEquals(new Integer[]{42, 43}, log.toArray());
+        assertArrayEquals(new Integer[] {42, 43}, log.toArray());
 
         assertTrue(log.add(44));
         assertEquals(3, log.size());
-        assertArrayEquals(new Integer[]{42, 43, 44}, log.toArray());
+        assertArrayEquals(new Integer[] {42, 43, 44}, log.toArray());
 
         assertTrue(log.add(45));
         assertEquals(4, log.size());
-        assertArrayEquals(new Integer[]{42, 43, 44, 45}, log.toArray());
+        assertArrayEquals(new Integer[] {42, 43, 44, 45}, log.toArray());
 
         assertTrue(log.add(46));
         assertEquals(5, log.size());
-        assertArrayEquals(new Integer[]{42, 43, 44, 45, 46}, log.toArray());
+        assertArrayEquals(new Integer[] {42, 43, 44, 45, 46}, log.toArray());
         assertTrue(log.add(47));
         assertEquals(5, log.size());
-        assertArrayEquals(new Integer[]{43, 44, 45, 46, 47}, log.toArray());
+        assertArrayEquals(new Integer[] {43, 44, 45, 46, 47}, log.toArray());
         assertTrue(log.add(48));
         assertEquals(5, log.size());
-        assertArrayEquals(new Integer[]{44, 45, 46, 47, 48}, log.toArray());
+        assertArrayEquals(new Integer[] {44, 45, 46, 47, 48}, log.toArray());
         assertTrue(log.add(49));
         assertEquals(5, log.size());
-        assertArrayEquals(new Integer[]{45, 46, 47, 48, 49}, log.toArray());
+        assertArrayEquals(new Integer[] {45, 46, 47, 48, 49}, log.toArray());
         assertTrue(log.add(50));
         assertEquals(5, log.size());
-        assertArrayEquals(new Integer[]{46, 47, 48, 49, 50}, log.toArray());
+        assertArrayEquals(new Integer[] {46, 47, 48, 49, 50}, log.toArray());
         assertTrue(log.addAll(Arrays.asList(51, 52)));
         assertEquals(5, log.size());
-        assertArrayEquals(new Integer[]{48, 49, 50, 51, 52}, log.toArray());
+        assertArrayEquals(new Integer[] {48, 49, 50, 51, 52}, log.toArray());
 
         log.clear();
         assertEquals(0, log.size());
         assertTrue(log.isEmpty());
-        assertArrayEquals(new Integer[]{}, log.toArray());
+        assertArrayEquals(new Integer[] {}, log.toArray());
     }
 
     @Test
@@ -104,16 +104,17 @@ public class CyclicThreadSafeCollectionTest {
         Integer[] dst = new Integer[2];
 
         log.add(1);
-        assertArrayEquals(new Integer[]{1, null}, log.toArray(dst));
-        assertArrayEquals(new Integer[]{1, null}, dst);
+        assertArrayEquals(new Integer[] {1, null}, log.toArray(dst));
+        assertArrayEquals(new Integer[] {1, null}, dst);
 
         log.add(1);
-        assertArrayEquals(new Integer[]{1, 1}, log.toArray(dst));
-        assertArrayEquals(new Integer[]{1, 1}, dst);
+        assertArrayEquals(new Integer[] {1, 1}, log.toArray(dst));
+        assertArrayEquals(new Integer[] {1, 1}, dst);
 
         log.add(1);
-        assertArrayEquals(new Integer[]{1, 1, 1}, log.toArray(dst));
-        assertArrayEquals(new Integer[]{1, 1}, dst); // Not returned in dst array as it does not fit
+        assertArrayEquals(new Integer[] {1, 1, 1}, log.toArray(dst));
+        assertArrayEquals(
+                new Integer[] {1, 1}, dst); // Not returned in dst array as it does not fit
     }
 
     @Test
@@ -181,64 +182,68 @@ public class CyclicThreadSafeCollectionTest {
     @Test
     public void threadSafety() {
         final Collection<Integer> data = new CyclicThreadSafeCollection<>(100000);
-        Runnable iterator = new Runnable() {
-            @Override
-            public void run() {
-                for (;;) {
-                    for (Integer d : data) {
-                        assertNotNull(d);
+        Runnable iterator =
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        for (; ; ) {
+                            for (Integer d : data) {
+                                assertNotNull(d);
+                            }
+
+                            if (Thread.interrupted()) break;
+                        }
                     }
+                };
 
-                    if (Thread.interrupted()) break;
-                }
-            }
-        };
+        Runnable appender =
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        for (; ; ) {
+                            assertTrue(data.add(data.size() + 42));
 
-        Runnable appender = new Runnable() {
-            @Override
-            public void run() {
-                for (;;) {
-                    assertTrue(data.add(data.size() + 42));
-
-                    if (Thread.interrupted()) break;
-                }
-            }
-        };
-
-        Runnable container = new Runnable() {
-            private boolean last;
-            @Override
-            public void run() {
-                for (;;) {
-                    // Pretend we use the result not to be optimized away
-                    last = data.containsAll(Arrays.asList(17, 39, last ? 315 : 316));
-
-                    if (Thread.interrupted()) break;
-                }
-            }
-        };
-
-        Runnable clearer = new Runnable() {
-            @Override
-            public void run() {
-                for (;;) {
-                    //System.out.printf("Clearing %d%n", data.size());
-                    data.clear();
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        break;
+                            if (Thread.interrupted()) break;
+                        }
                     }
-                }
-            }
-        };
+                };
 
-        Runnable[] runnables = new Runnable[] {
-                appender, appender, appender, appender, appender, appender, appender, appender,
-                iterator, iterator, iterator,
-                container, container, container,
-                clearer
-        };
+        Runnable container =
+                new Runnable() {
+                    private boolean last;
+
+                    @Override
+                    public void run() {
+                        for (; ; ) {
+                            // Pretend we use the result not to be optimized away
+                            last = data.containsAll(Arrays.asList(17, 39, last ? 315 : 316));
+
+                            if (Thread.interrupted()) break;
+                        }
+                    }
+                };
+
+        Runnable clearer =
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        for (; ; ) {
+                            // System.out.printf("Clearing %d%n", data.size());
+                            data.clear();
+                            try {
+                                Thread.sleep(10);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+                    }
+                };
+
+        Runnable[] runnables =
+                new Runnable[] {
+                    appender, appender, appender, appender, appender, appender, appender, appender,
+                    iterator, iterator, iterator, container, container, container, clearer
+                };
         Thread[] threads = new Thread[runnables.length];
         try {
             for (int i = 0; i < runnables.length; i++) {
@@ -250,7 +255,7 @@ public class CyclicThreadSafeCollectionTest {
         } catch (InterruptedException ignored) {
             // terminate after interrupting all children in finally
         } finally {
-            for (Thread thread: threads) {
+            for (Thread thread : threads) {
                 assertTrue(thread.isAlive()); // Died with exception
                 thread.interrupt();
             }

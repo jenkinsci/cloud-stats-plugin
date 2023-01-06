@@ -23,26 +23,29 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import javax.annotation.Nonnegative;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnegative;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Circular thread-safe Collection.
  *
- * At most <code>capacity</code> elements are preserved and when more added, oldest elements are deleted. Collection preserves
- * insertion order of the elements so the oldest is the first one.
+ * <p>At most <code>capacity</code> elements are preserved and when more added, oldest elements are
+ * deleted. Collection preserves insertion order of the elements so the oldest is the first one.
  *
- * The class does not implement selective deletion operations (<code>remove()</code>, <code>removeAll()</code>, <code>retainAll()</code>) but it implements <code>clear()</code>.
+ * <p>The class does not implement selective deletion operations (<code>remove()</code>, <code>
+ * removeAll()</code>, <code>retainAll()</code>) but it implements <code>clear()</code>.
  *
- * All operations, including iteration, are thread safe. Operations <code>add()</code>, <code>size()</code> and <code>isEmpty()</code>
- * performs in constant time. The rest of the operations have linear time complexity, while never holding the lock to
- * perform any custom logic (such as calling <code>contains()</code> on elements) or entering <code>synchronized</code> section
- * on any other monitor except for the internal lock. In such cases, lock is used only to make the copy of the content.
+ * <p>All operations, including iteration, are thread safe. Operations <code>add()</code>, <code>
+ * size()</code> and <code>isEmpty()</code> performs in constant time. The rest of the operations
+ * have linear time complexity, while never holding the lock to perform any custom logic (such as
+ * calling <code>contains()</code> on elements) or entering <code>synchronized</code> section on any
+ * other monitor except for the internal lock. In such cases, lock is used only to make the copy of
+ * the content.
  *
  * @author ogondza.
  */
@@ -74,7 +77,8 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     /**
      * Add several elements at once.
      *
-     * It is not guaranteed the elements will be consecutive in the collection (other thread can add elements in between) but it is guaranteed to preserve order.
+     * <p>It is not guaranteed the elements will be consecutive in the collection (other thread can
+     * add elements in between) but it is guaranteed to preserve order.
      */
     @Override
     public boolean addAll(@NonNull Collection<? extends E> c) {
@@ -96,16 +100,14 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     /**
      * Create thread-safe iterator for collection snapshot.
      *
-     * Iterated elements represent a snapshot of the collection.
+     * <p>Iterated elements represent a snapshot of the collection.
      */
     @Override
     public @NonNull Iterator<E> iterator() {
         return toList().iterator();
     }
 
-    /**
-     * Number of contained elements, never more than capacity.
-     */
+    /** Number of contained elements, never more than capacity. */
     @Override
     public @Nonnegative int size() {
         synchronized (data) {
@@ -113,9 +115,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
         }
     }
 
-    /**
-     * Maximal collection capacity.
-     */
+    /** Maximal collection capacity. */
     public @Nonnegative int capacity() {
         return data.length;
     }
@@ -135,9 +135,7 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
         return toList().containsAll(c);
     }
 
-    /**
-     * Get elements in separate collection.
-     */
+    /** Get elements in separate collection. */
     public @NonNull List<E> toList() {
         return Arrays.asList(toArray());
     }
@@ -159,7 +157,8 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
             } else if (ret.length > size) {
                 // javadoc: If this collection fits in the specified array with room to spare
                 // (i.e., the array has more elements than this collection), the element
-                // in the array immediately following the end of the collection is set to <code>null</code>
+                // in the array immediately following the end of the collection is set to
+                // <code>null</code>
                 ret[size] = null;
             }
             if (size < data.length) { // Initial fill
