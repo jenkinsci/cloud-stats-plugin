@@ -9,6 +9,7 @@ buildPlugin(
   // Test Java 11 with minimum Jenkins version, Java 17 with a more recent version
   configurations: [
     [platform: 'linux',   jdk: '11'], // Linux first for coverage report on ci.jenkins.io
+    [platform: 'linux',   jdk: '17'],
     [platform: 'windows', jdk: '17', jenkins: '2.389'],
   ]
 )
