@@ -66,7 +66,7 @@ public final class Health {
             }
         }
 
-        return new Report((success * 100 / all));
+        return new Report(success * 100 / all);
     }
 
     /**
@@ -79,7 +79,9 @@ public final class Health {
      * ones.
      */
     public Report getCurrent() {
-        if (samples.isEmpty()) return new Report(Float.NaN);
+        if (samples.isEmpty()) {
+            return new Report(Float.NaN);
+        }
 
         // Base the relative wights on the newest sample. It is important for older samples not to
         // outweight the recent
@@ -130,8 +132,12 @@ public final class Health {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Report report = (Report) o;
 
@@ -140,12 +146,14 @@ public final class Health {
 
         @Override
         public int hashCode() {
-            return (percent != +0.0f ? Float.floatToIntBits(percent) : 0);
+            return percent != +0.0f ? Float.floatToIntBits(percent) : 0;
         }
 
         @Override
         public String toString() {
-            if (Float.isNaN(percent)) return "?";
+            if (Float.isNaN(percent)) {
+                return "?";
+            }
             return FORMAT.format(percent);
         }
 

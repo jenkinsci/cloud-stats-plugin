@@ -44,8 +44,7 @@ public class TrackedPlannedNode extends PlannedNode implements TrackedItem {
 
     private final @NonNull ProvisioningActivity.Id id;
 
-    public TrackedPlannedNode(
-            @NonNull ProvisioningActivity.Id id, int numExecutors, @NonNull Future<Node> future) {
+    public TrackedPlannedNode(@NonNull ProvisioningActivity.Id id, int numExecutors, @NonNull Future<Node> future) {
         super(extractTemporaryName(id), future, numExecutors);
 
         this.id = id;
@@ -63,6 +62,7 @@ public class TrackedPlannedNode extends PlannedNode implements TrackedItem {
         return name;
     }
 
+    @Override
     public @NonNull ProvisioningActivity.Id getId() {
         return id;
     }

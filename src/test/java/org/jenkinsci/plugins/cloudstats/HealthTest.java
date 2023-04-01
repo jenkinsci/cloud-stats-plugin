@@ -152,11 +152,12 @@ public class HealthTest {
 
         assertEquals(0, health(failure(0)).getCurrent().getPercentage(), 0F);
         assertEquals(50, health(success(0), failure(1)).getCurrent().getPercentage(), 1F);
-        assertEquals(
-                66, health(success(0), success(1), failure(2)).getCurrent().getPercentage(), 2F);
+        assertEquals(66, health(success(0), success(1), failure(2)).getCurrent().getPercentage(), 2F);
         assertEquals(
                 75,
-                health(success(0), success(1), success(2), failure(3)).getCurrent().getPercentage(),
+                health(success(0), success(1), success(2), failure(3))
+                        .getCurrent()
+                        .getPercentage(),
                 2F);
 
         assertEquals(57, health(success(0), failure(10)).getCurrent().getPercentage(), 1F);

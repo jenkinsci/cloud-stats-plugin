@@ -102,10 +102,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
          *     known ahead, it can be <code>null</code> cloud stats plugin will update it once it
          *     will be known.
          */
-        public Id(
-                @NonNull String cloudName,
-                @CheckForNull String templateName,
-                @CheckForNull String nodeName) {
+        public Id(@NonNull String cloudName, @CheckForNull String templateName, @CheckForNull String nodeName) {
             this.cloudName = cloudName;
             this.templateName = templateName;
             this.nodeName = nodeName;
@@ -164,8 +161,12 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             Id id = (Id) o;
             return fingerprint == id.fingerprint;
         }
@@ -178,8 +179,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         @Override
         public String toString() {
             return String.format(
-                    "ProvisioningActivity for %s/%s/%s (%d)",
-                    cloudName, templateName, nodeName, fingerprint);
+                    "ProvisioningActivity for %s/%s/%s (%d)", cloudName, templateName, nodeName, fingerprint);
         }
     }
 
@@ -266,16 +266,24 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     public @NonNull PhaseExecution getCurrentPhaseExecution() {
         synchronized (progress) {
             PhaseExecution ex = progress.get(Phase.COMPLETED);
-            if (ex != null) return ex;
+            if (ex != null) {
+                return ex;
+            }
 
             ex = progress.get(Phase.OPERATING);
-            if (ex != null) return ex;
+            if (ex != null) {
+                return ex;
+            }
 
             ex = progress.get(Phase.LAUNCHING);
-            if (ex != null) return ex;
+            if (ex != null) {
+                return ex;
+            }
 
             ex = progress.get(Phase.PROVISIONING);
-            if (ex != null) return ex;
+            if (ex != null) {
+                return ex;
+            }
 
             throw new IllegalStateException("Unknown provisioning state of " + getDisplayName());
         }
@@ -295,7 +303,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         synchronized (progress) {
             Status status = Status.OK;
             for (PhaseExecution e : progress.values()) {
-                if (e == null) continue;
+                if (e == null) {
+                    continue;
+                }
                 Status s = e.getStatus();
                 if (status.ordinal() < s.ordinal()) {
                     status = s;
@@ -312,19 +322,18 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     public void enter(@NonNull Phase phase) {
         synchronized (progress) {
-            if (progress.get(phase) != null)
+            if (progress.get(phase) != null) {
                 throw new IllegalStateException("The phase " + phase + " has already started");
+            }
 
             final Phase currentPhase = getCurrentPhase();
-            if (currentPhase.compareTo(phase) >= 0)
-                throw new IllegalStateException(
-                        "The phase " + getCurrentPhase() + " has already started");
+            if (currentPhase.compareTo(phase) >= 0) {
+                throw new IllegalStateException("The phase " + getCurrentPhase() + " has already started");
+            }
 
             progress.put(phase, new PhaseExecution(phase));
 
-            if (phase == Phase.COMPLETED
-                    && currentPhase != Phase.OPERATING
-                    && getStatus() == Status.OK) {
+            if (phase == Phase.COMPLETED && currentPhase != Phase.OPERATING && getStatus() == Status.OK) {
                 PhaseExecutionAttachment attachment =
                         new PhaseExecutionAttachment(Status.WARN, PREMATURE_COMPLETION_DETECTED);
                 progress.get(Phase.COMPLETED).attach(attachment);
@@ -349,8 +358,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     public boolean enterIfNotAlready(@NonNull Phase phase) {
         synchronized (progress) {
             // Entered or skipped
-            if (progress.get(phase) != null || getCurrentPhase().compareTo(phase) >= 0)
+            if (progress.get(phase) != null || getCurrentPhase().compareTo(phase) >= 0) {
                 return false;
+            }
             progress.put(phase, new PhaseExecution(phase));
         }
         return true;
@@ -363,8 +373,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     @Restricted(NoExternalUse.class)
     /*package*/ void attach(Phase phase, PhaseExecutionAttachment attachment) {
         PhaseExecution execution = getPhaseExecution(phase);
-        if (execution == null)
+        if (execution == null) {
             throw new IllegalArgumentException("Phase " + phase + " not entered yet");
+        }
         execution.attach(attachment);
     }
 
@@ -387,8 +398,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     @Restricted(NoExternalUse.class)
     /*package*/ void rename(@NonNull String newName) {
-        if (Util.fixEmptyAndTrim(newName) == null)
+        if (Util.fixEmptyAndTrim(newName) == null) {
             throw new IllegalArgumentException("Unable to rename to empty string");
+        }
         synchronized (id) {
             name = newName;
         }
@@ -408,20 +420,24 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     @Restricted(NoExternalUse.class) // Stapler only
     public long getDuration(@NonNull PhaseExecution execution) {
         Phase phase = execution.getPhase();
-        if (phase == Phase.COMPLETED) throw new IllegalArgumentException();
+        if (phase == Phase.COMPLETED) {
+            throw new IllegalArgumentException();
+        }
 
         // Find any later nonnull execution
         PhaseExecution next = null;
         for (Phase p : Phase.values()) {
-            if (p.ordinal() <= phase.ordinal()) continue;
+            if (p.ordinal() <= phase.ordinal()) {
+                continue;
+            }
             next = getPhaseExecution(p);
-            if (next != null) break;
+            if (next != null) {
+                break;
+            }
         }
 
         long started = execution.getStartedTimestamp();
-        return next != null
-                ? next.getStartedTimestamp() - started
-                : -(System.currentTimeMillis() - started);
+        return next != null ? next.getStartedTimestamp() - started : -(System.currentTimeMillis() - started);
     }
 
     public boolean isFor(Id id) {
@@ -440,9 +456,15 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
     @Override
     public boolean equals(Object o) {
-        if (o == null) return false;
-        if (o == this) return true;
-        if (!o.getClass().equals(getClass())) return false;
+        if (o == null) {
+            return false;
+        }
+        if (o == this) {
+            return true;
+        }
+        if (!o.getClass().equals(getClass())) {
+            return false;
+        }
         ProvisioningActivity rhs = (ProvisioningActivity) o;
         return id.equals(rhs.id);
     }

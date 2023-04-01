@@ -78,8 +78,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
     /** The number of completed records to be stored. */
     @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL", justification = "Not final for testing")
-    public static /*final*/ int ARCHIVE_RECORDS =
-            Integer.getInteger(ARCHIVE_RECORDS_PROPERTY_NAME, 100);
+    public static /*final*/ int ARCHIVE_RECORDS = Integer.getInteger(ARCHIVE_RECORDS_PROPERTY_NAME, 100);
 
     /**
      * All activities that are not in completed state.
@@ -98,9 +97,8 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
      * be explicitly synchronized.
      */
     @GuardedBy("active")
-    private /*final except for serialization*/ @NonNull CyclicThreadSafeCollection<
-                    ProvisioningActivity>
-            log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
+    private /*final except for serialization*/ @NonNull CyclicThreadSafeCollection<ProvisioningActivity> log =
+            new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
 
     /** Get the singleton instance. */
     public static @NonNull CloudStatistics get() {
@@ -122,10 +120,8 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         // unless we intervene here.
         for (ProvisioningActivity activity : getActivities()) {
             if (activity.getCurrentPhase() == ProvisioningActivity.Phase.PROVISIONING) {
-                PhaseExecutionAttachment attachment =
-                        new PhaseExecutionAttachment(
-                                ProvisioningActivity.Status.OK,
-                                "Provisioning interrupted by restart");
+                PhaseExecutionAttachment attachment = new PhaseExecutionAttachment(
+                        ProvisioningActivity.Status.OK, "Provisioning interrupted by restart");
                 activity.enter(ProvisioningActivity.Phase.COMPLETED);
                 attach(activity, ProvisioningActivity.Phase.COMPLETED, attachment);
                 archive(activity);
@@ -134,6 +130,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         }
     }
 
+    @Override
     public String getDisplayName() {
         return "Cloud Statistics";
     }
@@ -142,8 +139,12 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     public String getIconFileName() {
         // This _needs_ to be done in getIconFileName only because of JENKINS-33683.
         Jenkins jenkins = Jenkins.get();
-        if (!jenkins.hasPermission(getRequiredPermission())) return null;
-        if (jenkins.clouds.isEmpty() && isEmpty()) return null;
+        if (!jenkins.hasPermission(getRequiredPermission())) {
+            return null;
+        }
+        if (jenkins.clouds.isEmpty() && isEmpty()) {
+            return null;
+        }
         return "graph.png";
     }
 
@@ -212,6 +213,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
      *     STATUS}.
      * @since 2.226 of Jenkins core
      */
+    @Override
     public String getCategoryName() {
         return "STATUS";
     }
@@ -230,9 +232,10 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
      *
      * @return The activity or null if rotated already.
      */
-    public @CheckForNull ProvisioningActivity getPotentiallyCompletedActivityFor(
-            ProvisioningActivity.Id id) {
-        if (id == null) return null;
+    public @CheckForNull ProvisioningActivity getPotentiallyCompletedActivityFor(ProvisioningActivity.Id id) {
+        if (id == null) {
+            return null;
+        }
 
         for (ProvisioningActivity activity : getActivities()) {
             if (activity.isFor(id)) {
@@ -245,7 +248,9 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     /** Get "active" activity, missing activity will be logged. */
     public @CheckForNull ProvisioningActivity getActivityFor(ProvisioningActivity.Id id) {
         ProvisioningActivity activity = getPotentiallyCompletedActivityFor(id);
-        if (activity != null) return activity;
+        if (activity != null) {
+            return activity;
+        }
 
         LOGGER.log(Level.WARNING, "No activity tracked for " + id, new IllegalStateException());
         return null;
@@ -253,7 +258,9 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
     public @CheckForNull ProvisioningActivity getActivityFor(TrackedItem item) {
         ProvisioningActivity.Id id = item.getId();
-        if (id == null) return null;
+        if (id == null) {
+            return null;
+        }
         return getActivityFor(id);
     }
 
@@ -289,7 +296,9 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         attachment.getClass();
 
         // No UI
-        if (attachment.getUrlName() == null) return null;
+        if (attachment.getUrlName() == null) {
+            return null;
+        }
 
         StringBuilder url = new StringBuilder("/cloud-stats/");
         url.append("activity/").append(activity.getId().getFingerprint()).append('/');
@@ -316,8 +325,11 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         persist();
     }
 
+    @Override
     public void save() throws IOException {
-        if (BulkChange.contains(this)) return;
+        if (BulkChange.contains(this)) {
+            return;
+        }
 
         getConfigFile().write(this);
     }
@@ -394,11 +406,9 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
             FilePath configFile = new FilePath(getConfigFile().getFile());
             try {
                 if (configFile.exists()) {
-                    FilePath target =
-                            new FilePath(new File(configFile.getRemote() + ".bak-JENKINS-44929"));
+                    FilePath target = new FilePath(new File(configFile.getRemote() + ".bak-JENKINS-44929"));
                     configFile.renameTo(target);
-                    LOGGER.warning(
-                            msg + " Please file a bug report attaching " + target.getRemote());
+                    LOGGER.warning(msg + " Please file a bug report attaching " + target.getRemote());
                 } else {
                     LOGGER.warning(msg + " " + configFile.getRemote() + " not found");
                 }
@@ -413,7 +423,10 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
             log = new CyclicThreadSafeCollection<>(ARCHIVE_RECORDS);
             int added = 0;
             for (ProvisioningActivity pa : existing) {
-                if (added > ARCHIVE_RECORDS) break; // Prevent adding more when shrinking
+                if (added > ARCHIVE_RECORDS) {
+                    // Prevent adding more when shrinking
+                    break;
+                }
                 log.add(pa);
                 added++;
             }
@@ -425,9 +438,8 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     /*package for testing*/ XmlFile getConfigFile() {
         return new XmlFile(
                 Jenkins.XSTREAM,
-                new File(
-                        new File(Jenkins.getInstance().root, getClass().getCanonicalName() + ".xml")
-                                .getAbsolutePath()));
+                new File(new File(Jenkins.getInstance().root, getClass().getCanonicalName() + ".xml")
+                        .getAbsolutePath()));
     }
 
     private void archive(ProvisioningActivity activity) {
@@ -454,8 +466,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
         @Override
         @Restricted(DoNotUse.class)
-        public void onStarted(
-                Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
+        public void onStarted(Cloud cloud, Label label, Collection<NodeProvisioner.PlannedNode> plannedNodes) {
             BulkChange change = new BulkChange(stats);
             try {
                 boolean changed = false;
@@ -513,8 +524,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
          *
          * <p>The method should be called before the node is added to Jenkins.
          */
-        public @CheckForNull ProvisioningActivity onComplete(
-                @NonNull ProvisioningActivity.Id id, @NonNull Node node) {
+        public @CheckForNull ProvisioningActivity onComplete(@NonNull ProvisioningActivity.Id id, @NonNull Node node) {
             ProvisioningActivity activity = stats.getActivityFor(id);
             if (activity != null) {
                 activity.rename(node.getDisplayName());
@@ -551,14 +561,15 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
                 stats.attach(
                         activity,
                         ProvisioningActivity.Phase.PROVISIONING,
-                        new PhaseExecutionAttachment.ExceptionAttachment(
-                                ProvisioningActivity.Status.FAIL, throwable));
+                        new PhaseExecutionAttachment.ExceptionAttachment(ProvisioningActivity.Status.FAIL, throwable));
             }
             return activity;
         }
 
         public static ProvisioningListener get() {
-            return Jenkins.getInstance().getExtensionList(ProvisioningListener.class).get(0);
+            return Jenkins.getInstance()
+                    .getExtensionList(ProvisioningListener.class)
+                    .get(0);
         }
     }
 
@@ -571,9 +582,13 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         @Override
         public void preLaunch(Computer c, TaskListener taskListener) {
             ProvisioningActivity.Id id = getIdFor(c);
-            if (id == null) return;
+            if (id == null) {
+                return;
+            }
             ProvisioningActivity activity = stats.getActivityFor(id);
-            if (activity == null) return;
+            if (activity == null) {
+                return;
+            }
 
             // Do not enter second time on relaunch
             boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.LAUNCHING);
@@ -585,9 +600,13 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         @Override
         public void onLaunchFailure(Computer c, TaskListener taskListener) {
             ProvisioningActivity.Id id = getIdFor(c);
-            if (id == null) return;
+            if (id == null) {
+                return;
+            }
             ProvisioningActivity activity = stats.getActivityFor(id);
-            if (activity == null) return;
+            if (activity == null) {
+                return;
+            }
 
             // TODO attach details
             // ...
@@ -596,9 +615,13 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         @Override
         public void onOnline(Computer c, TaskListener listener) {
             ProvisioningActivity.Id id = getIdFor(c);
-            if (id == null) return;
+            if (id == null) {
+                return;
+            }
             ProvisioningActivity activity = stats.getActivityFor(id);
-            if (activity == null) return;
+            if (activity == null) {
+                return;
+            }
 
             // Do not enter second time on relaunch
             boolean entered = activity.enterIfNotAlready(ProvisioningActivity.Phase.OPERATING);
@@ -633,24 +656,27 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
             ArrayList<ProvisioningActivity> completed = new ArrayList<>();
             for (ProvisioningActivity activity : stats.getRetainedActivities()) {
-                Map<ProvisioningActivity.Phase, PhaseExecution> executions =
-                        activity.getPhaseExecutions();
+                Map<ProvisioningActivity.Phase, PhaseExecution> executions = activity.getPhaseExecutions();
 
                 if (executions.get(ProvisioningActivity.Phase.COMPLETED) != null) {
                     completed.add(activity);
                     continue; // Completed already
                 }
-                assert activity.getStatus()
-                        != ProvisioningActivity.Status
-                                .FAIL; // Should be completed already if failed
+                // Should be completed already if failed
+                assert activity.getStatus() != ProvisioningActivity.Status.FAIL;
 
                 // TODO there is still a chance some activity will never be recognised as completed
                 // when provisioning
                 // completes without error and launching never starts for some reason
-                if (executions.get(ProvisioningActivity.Phase.LAUNCHING) == null)
-                    continue; // Still provisioning
+                if (executions.get(ProvisioningActivity.Phase.LAUNCHING) == null) {
+                    // Still provisioning
+                    continue;
+                }
 
-                if (trackedExisting.contains(activity.getId())) continue; // Still operating
+                if (trackedExisting.contains(activity.getId())) {
+                    // Still operating
+                    continue;
+                }
 
                 activity.enter(ProvisioningActivity.Phase.COMPLETED);
                 completed.add(activity);
@@ -674,13 +700,21 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         // Reflect renames so the name of the activity tracks the agent name
         @Override
         protected void onUpdated(@NonNull Node oldOne, @NonNull Node newOne) {
-            if (oldOne.getNodeName().equals(newOne.getNodeName())) return; // Not renamed
+            if (oldOne.getNodeName().equals(newOne.getNodeName())) {
+                // Not renamed
+                return;
+            }
 
             ProvisioningActivity.Id id = getIdFor(oldOne);
-            if (id == null) return; // Not tracked
+            if (id == null) {
+                // Not tracked
+                return;
+            }
 
             ProvisioningActivity activity = stats.getActivityFor(id);
-            if (activity == null) return;
+            if (activity == null) {
+                return;
+            }
 
             activity.rename(newOne.getNodeName());
             stats.persist();
@@ -689,10 +723,15 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         @Override
         protected void onDeleted(@NonNull Node node) {
             ProvisioningActivity.Id id = getIdFor(node);
-            if (id == null) return; // Not tracked
+            if (id == null) {
+                // Not tracked
+                return;
+            }
 
             ProvisioningActivity activity = stats.getActivityFor(id);
-            if (activity == null) return;
+            if (activity == null) {
+                return;
+            }
 
             // The phase might already been entered in case cloud plugins needed to to add an
             // attachment to the phase.
@@ -707,8 +746,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         }
     }
 
-    private static @CheckForNull ProvisioningActivity.Id getIdFor(
-            NodeProvisioner.PlannedNode plannedNode) {
+    private static @CheckForNull ProvisioningActivity.Id getIdFor(NodeProvisioner.PlannedNode plannedNode) {
         if (!(plannedNode instanceof TrackedItem)) {
             logTypeNotSupported(plannedNode.getClass());
             return null;
@@ -718,7 +756,9 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     }
 
     private static @CheckForNull ProvisioningActivity.Id getIdFor(Node node) {
-        if (node instanceof Jenkins) return null;
+        if (node instanceof Jenkins) {
+            return null;
+        }
 
         if (!(node instanceof TrackedItem)) {
             LOGGER.info("No support for cloud-stats-plugin by " + node.getClass());
@@ -729,8 +769,12 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
     }
 
     private static @CheckForNull ProvisioningActivity.Id getIdFor(Computer computer) {
-        if (computer instanceof Jenkins.MasterComputer) return null;
-        if (!(computer instanceof AbstractCloudComputer)) return null;
+        if (computer instanceof Jenkins.MasterComputer) {
+            return null;
+        }
+        if (!(computer instanceof AbstractCloudComputer)) {
+            return null;
+        }
 
         if (!(computer instanceof TrackedItem)) {
             logTypeNotSupported(computer.getClass());
@@ -747,6 +791,5 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         }
     }
 
-    private static final Set<Class> loggedUnsupportedTypes =
-            Collections.synchronizedSet(new HashSet<>());
+    private static final Set<Class> loggedUnsupportedTypes = Collections.synchronizedSet(new HashSet<>());
 }
