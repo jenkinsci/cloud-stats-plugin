@@ -45,87 +45,80 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
  */
 public class RestartTest {
 
-    @Rule public RestartableJenkinsRule j = new RestartableJenkinsRule();
+    @Rule
+    public RestartableJenkinsRule j = new RestartableJenkinsRule();
 
     @Test
     public void loadEmpty() {
-        j.addStep(
-                new Statement() {
-                    @Override
-                    public void evaluate() throws Throwable {
-                        CloudStatistics cs = CloudStatistics.get();
-                        cs.save();
-                        assertThat(cs.getActivities(), Matchers.emptyIterable());
-                    }
-                });
+        j.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                CloudStatistics cs = CloudStatistics.get();
+                cs.save();
+                assertThat(cs.getActivities(), Matchers.emptyIterable());
+            }
+        });
 
-        j.addStep(
-                new Statement() {
-                    @Override
-                    public void evaluate() {
-                        CloudStatistics cs = CloudStatistics.get();
-                        assertThat(cs.getActivities(), Matchers.emptyIterable());
-                    }
-                });
+        j.addStep(new Statement() {
+            @Override
+            public void evaluate() {
+                CloudStatistics cs = CloudStatistics.get();
+                assertThat(cs.getActivities(), Matchers.emptyIterable());
+            }
+        });
     }
 
     @Test
     public void persistStatisticsBetweenRestarts() {
-        final ProvisioningActivity.Id started =
-                new ProvisioningActivity.Id("Cloud", "template", "started");
-        final ProvisioningActivity.Id failed =
-                new ProvisioningActivity.Id("Cloud", "template", "failed");
-        final ProvisioningActivity.Id completed =
-                new ProvisioningActivity.Id("Cloud", "template", "completed");
+        final ProvisioningActivity.Id started = new ProvisioningActivity.Id("Cloud", "template", "started");
+        final ProvisioningActivity.Id failed = new ProvisioningActivity.Id("Cloud", "template", "failed");
+        final ProvisioningActivity.Id completed = new ProvisioningActivity.Id("Cloud", "template", "completed");
 
-        j.addStep(
-                new Statement() {
-                    @Override
-                    public void evaluate() throws Throwable {
-                        final CloudStatistics.ProvisioningListener listener =
-                                CloudStatistics.ProvisioningListener.get();
+        j.addStep(new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
 
-                        listener.onStarted(started);
-                        listener.onStarted(failed);
-                        listener.onFailure(failed, new Exception());
+                listener.onStarted(started);
+                listener.onStarted(failed);
+                listener.onFailure(failed, new Exception());
 
-                        TrackedAgent node = TrackedAgent.create(completed, j.j);
-                        listener.onStarted(completed);
-                        listener.onComplete(completed, node);
-                        ExtensionList.lookup(CloudStatistics.OperationListener.class)
-                                .get(0)
-                                .onOnline(node.createComputer(), null);
-                        ExtensionList.lookup(CloudStatistics.SlaveCompletionDetector.class)
-                                .get(0)
-                                .onDeleted(node);
-                    }
-                });
+                TrackedAgent node = TrackedAgent.create(completed, j.j);
+                listener.onStarted(completed);
+                listener.onComplete(completed, node);
+                ExtensionList.lookup(CloudStatistics.OperationListener.class)
+                        .get(0)
+                        .onOnline(node.createComputer(), null);
+                ExtensionList.lookup(CloudStatistics.SlaveCompletionDetector.class)
+                        .get(0)
+                        .onDeleted(node);
+            }
+        });
 
-        j.addStep(
-                new Statement() {
-                    @Override
-                    public void evaluate() {
-                        final CloudStatistics stats = CloudStatistics.get();
+        j.addStep(new Statement() {
+            @Override
+            public void evaluate() {
+                final CloudStatistics stats = CloudStatistics.get();
 
-                        assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
+                assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
 
-                        ProvisioningActivity c = stats.getActivityFor(completed);
-                        assertNotNull(c.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
-                        assertEquals(ProvisioningActivity.Status.OK, c.getStatus());
-                        assertEquals(COMPLETED, c.getCurrentPhase());
+                ProvisioningActivity c = stats.getActivityFor(completed);
+                assertNotNull(c.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
+                assertEquals(ProvisioningActivity.Status.OK, c.getStatus());
+                assertEquals(COMPLETED, c.getCurrentPhase());
 
-                        ProvisioningActivity f = stats.getActivityFor(failed);
-                        assertNotNull(f.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
-                        assertEquals(ProvisioningActivity.Status.FAIL, f.getStatus());
-                        assertEquals(COMPLETED, f.getCurrentPhase());
+                ProvisioningActivity f = stats.getActivityFor(failed);
+                assertNotNull(f.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
+                assertEquals(ProvisioningActivity.Status.FAIL, f.getStatus());
+                assertEquals(COMPLETED, f.getCurrentPhase());
 
-                        ProvisioningActivity s = stats.getActivityFor(started);
-                        assertNotNull(s.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
+                ProvisioningActivity s = stats.getActivityFor(started);
+                assertNotNull(s.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
 
-                        assertEquals(ProvisioningActivity.Status.WARN, s.getStatus());
-                        assertEquals(COMPLETED, f.getCurrentPhase());
-                    }
-                });
+                assertEquals(ProvisioningActivity.Status.WARN, s.getStatus());
+                assertEquals(COMPLETED, f.getCurrentPhase());
+            }
+        });
     }
 
     @Test
@@ -177,37 +170,33 @@ public class RestartTest {
                         CloudStatistics.ARCHIVE_RECORDS = 5;
                     }
                 });
-        j.addStep(
-                new Statement() {
-                    @Override
-                    public void evaluate() {
-                        final CloudStatistics stats = CloudStatistics.get();
-                        assertStats(stats, 4, 5, 6);
-                        addCompletedActivity(3);
-                        assertStats(stats, 5, 6, 7, 8, 9);
-                    }
-                });
+        j.addStep(new Statement() {
+            @Override
+            public void evaluate() {
+                final CloudStatistics stats = CloudStatistics.get();
+                assertStats(stats, 4, 5, 6);
+                addCompletedActivity(3);
+                assertStats(stats, 5, 6, 7, 8, 9);
+            }
+        });
     }
 
     private static transient AtomicInteger sequence = new AtomicInteger(0);
 
     private static void addCompletedActivity(int count) {
-        final CloudStatistics.ProvisioningListener listener =
-                CloudStatistics.ProvisioningListener.get();
+        final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
         for (int i = 0; i < count; i++) {
             ProvisioningActivity.Id id =
-                    new ProvisioningActivity.Id(
-                            "Cloud", "template", Integer.toString(sequence.getAndIncrement()));
+                    new ProvisioningActivity.Id("Cloud", "template", Integer.toString(sequence.getAndIncrement()));
             listener.onStarted(id);
             listener.onFailure(id, new Error());
         }
     }
 
     private static void assertStats(CloudStatistics stats, int... expected) {
-        List<Integer> statSequences =
-                stats.getActivities().stream()
-                        .map(pa -> Integer.parseInt(pa.getName()))
-                        .collect(Collectors.toList());
+        List<Integer> statSequences = stats.getActivities().stream()
+                .map(pa -> Integer.parseInt(pa.getName()))
+                .collect(Collectors.toList());
         List<Integer> expectedList = Arrays.stream(expected).boxed().collect(Collectors.toList());
         assertEquals(expectedList, statSequences);
 

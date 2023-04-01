@@ -65,8 +65,7 @@ public final class TestCloud extends Cloud {
         provision.id = new ProvisioningActivity.Id(name, null, name + "-agent-" + i);
 
         return Collections.singletonList(
-                new TrackedPlannedNode(
-                        provision.id, 1, Computer.threadPoolForRemoting.submit(provision)));
+                new TrackedPlannedNode(provision.id, 1, Computer.threadPoolForRemoting.submit(provision)));
     }
 
     @Override

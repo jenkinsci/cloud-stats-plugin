@@ -105,10 +105,11 @@ public final class ActivityIndex {
     }
 
     /** Get activities owned by particular cloud and template. */
-    public @NonNull Collection<ProvisioningActivity> forTemplate(
-            @NonNull String cloud, @Nullable String template) {
+    public @NonNull Collection<ProvisioningActivity> forTemplate(@NonNull String cloud, @Nullable String template) {
         Map<String, Collection<ProvisioningActivity>> forCloud = byTemplate.get(cloud);
-        if (forCloud == null) return EMPTY;
+        if (forCloud == null) {
+            return EMPTY;
+        }
         Collection<ProvisioningActivity> ret = forCloud.get(template);
         return ret == null ? EMPTY : ret;
     }
@@ -125,8 +126,7 @@ public final class ActivityIndex {
 
     public @NonNull Map<String, Map<String, Health>> healthByTemplate() {
         HashMap<String, Map<String, Health>> ret = new HashMap<>(byTemplate.size());
-        for (Map.Entry<String, Map<String, Collection<ProvisioningActivity>>> entry :
-                byTemplate.entrySet()) {
+        for (Map.Entry<String, Map<String, Collection<ProvisioningActivity>>> entry : byTemplate.entrySet()) {
             HashMap<String, Health> tmpltret = new HashMap<>(entry.getValue().size());
             for (Map.Entry<String, Collection<ProvisioningActivity>> template :
                     entry.getValue().entrySet()) {
@@ -150,7 +150,9 @@ public final class ActivityIndex {
         List<ProvisioningActivity> samples = new ArrayList<>(as.size());
         for (ProvisioningActivity sample : as) {
             ProvisioningActivity.Phase currentPhase = sample.getCurrentPhase();
-            if (currentPhase != COMPLETED && currentPhase != OPERATING) continue;
+            if (currentPhase != COMPLETED && currentPhase != OPERATING) {
+                continue;
+            }
             samples.add(sample);
         }
         return samples;

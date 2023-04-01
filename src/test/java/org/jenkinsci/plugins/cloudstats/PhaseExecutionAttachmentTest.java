@@ -45,7 +45,6 @@ public class PhaseExecutionAttachmentTest {
         assertEquals(
                 "NoSuchFileException: /foo: Some reason",
                 extractTitle(new NoSuchFileException("/foo", null, "Some reason")));
-        assertEquals(
-                "FileNotFoundException: /foo", extractTitle(new FileNotFoundException("/foo")));
+        assertEquals("FileNotFoundException: /foo", extractTitle(new FileNotFoundException("/foo")));
     }
 }

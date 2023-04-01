@@ -102,8 +102,7 @@ public class CloudStatisticsTest {
     }
 
     private void triggerProvisioning() {
-        provisionerInvoker
-                .run(); // The method first collects completed activities and then starts new ones -
+        provisionerInvoker.run(); // The method first collects completed activities and then starts new ones -
         // to start and collect it needs to be called twice.
         provisionerInvoker.run();
     }
@@ -122,16 +121,18 @@ public class CloudStatisticsTest {
             if (activities.size() > 0) {
                 activity = activities.get(0);
 
-                if (activity.getStatus() == FAIL) break;
+                if (activity.getStatus() == FAIL) {
+                    break;
+                }
             }
             Thread.sleep(100);
         }
 
         PhaseExecution prov = activity.getPhaseExecution(PROVISIONING);
         assertEquals(FAIL, activity.getStatus());
-        ExceptionAttachment attachment = prov.getAttachments(ExceptionAttachment.class).get(0);
-        assertEquals(
-                Functions.printThrowable(TestCloud.ThrowException.EXCEPTION), attachment.getText());
+        ExceptionAttachment attachment =
+                prov.getAttachments(ExceptionAttachment.class).get(0);
+        assertEquals(Functions.printThrowable(TestCloud.ThrowException.EXCEPTION), attachment.getText());
         assertEquals(FAIL, attachment.getStatus());
         assertEquals(FAIL, activity.getStatus());
 
@@ -154,7 +155,9 @@ public class CloudStatisticsTest {
         List<ProvisioningActivity> activities;
         for (; ; ) {
             activities = cs.getActivities();
-            if (activities.size() > 0) break;
+            if (activities.size() > 0) {
+                break;
+            }
         }
         for (ProvisioningActivity a : activities) {
             assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
@@ -164,10 +167,7 @@ public class CloudStatisticsTest {
 
         ProvisioningActivity activity = activities.get(0);
         assertNotNull(activity.getPhaseExecution(PROVISIONING));
-        assertEquals(
-                activity.getPhaseExecution(PROVISIONING).getAttachments().toString(),
-                OK,
-                activity.getStatus());
+        assertEquals(activity.getPhaseExecution(PROVISIONING).getAttachments().toString(), OK, activity.getStatus());
 
         // It can take a bit
         while (j.jenkins.getComputer(activity.getId().getNodeName()) == null) {
@@ -235,8 +235,7 @@ public class CloudStatisticsTest {
         provisioningListener.onStarted(warnId);
         Node slave = TrackedAgent.create(warnId, j);
         ProvisioningActivity a = provisioningListener.onComplete(warnId, slave);
-        final String WARNING_MESSAGE =
-                "There is something attention worthy. There is something attention worthy.";
+        final String WARNING_MESSAGE = "There is something attention worthy. There is something attention worthy.";
         a.attach(LAUNCHING, new PhaseExecutionAttachment(WARN, WARNING_MESSAGE));
 
         slave.toComputer().waitUntilOnline();
@@ -268,13 +267,9 @@ public class CloudStatisticsTest {
         JenkinsRule.WebClient wc = j.createWebClient();
         j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
 
-        Page page =
-                wc.goTo("cloud-stats")
-                        .getAnchorByHref(
-                                "/jenkins"
-                                        + cs.getUrl(
-                                                failedToProvision, failedProvisioning, exception))
-                        .click();
+        Page page = wc.goTo("cloud-stats")
+                .getAnchorByHref("/jenkins" + cs.getUrl(failedToProvision, failedProvisioning, exception))
+                .click();
         assertThat(page.getWebResponse().getContentAsString(), containsString(EXCEPTION_MESSAGE));
 
         ProvisioningActivity ok = cs.getActivityFor(okId);
@@ -377,19 +372,17 @@ public class CloudStatisticsTest {
     public void modifiedWhileSerialized() throws Exception {
         final CloudStatistics cs = CloudStatistics.get();
         final ProvisioningListener l = ProvisioningListener.get();
-        final ProvisioningActivity activity =
-                l.onStarted(new Id("Cloud", "template", "PAOriginal"));
+        final ProvisioningActivity activity = l.onStarted(new Id("Cloud", "template", "PAOriginal"));
         final StatsModifyingAttachment blocker = new StatsModifyingAttachment(OK, "Blocker");
         Computer.threadPoolForRemoting
-                .submit(
-                        new Callable<Object>() {
-                            @Override
-                            public Object call() {
-                                cs.attach(activity, PROVISIONING, blocker);
-                                cs.persist();
-                                return null;
-                            }
-                        })
+                .submit(new Callable<Object>() {
+                    @Override
+                    public Object call() {
+                        cs.attach(activity, PROVISIONING, blocker);
+                        cs.persist();
+                        return null;
+                    }
+                })
                 .get();
 
         String serialized = cs.getConfigFile().asString();
@@ -398,9 +391,7 @@ public class CloudStatisticsTest {
         assertThat(serialized, containsString("Blocker"));
         assertThat(serialized, containsString("PAOriginal"));
         assertThat(serialized, containsString("PAModifying"));
-        assertThat(
-                serialized,
-                containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
+        assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
 
         assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
@@ -442,9 +433,7 @@ public class CloudStatisticsTest {
         for (HtmlAnchor attachment : attachments) {
             wc.goTo("cloud-stats");
             Page attPage = attachment.click();
-            assertThat(
-                    attPage.getWebResponse().getContentAsString(),
-                    containsString("java.lang.Error"));
+            assertThat(attPage.getWebResponse().getContentAsString(), containsString("java.lang.Error"));
         }
 
         URL url = j.getURL();
@@ -475,19 +464,17 @@ public class CloudStatisticsTest {
         cs.attach(pa, PROVISIONING, new ExceptionAttachment(WARN, new Error("WARNmsg")));
 
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
-        j.jenkins.setAuthorizationStrategy(
-                new MockAuthorizationStrategy()
-                        .grant(Jenkins.READ)
-                        .everywhere()
-                        .to("user")
-                        .grant(Jenkins.ADMINISTER)
-                        .everywhere()
-                        .to("boss"));
+        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to("user")
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .to("boss"));
 
         PhaseExecution phaseExecution = pa.getPhaseExecution(PROVISIONING);
-        String url =
-                cs.getUrl(pa, phaseExecution, phaseExecution.getAttachment("exception"))
-                        .substring(1);
+        String url = cs.getUrl(pa, phaseExecution, phaseExecution.getAttachment("exception"))
+                .substring(1);
 
         JenkinsRule.WebClient adminWc = j.createWebClient().login("boss", "boss");
         adminWc.goTo(url);
@@ -508,9 +495,7 @@ public class CloudStatisticsTest {
 
         String serialized = cs.getConfigFile().asString();
         assertThat(serialized, not(containsString("active class=\"linked-hash-set\"")));
-        assertThat(
-                serialized,
-                containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
+        assertThat(serialized, containsString("active class=\"java.util.concurrent.CopyOnWriteArrayList\""));
 
         assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
@@ -526,8 +511,7 @@ public class CloudStatisticsTest {
         assertThat(partial.getDisplayName(), equalTo("EXCEPTION_MESSAGE"));
         assertThat(
                 partial.getText(),
-                equalTo(
-                        "Plugin was unable to deserialize the exception from version 0.12 or older"));
+                equalTo("Plugin was unable to deserialize the exception from version 0.12 or older"));
 
         ExceptionAttachment full = attachments.get(1);
 
@@ -543,10 +527,7 @@ public class CloudStatisticsTest {
                 break;
             }
         }
-        assertThat(
-                subStr,
-                startsWith(
-                        "at org.jenkinsci.plugins.cloudstats.CloudStatisticsTest.migrateToV013"));
+        assertThat(subStr, startsWith("at org.jenkinsci.plugins.cloudstats.CloudStatisticsTest.migrateToV013"));
 
         cs.persist();
         assertThat(cs.getConfigFile().asString(), not(containsString("suppressedExceptions")));
@@ -558,63 +539,59 @@ public class CloudStatisticsTest {
     @Test
     @Issue("JENKINS-49162")
     public void testConcurrentModificationException() throws Exception {
-        Runnable activityProducer =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        for (; ; ) {
-                            try {
-                                ProvisioningActivity activity =
-                                        ProvisioningListener.get()
-                                                .onStarted(new Id("test1", null, "test1"));
-                                activity.enterIfNotAlready(LAUNCHING);
-                                Thread.sleep(new Random().nextInt(50));
-                                activity.enterIfNotAlready(OPERATING);
-                                Thread.sleep(new Random().nextInt(50));
-                                activity.enterIfNotAlready(COMPLETED);
-                                Thread.sleep(new Random().nextInt(50));
-                            } catch (InterruptedException e) {
-                                break;
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                            if (Thread.interrupted()) break;
-                        }
+        Runnable activityProducer = new Runnable() {
+            @Override
+            public void run() {
+                for (; ; ) {
+                    try {
+                        ProvisioningActivity activity =
+                                ProvisioningListener.get().onStarted(new Id("test1", null, "test1"));
+                        activity.enterIfNotAlready(LAUNCHING);
+                        Thread.sleep(new Random().nextInt(50));
+                        activity.enterIfNotAlready(OPERATING);
+                        Thread.sleep(new Random().nextInt(50));
+                        activity.enterIfNotAlready(COMPLETED);
+                        Thread.sleep(new Random().nextInt(50));
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                };
 
-        Runnable activitiesSaver =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        for (; ; ) {
-                            try {
-                                Thread.sleep(new Random().nextInt(100));
-                                CloudStatistics.get().save();
-                            } catch (InterruptedException e) {
-                                break;
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                            if (Thread.interrupted()) break;
-                        }
+                    if (Thread.interrupted()) {
+                        break;
                     }
-                };
+                }
+            }
+        };
 
-        Runnable[] runnables =
-                new Runnable[] {
-                    activityProducer, activityProducer, activityProducer, activityProducer,
-                            activityProducer,
-                    activityProducer, activityProducer, activityProducer, activityProducer,
-                            activityProducer,
-                    activityProducer, activityProducer, activityProducer, activityProducer,
-                            activityProducer,
-                    activityProducer, activityProducer, activityProducer, activityProducer,
-                            activityProducer,
-                    activitiesSaver
-                };
+        Runnable activitiesSaver = new Runnable() {
+            @Override
+            public void run() {
+                for (; ; ) {
+                    try {
+                        Thread.sleep(new Random().nextInt(100));
+                        CloudStatistics.get().save();
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (Thread.interrupted()) {
+                        break;
+                    }
+                }
+            }
+        };
+
+        Runnable[] runnables = new Runnable[] {
+            activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+            activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+            activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+            activityProducer, activityProducer, activityProducer, activityProducer, activityProducer,
+            activitiesSaver
+        };
         Thread[] threads = new Thread[runnables.length];
         try {
             for (int i = 0; i < runnables.length; i++) {
@@ -639,8 +616,7 @@ public class CloudStatisticsTest {
     // update
     private static final class StatsModifyingAttachment extends PhaseExecutionAttachment {
 
-        public StatsModifyingAttachment(
-                @NonNull ProvisioningActivity.Status status, @NonNull String title) {
+        public StatsModifyingAttachment(@NonNull ProvisioningActivity.Status status, @NonNull String title) {
             super(status, title);
         }
 
@@ -660,7 +636,10 @@ public class CloudStatisticsTest {
     }
 
     private void detectCompletionNow() {
-        j.jenkins.getExtensionList(CloudStatistics.DanglingSlaveScavenger.class).get(0).doRun();
+        j.jenkins
+                .getExtensionList(CloudStatistics.DanglingSlaveScavenger.class)
+                .get(0)
+                .doRun();
     }
 
     private static class LaunchSuccessfully extends TestCloud.Launcher {

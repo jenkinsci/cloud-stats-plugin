@@ -113,8 +113,7 @@ public class CyclicThreadSafeCollectionTest {
 
         log.add(1);
         assertArrayEquals(new Integer[] {1, 1, 1}, log.toArray(dst));
-        assertArrayEquals(
-                new Integer[] {1, 1}, dst); // Not returned in dst array as it does not fit
+        assertArrayEquals(new Integer[] {1, 1}, dst); // Not returned in dst array as it does not fit
     }
 
     @Test
@@ -182,68 +181,69 @@ public class CyclicThreadSafeCollectionTest {
     @Test
     public void threadSafety() {
         final Collection<Integer> data = new CyclicThreadSafeCollection<>(100000);
-        Runnable iterator =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        for (; ; ) {
-                            for (Integer d : data) {
-                                assertNotNull(d);
-                            }
-
-                            if (Thread.interrupted()) break;
-                        }
+        Runnable iterator = new Runnable() {
+            @Override
+            public void run() {
+                for (; ; ) {
+                    for (Integer d : data) {
+                        assertNotNull(d);
                     }
-                };
 
-        Runnable appender =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        for (; ; ) {
-                            assertTrue(data.add(data.size() + 42));
-
-                            if (Thread.interrupted()) break;
-                        }
+                    if (Thread.interrupted()) {
+                        break;
                     }
-                };
+                }
+            }
+        };
 
-        Runnable container =
-                new Runnable() {
-                    private boolean last;
+        Runnable appender = new Runnable() {
+            @Override
+            public void run() {
+                for (; ; ) {
+                    assertTrue(data.add(data.size() + 42));
 
-                    @Override
-                    public void run() {
-                        for (; ; ) {
-                            // Pretend we use the result not to be optimized away
-                            last = data.containsAll(Arrays.asList(17, 39, last ? 315 : 316));
-
-                            if (Thread.interrupted()) break;
-                        }
+                    if (Thread.interrupted()) {
+                        break;
                     }
-                };
+                }
+            }
+        };
 
-        Runnable clearer =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        for (; ; ) {
-                            // System.out.printf("Clearing %d%n", data.size());
-                            data.clear();
-                            try {
-                                Thread.sleep(10);
-                            } catch (InterruptedException e) {
-                                break;
-                            }
-                        }
+        Runnable container = new Runnable() {
+            private boolean last;
+
+            @Override
+            public void run() {
+                for (; ; ) {
+                    // Pretend we use the result not to be optimized away
+                    last = data.containsAll(Arrays.asList(17, 39, last ? 315 : 316));
+
+                    if (Thread.interrupted()) {
+                        break;
                     }
-                };
+                }
+            }
+        };
 
-        Runnable[] runnables =
-                new Runnable[] {
-                    appender, appender, appender, appender, appender, appender, appender, appender,
-                    iterator, iterator, iterator, container, container, container, clearer
-                };
+        Runnable clearer = new Runnable() {
+            @Override
+            public void run() {
+                for (; ; ) {
+                    // System.out.printf("Clearing %d%n", data.size());
+                    data.clear();
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }
+        };
+
+        Runnable[] runnables = new Runnable[] {
+            appender, appender, appender, appender, appender, appender, appender, appender, iterator, iterator,
+            iterator, container, container, container, clearer
+        };
         Thread[] threads = new Thread[runnables.length];
         try {
             for (int i = 0; i < runnables.length; i++) {

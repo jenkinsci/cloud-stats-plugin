@@ -34,7 +34,8 @@ import org.jvnet.hudson.test.recipes.PresetData;
 
 public class StatsWidgetTest {
 
-    @Rule public JenkinsRule j = new JenkinsRule();
+    @Rule
+    public JenkinsRule j = new JenkinsRule();
 
     @Test
     public void showWhenCloudsConfigured() throws Exception {

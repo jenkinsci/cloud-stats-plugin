@@ -57,7 +57,9 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
     private @Nonnegative int size = 0;
 
     public CyclicThreadSafeCollection(int capacity) {
-        if (capacity < 0) throw new IllegalArgumentException("Capacity must be non-negative");
+        if (capacity < 0) {
+            throw new IllegalArgumentException("Capacity must be non-negative");
+        }
 
         this.data = CyclicThreadSafeCollection.newArray(capacity);
     }

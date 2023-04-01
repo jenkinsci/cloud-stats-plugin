@@ -38,8 +38,7 @@ import org.jvnet.hudson.test.Issue;
 
 public class ProvisioningActivityTest {
 
-    private static final ProvisioningActivity.Id DUMMY_ID =
-            new ProvisioningActivity.Id("Fake cloud");
+    private static final ProvisioningActivity.Id DUMMY_ID = new ProvisioningActivity.Id("Fake cloud");
 
     @Test
     public void id() {
@@ -219,8 +218,7 @@ public class ProvisioningActivityTest {
     public void enteringCompletedPhaseWithoutOperationShouldBeWarningState() {
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         final PhaseExecutionAttachment failedAttachment =
-                new PhaseExecutionAttachment(
-                        ProvisioningActivity.Status.FAIL, "Failed intentionally");
+                new PhaseExecutionAttachment(ProvisioningActivity.Status.FAIL, "Failed intentionally");
 
         pa.enter(COMPLETED);
         assertEquals(WARN, pa.getPhaseExecution(COMPLETED).getStatus());
@@ -259,8 +257,7 @@ public class ProvisioningActivityTest {
         assertThat(pa.getPhaseExecution(COMPLETED).getAttachments(), hasSize(0));
     }
 
-    private PhaseExecution enter(
-            ProvisioningActivity activity, ProvisioningActivity.Phase phase, long started) {
+    private PhaseExecution enter(ProvisioningActivity activity, ProvisioningActivity.Phase phase, long started) {
         PhaseExecution execution = new PhaseExecution(phase, started);
         activity.enter(execution);
         return execution;

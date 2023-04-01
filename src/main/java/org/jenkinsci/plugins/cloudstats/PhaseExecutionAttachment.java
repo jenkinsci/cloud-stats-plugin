@@ -40,8 +40,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
     private final @NonNull ProvisioningActivity.Status status;
     private final @NonNull String title;
 
-    public PhaseExecutionAttachment(
-            @NonNull ProvisioningActivity.Status status, @NonNull String title) {
+    public PhaseExecutionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull String title) {
         this.status = status;
         this.title = title;
     }
@@ -71,7 +70,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
     @Override
     public @NonNull String getDisplayName() {
         String title = getTitle();
-        return title.length() < 50 ? title : (title.substring(0, 49) + "…");
+        return title.length() < 50 ? title : title.substring(0, 49) + "…";
     }
 
     /**
@@ -89,13 +88,16 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         public static final long serialVersionUID = 0;
 
         // Replaced by text field
-        @Deprecated private transient Throwable throwable;
+        @Deprecated
+        private transient Throwable throwable;
 
         private /*final*/ @NonNull String text;
 
         @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
         private Object readResolve() {
-            if (text != null) return this;
+            if (text != null) {
+                return this;
+            }
 
             // Failed to deserialize
             if (throwable == null) {
@@ -107,8 +109,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return this;
         }
 
-        public ExceptionAttachment(
-                @NonNull ProvisioningActivity.Status status, @NonNull Throwable throwable) {
+        public ExceptionAttachment(@NonNull ProvisioningActivity.Status status, @NonNull Throwable throwable) {
             super(status, extractTitle(throwable));
             this.text = Functions.printThrowable(throwable);
         }
@@ -119,11 +120,12 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             String message = throwable.getMessage();
 
             // The message might be empty (NPE for example) so get the type at least
-            if (message == null) return throwable.getClass().getSimpleName();
+            if (message == null) {
+                return throwable.getClass().getSimpleName();
+            }
 
             // "NoSuchFileException: /foo/bar"
-            if (throwable instanceof NoSuchFileException
-                    || throwable instanceof FileNotFoundException) {
+            if (throwable instanceof NoSuchFileException || throwable instanceof FileNotFoundException) {
                 return throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
             }
 
@@ -131,9 +133,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         }
 
         public ExceptionAttachment(
-                @NonNull ProvisioningActivity.Status status,
-                @NonNull String title,
-                @NonNull Throwable throwable) {
+                @NonNull ProvisioningActivity.Status status, @NonNull String title, @NonNull Throwable throwable) {
             super(status, title);
             this.text = Functions.printThrowable(throwable);
         }
@@ -150,6 +150,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return text;
         }
 
+        @Override
         public String toString() {
             return "Exception attachment: " + getTitle();
         }

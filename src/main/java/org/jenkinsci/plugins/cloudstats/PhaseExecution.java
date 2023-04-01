@@ -51,8 +51,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
  * started launching, plugin can still append provisioning log.
  */
 public final class PhaseExecution implements ModelObject {
-    private final @NonNull List<PhaseExecutionAttachment> attachments =
-            new CopyOnWriteArrayList<>();
+    private final @NonNull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
     private final long started;
     private final @NonNull ProvisioningActivity.Phase phase;
 
@@ -69,8 +68,7 @@ public final class PhaseExecution implements ModelObject {
         return Collections.unmodifiableList(attachments);
     }
 
-    public @NonNull <T extends PhaseExecutionAttachment> List<T> getAttachments(
-            @NonNull Class<T> type) {
+    public @NonNull <T extends PhaseExecutionAttachment> List<T> getAttachments(@NonNull Class<T> type) {
         List<T> out = new ArrayList<>();
         for (PhaseExecutionAttachment attachment : getAttachments()) {
             if (type.isInstance(attachment)) {
@@ -119,14 +117,19 @@ public final class PhaseExecution implements ModelObject {
     @Restricted(NoExternalUse.class)
     public @CheckForNull String getUrlName(@NonNull PhaseExecutionAttachment attachment) {
         String urlName = attachment.getUrlName();
-        if (urlName == null) return null;
+        if (urlName == null) {
+            return null;
+        }
 
-        if (!attachments.contains(attachment))
+        if (!attachments.contains(attachment)) {
             throw new IllegalArgumentException("Attachment not present in current execution");
+        }
 
         int cntr = 0;
         for (PhaseExecutionAttachment a : attachments) {
-            if (a.equals(attachment)) break;
+            if (a.equals(attachment)) {
+                break;
+            }
 
             if (urlName.equals(a.getUrlName())) {
                 cntr++;
@@ -155,13 +158,19 @@ public final class PhaseExecution implements ModelObject {
         }
 
         // Fail early
-        if (n > attachments.size()) return null;
+        if (n > attachments.size()) {
+            return null;
+        }
 
         int cntr = 0;
         for (PhaseExecutionAttachment a : attachments) {
-            if (!urlName.equals(a.getUrlName())) continue;
+            if (!urlName.equals(a.getUrlName())) {
+                continue;
+            }
 
-            if (cntr == n) return a;
+            if (cntr == n) {
+                return a;
+            }
 
             cntr++;
         }
