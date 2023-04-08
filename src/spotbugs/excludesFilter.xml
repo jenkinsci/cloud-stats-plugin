@@ -1,14 +1,14 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
   <!--
     Exclusions in this section have been triaged and determined to be
     false positives.
   -->
   <Match>
-    <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    <Bug pattern="SE_NO_SERIALVERSIONID" />
     <Or>
-      <Class name="org.jenkinsci.plugins.cloudstats.ProvisioningActivity$Id"/>
-      <Class name="org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment"/>
+      <Class name="org.jenkinsci.plugins.cloudstats.ProvisioningActivity$Id" />
+      <Class name="org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment" />
     </Or>
   </Match>
 
@@ -26,21 +26,21 @@
       exclusion from this section.
   -->
   <Match>
-    <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
-    <Class name="org.jenkinsci.plugins.cloudstats.CloudAction"/>
-    <Field name="cloud"/>
+    <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD" />
+    <Class name="org.jenkinsci.plugins.cloudstats.CloudAction" />
+    <Field name="cloud" />
   </Match>
   <Match>
-    <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
-    <Class name="org.jenkinsci.plugins.cloudstats.CloudStatistics"/>
+    <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT" />
+    <Class name="org.jenkinsci.plugins.cloudstats.CloudStatistics" />
   </Match>
   <Match>
-    <Bug pattern="DCN_NULLPOINTER_EXCEPTION"/>
-    <Class name="org.jenkinsci.plugins.cloudstats.CloudStatistics"/>
-    <Method name="readResolve"/>
+    <Bug pattern="DCN_NULLPOINTER_EXCEPTION" />
+    <Class name="org.jenkinsci.plugins.cloudstats.CloudStatistics" />
+    <Method name="readResolve" />
   </Match>
   <Match>
-    <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR"/>
-    <Class name="org.jenkinsci.plugins.cloudstats.CloudStatistics"/>
+    <Bug pattern="MC_OVERRIDABLE_METHOD_CALL_IN_CONSTRUCTOR" />
+    <Class name="org.jenkinsci.plugins.cloudstats.CloudStatistics" />
   </Match>
 </FindBugsFilter>
