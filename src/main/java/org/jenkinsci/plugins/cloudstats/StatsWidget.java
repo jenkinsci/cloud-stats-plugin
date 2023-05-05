@@ -23,9 +23,14 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.widgets.Widget;
+import java.util.Collection;
+import java.util.List;
+import jenkins.agents.CloudSet;
 import jenkins.model.Jenkins;
+import jenkins.widgets.WidgetFactory;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 
@@ -33,12 +38,41 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
  * @author ogondza.
  */
 @Restricted(DoNotUse.class)
-@Extension(ordinal = 300) // Above queue
 public class StatsWidget extends Widget {
+
+    private final String ownerUrl;
+
+    public StatsWidget(String ownerUrl) {
+        this.ownerUrl = ownerUrl;
+    }
+
+    @Override
+    protected String getOwnerUrl() {
+        return ownerUrl;
+    }
 
     public boolean isDisplayed() {
         Jenkins instance = Jenkins.get();
         return !instance.clouds.isEmpty()
                 && instance.hasPermission(CloudStatistics.get().getRequiredPermission());
+    }
+
+    @Extension
+    public static class FactoryImpl extends WidgetFactory<CloudSet, StatsWidget> {
+        @Override
+        public Class<CloudSet> type() {
+            return CloudSet.class;
+        }
+
+        @Override
+        public Class<StatsWidget> widgetType() {
+            return StatsWidget.class;
+        }
+
+        @NonNull
+        @Override
+        public Collection<StatsWidget> createFor(@NonNull CloudSet target) {
+            return List.of(new StatsWidget(target.getUrlName() + "/"));
+        }
     }
 }
