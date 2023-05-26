@@ -11,7 +11,7 @@ CloudAction action = my
 Jenkins jenkins = app
 
 def c = jenkins.getComputers().grep {
-    it instanceof TrackedItem && it.id.cloudName == action.cloud.name
+    it instanceof TrackedItem && it.id != null && it.id.cloudName == action.cloud.name
 }
 
 j.executors(computers: c, ajax: false)
