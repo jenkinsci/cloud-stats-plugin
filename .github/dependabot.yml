@@ -10,3 +10,8 @@ updates:
   directory: /
   schedule:
     interval: monthly
+  ignore:
+    # TODO: Remove when jenkins.version >= 2.387.3
+    # The 3.1.10 release requires Jenkins 2.387.3 or newer
+    - dependency-name: "org.jenkins-ci.plugins:matrix-auth"
+      versions: [">3.1.9"]
