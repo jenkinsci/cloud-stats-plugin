@@ -24,7 +24,8 @@ Jenkins j = app
 
 style("""
         #cloud-stat-grid {
-            border: 1px solid #BBB;
+         border: 1px solid #BBB;
+          height: 40px;
         }
 
         td.status-WARN {
@@ -52,7 +53,7 @@ style("""
             padding-left: 4em;
         }
 """)
-table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
+table(class: "pane sortable jenkins-table", width: "100%", id: "cloud-stat-grid") {
   tr {
     th("Cloud"); th("Template"); th("Name"); th("Started"); th("Provisioning"); th("Launch"); th("Operation"); th("Completed")
   }
