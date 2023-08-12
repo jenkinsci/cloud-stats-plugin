@@ -44,7 +44,7 @@ l.layout(permission: stats.getRequiredPermission()) {
     l.header(title: stats.displayName)
     l.main_panel {
         h1(stats.displayName)
-        table(class: "pane sortable bigtable", width: "100%", id: "cloud-stats-overview") {
+        table(class: "jenkins-table sortable", width: "100%", id: "cloud-stats-overview") {
             tr {
                 th("Cloud"); th("Template"); th("Overall success rate"); th("Current success rate"); th("Sample count")
             }
