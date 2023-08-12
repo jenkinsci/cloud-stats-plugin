@@ -35,9 +35,8 @@ def st = namespace("jelly:stapler")
 CloudStatistics stats = my
 
 style("""
-        #cloud-stats-overview {
-          border: 1px solid #BBB;
-          height: 40px;
+        #cloud-stats-overview th {
+          text-align: left;
         }
 """)
 
@@ -45,10 +44,14 @@ l.layout(permission: stats.getRequiredPermission()) {
     l.header(title: stats.displayName)
     l.main_panel {
         h1(stats.displayName)
-        table(class: "pane sortable jenkins-table", width: "100%", id: "cloud-stats-overview") {
-            tr {
-                th("Cloud"); th("Template"); th("Overall success rate"); th("Current success rate"); th("Sample count")
+        table(class: "sortable jenkins-table", width: "100%", id: "cloud-stats-overview") {
+            thead {
+                tr {
+                    th("Cloud"); th("Template"); th("Overall success rate"); th("Current success rate");
+                    th("Sample count")
+                }
             }
+            tbody {
             def index = stats.index
             def templateHealth = index.healthByTemplate()
             index.healthByCloud().each { String cloud, Health ch ->
@@ -92,6 +95,7 @@ l.layout(permission: stats.getRequiredPermission()) {
                     }
                 }
             }
+        }
         }
 
         h2("Provisioning attempts")
