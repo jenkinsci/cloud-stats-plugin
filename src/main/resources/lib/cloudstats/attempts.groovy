@@ -24,7 +24,7 @@ Jenkins j = app
 
 style("""
         #cloud-stat-grid {
-            border: 1px solid #BBB;
+         
         }
 
         td.status-WARN {
@@ -52,22 +52,25 @@ style("""
             padding-left: 4em;
         }
 """)
-table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
-  tr {
-    th("Cloud"); th("Template"); th("Name"); th("Started"); th("Provisioning"); th("Launch"); th("Operation"); th("Completed")
+table(class: "sortable jenkins-table", width: "100%", id: "cloud-stat-grid") {
+  thead {
+    tr {
+      th("Cloud"); th("Template"); th("Name"); th("Started"); th("Provisioning"); th("Launch"); th("Operation");
+      th("Completed")
+    }
   }
 
   DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
   String[] computerNames = j.getComputers().collect { it.name }
-
+  tbody {
   acts.reverseEach { ProvisioningActivity activity ->
     def activityStatus = activity.status
     List<PhaseExecution> executions = new ArrayList<>(activity.phaseExecutions.values())
     tr("class": "status-${activityStatus}") {
       td(activity.id.cloudName)
       td(activity.id.templateName)
-      td{
+      td {
         def n = activity.name
         if (computerNames.contains(n)) {
           a(href: rootURL + "/computer/" + n + "/") { text(n) }
@@ -78,7 +81,7 @@ table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
       td(data: executions[0].startedTimestamp) {
         text(df.format(executions[0].started))
       }
-      for (PhaseExecution execution: executions) {
+      for (PhaseExecution execution : executions) {
         if (execution == null) {
           td() // empty cell
           continue
@@ -98,7 +101,7 @@ table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
           data = execution.startedTimestamp
         }
 
-        def attrs = [ "data": data ]
+        def attrs = ["data": data]
         if (execution.status.ordinal() >= activityStatus.ordinal()) {
           attrs["class"] = "status-${execution.status}"
         }
@@ -123,4 +126,5 @@ table(class: "pane sortable bigtable", width: "100%", id: "cloud-stat-grid") {
       }
     }
   }
+}
 }
