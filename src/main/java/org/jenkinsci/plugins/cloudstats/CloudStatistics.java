@@ -145,7 +145,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         if (jenkins.clouds.isEmpty() && isEmpty()) {
             return null;
         }
-        return "graph.png";
+        return "symbol-analytics";
     }
 
     @Override

@@ -55,7 +55,7 @@ public class CloudAction implements Action {
     @CheckForNull
     @Override
     public String getIconFileName() {
-        return "graph.png";
+        return "symbol-analytics";
     }
 
     @CheckForNull
