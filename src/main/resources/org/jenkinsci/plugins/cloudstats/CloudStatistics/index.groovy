@@ -40,7 +40,7 @@ style("""
         }
 """)
 
-l.layout(permission: stats.getRequiredPermission()) {
+l.layout(permission: stats.getRequiredPermission(), type:"one-column") {
     l.header(title: stats.displayName)
     l.main_panel {
         h1(stats.displayName)
