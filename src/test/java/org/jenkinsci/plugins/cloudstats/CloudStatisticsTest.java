@@ -212,7 +212,7 @@ public class CloudStatisticsTest {
              *
              * This test is unreliable on Windows agents on
              * ci.jenkins.io, so it is better to skip the test and
-             * rely on runnig the test on non-Windows platforms to
+             * rely on running the test on non-Windows platforms to
              * verify this functionality.
              */
             return;

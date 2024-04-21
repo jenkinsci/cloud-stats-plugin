@@ -84,7 +84,7 @@ public final class Health {
         }
 
         // Base the relative wights on the newest sample. It is important for older samples not to
-        // outweight the recent
+        // outweigh the recent
         // ones but there is no reason to report bad score just because we do not have recent data.
         double start = samples.iterator().next().getStartedTimestamp();
 
