@@ -649,8 +649,8 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         protected void doRun() {
             List<ProvisioningActivity.Id> trackedExisting = new ArrayList<>();
             for (Computer computer : Jenkins.getInstance().getComputers()) {
-                if (computer instanceof TrackedItem) {
-                    trackedExisting.add(((TrackedItem) computer).getId());
+                if (computer instanceof TrackedItem item) {
+                    trackedExisting.add(item.getId());
                 }
             }
 
