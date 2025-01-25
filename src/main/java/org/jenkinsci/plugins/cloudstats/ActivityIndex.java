@@ -27,13 +27,13 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLE
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.OPERATING;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Indexed view of statistics snapshot.

@@ -23,7 +23,7 @@
  */
 package org.jenkinsci.plugins.cloudstats;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Interface to be implemented by plugins to have their provisioning activities tracked.

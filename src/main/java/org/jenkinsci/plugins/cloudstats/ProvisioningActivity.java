@@ -25,6 +25,7 @@ package org.jenkinsci.plugins.cloudstats;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Util;
 import hudson.model.ModelObject;
 import java.io.Serializable;
@@ -33,7 +34,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
