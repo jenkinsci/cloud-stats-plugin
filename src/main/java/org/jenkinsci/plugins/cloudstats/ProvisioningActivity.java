@@ -178,8 +178,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
 
         @Override
         public String toString() {
-            return String.format(
-                    "ProvisioningActivity for %s/%s/%s (%d)", cloudName, templateName, nodeName, fingerprint);
+            return "ProvisioningActivity for %s/%s/%s (%d)".formatted(cloudName, templateName, nodeName, fingerprint);
         }
     }
 
