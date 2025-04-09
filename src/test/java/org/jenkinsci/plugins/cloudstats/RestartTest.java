@@ -37,8 +37,7 @@ import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runners.model.Statement;
-import org.jvnet.hudson.test.RestartableJenkinsRule;
+import org.jvnet.hudson.test.JenkinsSessionRule;
 
 /**
  * @author ogondza.
@@ -46,138 +45,109 @@ import org.jvnet.hudson.test.RestartableJenkinsRule;
 public class RestartTest {
 
     @Rule
-    public RestartableJenkinsRule j = new RestartableJenkinsRule();
+    public JenkinsSessionRule r = new JenkinsSessionRule();
 
     @Test
-    public void loadEmpty() {
-        j.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                CloudStatistics cs = CloudStatistics.get();
-                cs.save();
-                assertThat(cs.getActivities(), Matchers.emptyIterable());
-            }
+    public void loadEmpty() throws Throwable {
+        r.then(j -> {
+            CloudStatistics cs = CloudStatistics.get();
+            cs.save();
+            assertThat(cs.getActivities(), Matchers.emptyIterable());
         });
 
-        j.addStep(new Statement() {
-            @Override
-            public void evaluate() {
-                CloudStatistics cs = CloudStatistics.get();
-                assertThat(cs.getActivities(), Matchers.emptyIterable());
-            }
+        r.then(j -> {
+            CloudStatistics cs = CloudStatistics.get();
+            assertThat(cs.getActivities(), Matchers.emptyIterable());
         });
     }
 
     @Test
-    public void persistStatisticsBetweenRestarts() {
+    public void persistStatisticsBetweenRestarts() throws Throwable {
         final ProvisioningActivity.Id started = new ProvisioningActivity.Id("Cloud", "template", "started");
         final ProvisioningActivity.Id failed = new ProvisioningActivity.Id("Cloud", "template", "failed");
         final ProvisioningActivity.Id completed = new ProvisioningActivity.Id("Cloud", "template", "completed");
 
-        j.addStep(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
+        r.then(j -> {
+            final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
 
-                listener.onStarted(started);
-                listener.onStarted(failed);
-                listener.onFailure(failed, new Exception());
+            listener.onStarted(started);
+            listener.onStarted(failed);
+            listener.onFailure(failed, new Exception());
 
-                TrackedAgent node = TrackedAgent.create(completed, j.j);
-                listener.onStarted(completed);
-                listener.onComplete(completed, node);
-                ExtensionList.lookup(CloudStatistics.OperationListener.class)
-                        .get(0)
-                        .onOnline(node.createComputer(), null);
-                ExtensionList.lookup(CloudStatistics.SlaveCompletionDetector.class)
-                        .get(0)
-                        .onDeleted(node);
-            }
+            TrackedAgent node = TrackedAgent.create(completed, j);
+            listener.onStarted(completed);
+            listener.onComplete(completed, node);
+            ExtensionList.lookup(CloudStatistics.OperationListener.class).get(0).onOnline(node.createComputer(), null);
+            ExtensionList.lookup(CloudStatistics.SlaveCompletionDetector.class)
+                    .get(0)
+                    .onDeleted(node);
         });
 
-        j.addStep(new Statement() {
-            @Override
-            public void evaluate() {
-                final CloudStatistics stats = CloudStatistics.get();
+        r.then(j -> {
+            final CloudStatistics stats = CloudStatistics.get();
 
-                assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
+            assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
 
-                ProvisioningActivity c = stats.getActivityFor(completed);
-                assertNotNull(c.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
-                assertEquals(ProvisioningActivity.Status.OK, c.getStatus());
-                assertEquals(COMPLETED, c.getCurrentPhase());
+            ProvisioningActivity c = stats.getActivityFor(completed);
+            assertNotNull(c.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
+            assertEquals(ProvisioningActivity.Status.OK, c.getStatus());
+            assertEquals(COMPLETED, c.getCurrentPhase());
 
-                ProvisioningActivity f = stats.getActivityFor(failed);
-                assertNotNull(f.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
-                assertEquals(ProvisioningActivity.Status.FAIL, f.getStatus());
-                assertEquals(COMPLETED, f.getCurrentPhase());
+            ProvisioningActivity f = stats.getActivityFor(failed);
+            assertNotNull(f.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
+            assertEquals(ProvisioningActivity.Status.FAIL, f.getStatus());
+            assertEquals(COMPLETED, f.getCurrentPhase());
 
-                ProvisioningActivity s = stats.getActivityFor(started);
-                assertNotNull(s.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
+            ProvisioningActivity s = stats.getActivityFor(started);
+            assertNotNull(s.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING));
 
-                assertEquals(ProvisioningActivity.Status.WARN, s.getStatus());
-                assertEquals(COMPLETED, f.getCurrentPhase());
-            }
+            assertEquals(ProvisioningActivity.Status.WARN, s.getStatus());
+            assertEquals(COMPLETED, f.getCurrentPhase());
         });
     }
 
     @Test
-    public void resizeStatsCountOnRestart() {
+    public void resizeStatsCountOnRestart() throws Throwable {
         CloudStatistics.ARCHIVE_RECORDS = 1;
-        j.addStep(
-                new Statement() { // Capacity is set correctly initially
-                    @Override
-                    public void evaluate() {
-                        final CloudStatistics stats = CloudStatistics.get();
-                        addCompletedActivity(2);
-                        assertStats(stats, 1);
-                        CloudStatistics.ARCHIVE_RECORDS = 2;
-                        assertStats(stats, 1);
-                    }
-                });
+        // Capacity is set correctly initially
+        r.then(j -> {
+            final CloudStatistics stats = CloudStatistics.get();
+            addCompletedActivity(2);
+            assertStats(stats, 1);
+            CloudStatistics.ARCHIVE_RECORDS = 2;
+            assertStats(stats, 1);
+        });
 
-        j.addStep(
-                new Statement() { // Capacity is extended
-                    @Override
-                    public void evaluate() {
-                        final CloudStatistics stats = CloudStatistics.get();
-                        assertStats(stats, 1);
-                        addCompletedActivity(2);
-                        assertStats(stats, 2, 3);
-                        CloudStatistics.ARCHIVE_RECORDS = 1;
-                    }
-                });
+        // Capacity is extended
+        r.then(j -> {
+            final CloudStatistics stats = CloudStatistics.get();
+            assertStats(stats, 1);
+            addCompletedActivity(2);
+            assertStats(stats, 2, 3);
+            CloudStatistics.ARCHIVE_RECORDS = 1;
+        });
 
-        j.addStep(
-                new Statement() { // Capacity is trimmed below current size truncating the log
-                    @Override
-                    public void evaluate() {
-                        final CloudStatistics stats = CloudStatistics.get();
-                        assertStats(stats, 3);
-                        addCompletedActivity(1);
-                        assertStats(stats, 4);
-                        CloudStatistics.ARCHIVE_RECORDS = 10;
-                    }
-                });
+        // Capacity is trimmed below current size truncating the log
+        r.then(j -> {
+            final CloudStatistics stats = CloudStatistics.get();
+            assertStats(stats, 3);
+            addCompletedActivity(1);
+            assertStats(stats, 4);
+            CloudStatistics.ARCHIVE_RECORDS = 10;
+        });
 
-        j.addStep(
-                new Statement() { // Capacity is shrunk but above current log size
-                    @Override
-                    public void evaluate() {
-                        final CloudStatistics stats = CloudStatistics.get();
-                        addCompletedActivity(2);
-                        assertStats(stats, 4, 5, 6);
-                        CloudStatistics.ARCHIVE_RECORDS = 5;
-                    }
-                });
-        j.addStep(new Statement() {
-            @Override
-            public void evaluate() {
-                final CloudStatistics stats = CloudStatistics.get();
-                assertStats(stats, 4, 5, 6);
-                addCompletedActivity(3);
-                assertStats(stats, 5, 6, 7, 8, 9);
-            }
+        // Capacity is shrunk but above current log size
+        r.then(j -> {
+            final CloudStatistics stats = CloudStatistics.get();
+            addCompletedActivity(2);
+            assertStats(stats, 4, 5, 6);
+            CloudStatistics.ARCHIVE_RECORDS = 5;
+        });
+        r.then(j -> {
+            final CloudStatistics stats = CloudStatistics.get();
+            assertStats(stats, 4, 5, 6);
+            addCompletedActivity(3);
+            assertStats(stats, 5, 6, 7, 8, 9);
         });
     }
 
