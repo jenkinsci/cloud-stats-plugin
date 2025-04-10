@@ -29,19 +29,19 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.*;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 
-public class ProvisioningActivityTest {
+class ProvisioningActivityTest {
 
     private static final ProvisioningActivity.Id DUMMY_ID = new ProvisioningActivity.Id("Fake cloud");
 
     @Test
-    public void id() {
+    void id() {
         ProvisioningActivity.Id id = new ProvisioningActivity.Id("c", "t");
         assertEquals(id, id);
         assertEquals(id, id.named("n"));
@@ -51,7 +51,7 @@ public class ProvisioningActivityTest {
     }
 
     @Test
-    public void phaseExecutionTrivia() {
+    void phaseExecutionTrivia() {
         long before = System.currentTimeMillis();
         PhaseExecution pe = new PhaseExecution(PROVISIONING);
         long after = System.currentTimeMillis();
@@ -62,7 +62,7 @@ public class ProvisioningActivityTest {
     }
 
     @Test
-    public void trivia() {
+    void trivia() {
         long before = System.currentTimeMillis();
         ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
         long after = System.currentTimeMillis();
@@ -74,7 +74,7 @@ public class ProvisioningActivityTest {
     }
 
     @Test
-    public void phasing() {
+    void phasing() {
         ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
         assertEquals(PROVISIONING, activity.getCurrentPhase());
         assertNotNull(activity.getPhaseExecution(PROVISIONING));
@@ -105,7 +105,7 @@ public class ProvisioningActivityTest {
     }
 
     @Test
-    public void attachmentsAndStates() {
+    void attachmentsAndStates() {
         ProvisioningActivity activity = new ProvisioningActivity(DUMMY_ID);
         PhaseExecution pe = activity.getPhaseExecution(PROVISIONING);
 
@@ -135,7 +135,7 @@ public class ProvisioningActivityTest {
     }
 
     @Test
-    public void duration() {
+    void duration() {
         // Completed
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         PhaseExecution provisioning = enter(pa, PROVISIONING, 10);
@@ -185,7 +185,7 @@ public class ProvisioningActivityTest {
 
     @Test
     @Issue("https://github.com/jenkinsci/cloud-stats-plugin/issues/4")
-    public void enteringSkippedPhaseShouldFail() throws Exception {
+    void enteringSkippedPhaseShouldFail() {
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         try {
             pa.enter(PROVISIONING);
@@ -193,7 +193,7 @@ public class ProvisioningActivityTest {
         } catch (IllegalStateException ex) {
             assertEquals("The phase PROVISIONING has already started", ex.getMessage());
         }
-        assertFalse("Entering phase entered already", pa.enterIfNotAlready(PROVISIONING));
+        assertFalse(pa.enterIfNotAlready(PROVISIONING), "Entering phase entered already");
 
         pa.enter(COMPLETED);
 
@@ -203,7 +203,7 @@ public class ProvisioningActivityTest {
         } catch (IllegalStateException ex) {
             assertEquals("The phase COMPLETED has already started", ex.getMessage());
         }
-        assertFalse("Entering phase entered already", pa.enterIfNotAlready(LAUNCHING));
+        assertFalse(pa.enterIfNotAlready(LAUNCHING), "Entering phase entered already");
 
         try {
             pa.enter(OPERATING);
@@ -211,11 +211,11 @@ public class ProvisioningActivityTest {
         } catch (IllegalStateException ex) {
             assertEquals("The phase COMPLETED has already started", ex.getMessage());
         }
-        assertFalse("Entering phase entered already", pa.enterIfNotAlready(OPERATING));
+        assertFalse(pa.enterIfNotAlready(OPERATING), "Entering phase entered already");
     }
 
     @Test
-    public void enteringCompletedPhaseWithoutOperationShouldBeWarningState() {
+    void enteringCompletedPhaseWithoutOperationShouldBeWarningState() {
         ProvisioningActivity pa = new ProvisioningActivity(new ProvisioningActivity.Id("cld"));
         final PhaseExecutionAttachment failedAttachment =
                 new PhaseExecutionAttachment(ProvisioningActivity.Status.FAIL, "Failed intentionally");

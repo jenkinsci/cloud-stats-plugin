@@ -53,7 +53,7 @@ final class TrackedAgent extends AbstractCloudSlave implements TrackedItem {
                 "label",
                 j.createComputerLauncher(new EnvVars()),
                 RetentionStrategy.NOOP,
-                Collections.<NodeProperty<?>>emptyList());
+                Collections.emptyList());
         this.id = id;
     }
 

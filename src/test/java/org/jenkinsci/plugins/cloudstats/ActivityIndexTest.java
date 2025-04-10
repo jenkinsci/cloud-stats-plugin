@@ -31,15 +31,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author ogondza.
  */
-public class ActivityIndexTest {
+class ActivityIndexTest {
 
     @Test
-    public void empty() {
+    void empty() {
         ActivityIndex index = new ActivityIndex(Collections.emptyList());
         assertThat(index.byCloud().size(), equalTo(0));
         assertThat(index.byTemplate().size(), equalTo(0));
@@ -48,7 +48,7 @@ public class ActivityIndexTest {
     }
 
     @Test
-    public void content() {
+    void content() {
         ActivityIndex index = new ActivityIndex(Arrays.asList(
                 new ProvisioningActivity(new ProvisioningActivity.Id("A", "a")),
                 new ProvisioningActivity(new ProvisioningActivity.Id("A", "b", "x")),
@@ -73,7 +73,7 @@ public class ActivityIndexTest {
     }
 
     @Test
-    public void activitiesNotCompletedOrOperatingAreIgnoredForHealth() {
+    void activitiesNotCompletedOrOperatingAreIgnoredForHealth() {
         ActivityIndex index = new ActivityIndex(Arrays.asList(
                 enter(
                         new ProvisioningActivity(new ProvisioningActivity.Id("P", "p")),

@@ -90,7 +90,7 @@ public final class TestCloud extends Cloud {
         public static final NullPointerException EXCEPTION = new NullPointerException("Whoops");
 
         @Override
-        public Node call() throws Exception {
+        public Node call() {
             throw EXCEPTION;
         }
     }

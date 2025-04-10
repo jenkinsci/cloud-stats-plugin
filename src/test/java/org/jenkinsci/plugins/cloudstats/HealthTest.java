@@ -29,28 +29,28 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.Arrays;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author ogondza.
  */
-public class HealthTest {
+class HealthTest {
 
     // Use since moment to base ages on to avoid undesired millisecond differences cased by the
     // speed of test execution
-    public final long NOW = System.currentTimeMillis();
+    private final long NOW = System.currentTimeMillis();
 
-    public static final ProvisioningActivity.Id SUCCESS_ID = new ProvisioningActivity.Id("Success");
-    public static final ProvisioningActivity.Id FAILURE_ID = new ProvisioningActivity.Id("Failure");
+    private static final ProvisioningActivity.Id SUCCESS_ID = new ProvisioningActivity.Id("Success");
+    private static final ProvisioningActivity.Id FAILURE_ID = new ProvisioningActivity.Id("Failure");
 
-    public static final ProvisioningActivity SUCCESS = new ProvisioningActivity(SUCCESS_ID);
-    public static final ProvisioningActivity FAILURE = new ProvisioningActivity(FAILURE_ID);
+    private static final ProvisioningActivity SUCCESS = new ProvisioningActivity(SUCCESS_ID);
+    private static final ProvisioningActivity FAILURE = new ProvisioningActivity(FAILURE_ID);
 
-    public static final PhaseExecutionAttachment FAILED_ATTACHMENT =
+    private static final PhaseExecutionAttachment FAILED_ATTACHMENT =
             new PhaseExecutionAttachment(ProvisioningActivity.Status.FAIL, "It failed alright");
 
     static {
@@ -58,7 +58,7 @@ public class HealthTest {
     }
 
     @Test
-    public void overall() throws Exception {
+    void overall() {
         Health.Report actual = health().getOverall();
         assertEquals(new Health.Report(Float.NaN), actual);
         assertEquals("?", actual.toString());
@@ -75,7 +75,7 @@ public class HealthTest {
     }
 
     @Test
-    public void currentTrivial() throws Exception {
+    void currentTrivial() {
         Health.Report actual = health().getCurrent();
         assertEquals(new Health.Report(Float.NaN), actual);
         assertEquals("?", actual.toString());
@@ -98,7 +98,7 @@ public class HealthTest {
     }
 
     @Test
-    public void currentSameAge() throws Exception {
+    void currentSameAge() {
         Health.Report actual = health(failure(0), success(0)).getCurrent();
         assertFalse(Float.isNaN(actual.getPercentage()));
         assertThat(actual.getPercentage(), equalTo(50F));
@@ -114,7 +114,7 @@ public class HealthTest {
     }
 
     @Test
-    public void currentDifferentAge() throws Exception {
+    void currentDifferentAge() {
         // Current implementation considers same sequences equally successful regardless of the
         // latest sample age
         assertThat(health(success(1)).getCurrent(), equalTo(health(success(0)).getCurrent()));
@@ -136,7 +136,7 @@ public class HealthTest {
     }
 
     @Test
-    public void timeDecay() throws Exception {
+    void timeDecay() {
         assertThat(
                 health(
                                 success(0),
