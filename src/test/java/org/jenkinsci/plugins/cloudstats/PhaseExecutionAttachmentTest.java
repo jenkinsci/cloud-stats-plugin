@@ -25,17 +25,17 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import static org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment.ExceptionAttachment.extractTitle;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class PhaseExecutionAttachmentTest {
+class PhaseExecutionAttachmentTest {
 
     @Test
-    public void extractMessage() {
+    void extractMessage() {
         assertEquals("Foo bar baz", extractTitle(new Exception("Foo bar baz")));
 
         assertEquals("IOException", extractTitle(new IOException()));

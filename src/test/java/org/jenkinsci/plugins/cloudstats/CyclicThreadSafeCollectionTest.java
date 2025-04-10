@@ -24,33 +24,29 @@
 
 package org.jenkinsci.plugins.cloudstats;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author ogondza.
  */
-public class CyclicThreadSafeCollectionTest {
+class CyclicThreadSafeCollectionTest {
 
     @Test
-    public void capacity() {
+    void capacity() {
         new CyclicThreadSafeCollection<Float>(1);
         new CyclicThreadSafeCollection<Float>(0);
-        try {
-            new CyclicThreadSafeCollection<Float>(-1);
-            fail();
-        } catch (IllegalArgumentException ignored) {
-        } // expected
+        assertThrows(IllegalArgumentException.class, () -> new CyclicThreadSafeCollection<Float>(-1));
     }
 
     @Test
-    public void preserveData() {
+    void preserveData() {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(5);
         assertEquals(0, log.size());
         assertTrue(log.isEmpty());
@@ -99,7 +95,7 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     @Test
-    public void toArray() {
+    void toArray() {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(5);
         Integer[] dst = new Integer[2];
 
@@ -117,7 +113,7 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     @Test
-    public void toList() {
+    void toList() {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(2);
 
         log.add(1);
@@ -139,7 +135,7 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     @Test
-    public void contains() {
+    void contains() {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(3);
         log.add(1);
         log.add(2);
@@ -157,7 +153,7 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     @Test
-    public void iterator() {
+    void iterator() {
         CyclicThreadSafeCollection<Integer> log = new CyclicThreadSafeCollection<>(3);
         assertEquals(Collections.emptyList(), it2list(log));
 
@@ -179,32 +175,26 @@ public class CyclicThreadSafeCollectionTest {
     }
 
     @Test
-    public void threadSafety() {
+    void threadSafety() {
         final Collection<Integer> data = new CyclicThreadSafeCollection<>(100000);
-        Runnable iterator = new Runnable() {
-            @Override
-            public void run() {
-                for (; ; ) {
-                    for (Integer d : data) {
-                        assertNotNull(d);
-                    }
+        Runnable iterator = () -> {
+            for (; ; ) {
+                for (Integer d : data) {
+                    assertNotNull(d);
+                }
 
-                    if (Thread.interrupted()) {
-                        break;
-                    }
+                if (Thread.interrupted()) {
+                    break;
                 }
             }
         };
 
-        Runnable appender = new Runnable() {
-            @Override
-            public void run() {
-                for (; ; ) {
-                    assertTrue(data.add(data.size() + 42));
+        Runnable appender = () -> {
+            for (; ; ) {
+                assertTrue(data.add(data.size() + 42));
 
-                    if (Thread.interrupted()) {
-                        break;
-                    }
+                if (Thread.interrupted()) {
+                    break;
                 }
             }
         };
@@ -225,17 +215,14 @@ public class CyclicThreadSafeCollectionTest {
             }
         };
 
-        Runnable clearer = new Runnable() {
-            @Override
-            public void run() {
-                for (; ; ) {
-                    // System.out.printf("Clearing %d%n", data.size());
-                    data.clear();
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
+        Runnable clearer = () -> {
+            for (; ; ) {
+                // System.out.printf("Clearing %d%n", data.size());
+                data.clear();
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    break;
                 }
             }
         };

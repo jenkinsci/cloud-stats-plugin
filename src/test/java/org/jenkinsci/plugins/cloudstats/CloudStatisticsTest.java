@@ -39,11 +39,7 @@ import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.PROVIS
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.FAIL;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.OK;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status.WARN;
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.BulkChange;
@@ -54,12 +50,12 @@ import hudson.model.queue.QueueTaskFuture;
 import hudson.security.AuthorizationStrategy;
 import hudson.slaves.NodeProvisioner;
 import java.io.ObjectStreamException;
+import java.io.Serial;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
 import jenkins.model.Jenkins;
 import jenkins.model.NodeListener;
 import org.htmlunit.ElementNotFoundException;
@@ -69,28 +65,30 @@ import org.htmlunit.html.HtmlPage;
 import org.jenkinsci.plugins.cloudstats.CloudStatistics.ProvisioningListener;
 import org.jenkinsci.plugins.cloudstats.PhaseExecutionAttachment.ExceptionAttachment;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Id;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 /**
  * @author ogondza.
  */
-public class CloudStatisticsTest {
+@WithJenkins
+class CloudStatisticsTest {
 
-    public @Rule JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
     private NodeProvisioner.NodeProvisionerInvoker provisionerInvoker;
 
     static {
         LoadStatistics.CLOCK = 1000;
     }
 
-    @Before
-    public void before() throws Exception {
+    @BeforeEach
+    void before(JenkinsRule rule) throws Exception {
+        j = rule;
         // Pretend we are out of agents
         j.jenkins.setNumExecutors(0);
         j.jenkins.setNodes(Collections.emptyList());
@@ -108,7 +106,7 @@ public class CloudStatisticsTest {
     }
 
     @Test
-    public void provisionAndFail() throws Exception {
+    void provisionAndFail() throws Exception {
         j.createFreeStyleProject().scheduleBuild2(0);
 
         j.jenkins.clouds.add(new TestCloud("dummy", j, new TestCloud.ThrowException()));
@@ -118,7 +116,7 @@ public class CloudStatisticsTest {
         CloudStatistics cs = CloudStatistics.get();
         for (; ; ) {
             List<ProvisioningActivity> activities = cs.getActivities();
-            if (activities.size() > 0) {
+            if (!activities.isEmpty()) {
                 activity = activities.get(0);
 
                 if (activity.getStatus() == FAIL) {
@@ -142,7 +140,7 @@ public class CloudStatisticsTest {
     }
 
     @Test
-    public void provisionAndLaunch() throws Exception {
+    void provisionAndLaunch() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
 
         FreeStyleProject p = j.createFreeStyleProject();
@@ -155,19 +153,22 @@ public class CloudStatisticsTest {
         List<ProvisioningActivity> activities;
         for (; ; ) {
             activities = cs.getActivities();
-            if (activities.size() > 0) {
+            if (!activities.isEmpty()) {
                 break;
             }
         }
         for (ProvisioningActivity a : activities) {
-            assertEquals(activities.toString(), "dummy", a.getId().getCloudName());
+            assertEquals("dummy", a.getId().getCloudName(), activities.toString());
             assertThat(activities.toString(), a.getId().getNodeName(), startsWith("dummy-agent-"));
             assertThat(activities.toString(), a.getName(), startsWith("dummy-agent-"));
         }
 
         ProvisioningActivity activity = activities.get(0);
         assertNotNull(activity.getPhaseExecution(PROVISIONING));
-        assertEquals(activity.getPhaseExecution(PROVISIONING).getAttachments().toString(), OK, activity.getStatus());
+        assertEquals(
+                OK,
+                activity.getStatus(),
+                activity.getPhaseExecution(PROVISIONING).getAttachments().toString());
 
         // It can take a bit
         while (j.jenkins.getComputer(activity.getId().getNodeName()) == null) {
@@ -198,14 +199,16 @@ public class CloudStatisticsTest {
         assertThat(cs.getNotCompletedActivities(), contains(activity));
         computer.doDoDelete();
         assertEquals(OK, activity.getStatus());
-        assertNotNull(activity.getCurrentPhase().toString(), activity.getPhaseExecution(COMPLETED));
+        assertNotNull(
+                activity.getPhaseExecution(COMPLETED),
+                activity.getCurrentPhase().toString());
         assertThat(cs.getNotCompletedActivities(), not(contains(activity)));
 
         assertEquals(cs.getRetainedActivities(), cs.getNotCompletedActivities());
     }
 
     @Test
-    public void ui() throws Exception {
+    void ui() throws Exception {
         if (isWindows()) {
             /* UI tests are not Windows specific, so it is not a
              * compelling case to test this on Windows.
@@ -321,7 +324,7 @@ public class CloudStatisticsTest {
     }
 
     @Test
-    public void renameActivity() throws Exception {
+    void renameActivity() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
         ProvisioningListener l = ProvisioningListener.get();
 
@@ -359,7 +362,7 @@ public class CloudStatisticsTest {
 
     @Test // Single cyclic buffer ware split to active and archived activities
     @LocalData
-    public void migrateToV03() {
+    void migrateToV03() {
         CloudStatistics cs = CloudStatistics.get();
         assertEquals(2, cs.getActivities().size());
         assertEquals(1, cs.getNotCompletedActivities().size());
@@ -369,19 +372,16 @@ public class CloudStatisticsTest {
 
     @Test
     @Issue("JENKINS-41037")
-    public void modifiedWhileSerialized() throws Exception {
+    void modifiedWhileSerialized() throws Exception {
         final CloudStatistics cs = CloudStatistics.get();
         final ProvisioningListener l = ProvisioningListener.get();
         final ProvisioningActivity activity = l.onStarted(new Id("Cloud", "template", "PAOriginal"));
         final StatsModifyingAttachment blocker = new StatsModifyingAttachment(OK, "Blocker");
         Computer.threadPoolForRemoting
-                .submit(new Callable<Object>() {
-                    @Override
-                    public Object call() {
-                        cs.attach(activity, PROVISIONING, blocker);
-                        cs.persist();
-                        return null;
-                    }
+                .submit(() -> {
+                    cs.attach(activity, PROVISIONING, blocker);
+                    cs.persist();
+                    return null;
                 })
                 .get();
 
@@ -397,7 +397,7 @@ public class CloudStatisticsTest {
     }
 
     @Test
-    public void multipleAttachmentsForPhase() throws Exception {
+    void multipleAttachmentsForPhase() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
         ProvisioningListener provisioningListener = ProvisioningListener.get();
 
@@ -455,7 +455,7 @@ public class CloudStatisticsTest {
 
     @Test
     @Issue("SECURITY-2246")
-    public void denyAccessToStatsDetails() throws Exception {
+    void denyAccessToStatsDetails() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
         ProvisioningListener provisioningListener = ProvisioningListener.get();
 
@@ -487,7 +487,7 @@ public class CloudStatisticsTest {
     @Test
     @LocalData
     @Issue("JENKINS-41037")
-    public void migrateToV010() throws Exception {
+    void migrateToV010() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
         ProvisioningActivity activity = cs.getActivities().iterator().next();
         assertThat(activity.getName(), equalTo("Asdf"));
@@ -502,7 +502,7 @@ public class CloudStatisticsTest {
 
     @Test
     @LocalData
-    public void migrateToV013() throws Exception {
+    void migrateToV013() throws Exception {
         CloudStatistics cs = CloudStatistics.get();
         ProvisioningActivity activity = cs.getActivities().iterator().next();
         List<ExceptionAttachment> attachments =
@@ -538,49 +538,43 @@ public class CloudStatisticsTest {
     // Test ConcurrentModificationException in CloudStatistics.save()
     @Test
     @Issue("JENKINS-49162")
-    public void testConcurrentModificationException() throws Exception {
-        Runnable activityProducer = new Runnable() {
-            @Override
-            public void run() {
-                for (; ; ) {
-                    try {
-                        ProvisioningActivity activity =
-                                ProvisioningListener.get().onStarted(new Id("test1", null, "test1"));
-                        activity.enterIfNotAlready(LAUNCHING);
-                        Thread.sleep(new Random().nextInt(50));
-                        activity.enterIfNotAlready(OPERATING);
-                        Thread.sleep(new Random().nextInt(50));
-                        activity.enterIfNotAlready(COMPLETED);
-                        Thread.sleep(new Random().nextInt(50));
-                    } catch (InterruptedException e) {
-                        break;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+    void testConcurrentModificationException() throws Exception {
+        Runnable activityProducer = () -> {
+            for (; ; ) {
+                try {
+                    ProvisioningActivity activity =
+                            ProvisioningListener.get().onStarted(new Id("test1", null, "test1"));
+                    activity.enterIfNotAlready(LAUNCHING);
+                    Thread.sleep(new Random().nextInt(50));
+                    activity.enterIfNotAlready(OPERATING);
+                    Thread.sleep(new Random().nextInt(50));
+                    activity.enterIfNotAlready(COMPLETED);
+                    Thread.sleep(new Random().nextInt(50));
+                } catch (InterruptedException e) {
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-                    if (Thread.interrupted()) {
-                        break;
-                    }
+                if (Thread.interrupted()) {
+                    break;
                 }
             }
         };
 
-        Runnable activitiesSaver = new Runnable() {
-            @Override
-            public void run() {
-                for (; ; ) {
-                    try {
-                        Thread.sleep(new Random().nextInt(100));
-                        CloudStatistics.get().save();
-                    } catch (InterruptedException e) {
-                        break;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+        Runnable activitiesSaver = () -> {
+            for (; ; ) {
+                try {
+                    Thread.sleep(new Random().nextInt(100));
+                    CloudStatistics.get().save();
+                } catch (InterruptedException e) {
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-                    if (Thread.interrupted()) {
-                        break;
-                    }
+                if (Thread.interrupted()) {
+                    break;
                 }
             }
         };
@@ -620,6 +614,7 @@ public class CloudStatisticsTest {
             super(status, title);
         }
 
+        @Serial
         private Object writeReplace() throws ObjectStreamException {
             try {
                 // Avoid saving as it is a) not related to test and b) spins infinite recursion of
