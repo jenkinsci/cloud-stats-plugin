@@ -27,18 +27,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 
-import org.junit.Rule;
-import org.junit.Test;
+import hudson.security.Permission;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.recipes.PresetData;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class StatsWidgetTest {
-
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class StatsWidgetTest {
 
     @Test
-    public void showWhenCloudsConfigured() throws Exception {
+    void showWhenCloudsConfigured(JenkinsRule j) throws Exception {
         JenkinsRule.WebClient webClient = j.createWebClient();
         String content = webClient.goTo("").getWebResponse().getContentAsString();
         assertThat(content, not(containsString("Cloud Statistics")));
@@ -51,8 +50,12 @@ public class StatsWidgetTest {
     }
 
     @Test
-    @PresetData(PresetData.DataSet.ANONYMOUS_READONLY)
-    public void doNotShowWhenNotAuthenticated() throws Exception {
+    void doNotShowWhenNotAuthenticated(JenkinsRule j) throws Exception {
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Permission.READ)
+                .everywhere()
+                .toEveryone());
         j.jenkins.clouds.add(new TestCloud("asdf"));
         JenkinsRule.WebClient webClient = j.createWebClient();
         String content = webClient.goTo("").getWebResponse().getContentAsString();
