@@ -26,48 +26,47 @@ package org.jenkinsci.plugins.cloudstats;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Phase.COMPLETED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import hudson.ExtensionList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsSessionRule;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.jvnet.hudson.test.junit.jupiter.JenkinsSessionExtension;
 
 /**
  * @author ogondza.
  */
-public class RestartTest {
+class RestartTest {
 
-    @Rule
-    public JenkinsSessionRule r = new JenkinsSessionRule();
+    @RegisterExtension
+    private final JenkinsSessionExtension extension = new JenkinsSessionExtension();
 
     @Test
-    public void loadEmpty() throws Throwable {
-        r.then(j -> {
+    void loadEmpty() throws Throwable {
+        extension.then(j -> {
             CloudStatistics cs = CloudStatistics.get();
             cs.save();
             assertThat(cs.getActivities(), Matchers.emptyIterable());
         });
 
-        r.then(j -> {
+        extension.then(j -> {
             CloudStatistics cs = CloudStatistics.get();
             assertThat(cs.getActivities(), Matchers.emptyIterable());
         });
     }
 
     @Test
-    public void persistStatisticsBetweenRestarts() throws Throwable {
+    void persistStatisticsBetweenRestarts() throws Throwable {
         final ProvisioningActivity.Id started = new ProvisioningActivity.Id("Cloud", "template", "started");
         final ProvisioningActivity.Id failed = new ProvisioningActivity.Id("Cloud", "template", "failed");
         final ProvisioningActivity.Id completed = new ProvisioningActivity.Id("Cloud", "template", "completed");
 
-        r.then(j -> {
+        extension.then(j -> {
             final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
 
             listener.onStarted(started);
@@ -83,7 +82,7 @@ public class RestartTest {
                     .onDeleted(node);
         });
 
-        r.then(j -> {
+        extension.then(j -> {
             final CloudStatistics stats = CloudStatistics.get();
 
             assertThat(stats.getActivities(), Matchers.iterableWithSize(3));
@@ -107,10 +106,10 @@ public class RestartTest {
     }
 
     @Test
-    public void resizeStatsCountOnRestart() throws Throwable {
+    void resizeStatsCountOnRestart() throws Throwable {
         CloudStatistics.ARCHIVE_RECORDS = 1;
         // Capacity is set correctly initially
-        r.then(j -> {
+        extension.then(j -> {
             final CloudStatistics stats = CloudStatistics.get();
             addCompletedActivity(2);
             assertStats(stats, 1);
@@ -119,7 +118,7 @@ public class RestartTest {
         });
 
         // Capacity is extended
-        r.then(j -> {
+        extension.then(j -> {
             final CloudStatistics stats = CloudStatistics.get();
             assertStats(stats, 1);
             addCompletedActivity(2);
@@ -128,7 +127,7 @@ public class RestartTest {
         });
 
         // Capacity is trimmed below current size truncating the log
-        r.then(j -> {
+        extension.then(j -> {
             final CloudStatistics stats = CloudStatistics.get();
             assertStats(stats, 3);
             addCompletedActivity(1);
@@ -137,13 +136,13 @@ public class RestartTest {
         });
 
         // Capacity is shrunk but above current log size
-        r.then(j -> {
+        extension.then(j -> {
             final CloudStatistics stats = CloudStatistics.get();
             addCompletedActivity(2);
             assertStats(stats, 4, 5, 6);
             CloudStatistics.ARCHIVE_RECORDS = 5;
         });
-        r.then(j -> {
+        extension.then(j -> {
             final CloudStatistics stats = CloudStatistics.get();
             assertStats(stats, 4, 5, 6);
             addCompletedActivity(3);
@@ -151,13 +150,13 @@ public class RestartTest {
         });
     }
 
-    private static transient AtomicInteger sequence = new AtomicInteger(0);
+    private static final AtomicInteger SEQUENCE = new AtomicInteger(0);
 
     private static void addCompletedActivity(int count) {
         final CloudStatistics.ProvisioningListener listener = CloudStatistics.ProvisioningListener.get();
         for (int i = 0; i < count; i++) {
             ProvisioningActivity.Id id =
-                    new ProvisioningActivity.Id("Cloud", "template", Integer.toString(sequence.getAndIncrement()));
+                    new ProvisioningActivity.Id("Cloud", "template", Integer.toString(SEQUENCE.getAndIncrement()));
             listener.onStarted(id);
             listener.onFailure(id, new Error());
         }
@@ -166,8 +165,8 @@ public class RestartTest {
     private static void assertStats(CloudStatistics stats, int... expected) {
         List<Integer> statSequences = stats.getActivities().stream()
                 .map(pa -> Integer.parseInt(pa.getName()))
-                .collect(Collectors.toList());
-        List<Integer> expectedList = Arrays.stream(expected).boxed().collect(Collectors.toList());
+                .toList();
+        List<Integer> expectedList = Arrays.stream(expected).boxed().toList();
         assertEquals(expectedList, statSequences);
 
         // Verify the order remain preserved
