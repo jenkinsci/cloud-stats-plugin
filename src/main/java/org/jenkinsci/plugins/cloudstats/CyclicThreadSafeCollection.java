@@ -24,12 +24,12 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import net.jcip.annotations.ThreadSafe;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nonnegative;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Circular thread-safe Collection.
@@ -53,8 +53,8 @@ import javax.annotation.concurrent.ThreadSafe;
 public class CyclicThreadSafeCollection<E> implements Collection<E> {
 
     private final @NonNull E[] data;
-    private @Nonnegative int next = 0;
-    private @Nonnegative int size = 0;
+    private /* @java.annotation.Nonnegative */ int next = 0;
+    private /* @java.annotation.Nonnegative */ int size = 0;
 
     public CyclicThreadSafeCollection(int capacity) {
         if (capacity < 0) {
@@ -111,14 +111,14 @@ public class CyclicThreadSafeCollection<E> implements Collection<E> {
 
     /** Number of contained elements, never more than capacity. */
     @Override
-    public @Nonnegative int size() {
+    public /* @java.annotation.Nonnegative */ int size() {
         synchronized (data) {
             return size;
         }
     }
 
     /** Maximal collection capacity. */
-    public @Nonnegative int capacity() {
+    public /* @java.annotation.Nonnegative */ int capacity() {
         return data.length;
     }
 
