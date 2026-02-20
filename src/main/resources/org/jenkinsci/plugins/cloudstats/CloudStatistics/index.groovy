@@ -36,7 +36,7 @@ def st = namespace("jelly:stapler")
 CloudStatistics stats = my
 
 l.'settings-subpage'(permission: stats.getRequiredPermission()) {
-    table(class: "sortable jenkins-table", width: "100%", id: "cloud-stats-overview") {
+    table(class: "sortable jenkins-table", id: "cloud-stats-overview") {
         thead {
             tr {
                 th("Cloud"); th("Template"); th("Overall success rate"); th("Current success rate");
