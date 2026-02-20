@@ -24,12 +24,11 @@
 package org.jenkinsci.plugins.cloudstats;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import net.jcip.annotations.ThreadSafe;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Circular thread-safe Collection.
