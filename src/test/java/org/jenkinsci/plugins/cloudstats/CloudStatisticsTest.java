@@ -645,6 +645,48 @@ class CloudStatisticsTest {
         }
     }
 
+    @Test
+    void restApi() throws Exception {
+        CloudStatistics cs = CloudStatistics.get();
+        ProvisioningListener provisioningListener = ProvisioningListener.get();
+
+        Id failId = new Id("MyCloud", "broken-template", "fail-agent");
+        provisioningListener.onStarted(failId);
+        provisioningListener.onFailure(failId, new Exception("ProvisioningFailed"));
+
+        Id okId = new Id("MyCloud", "working-template", "ok-agent");
+        ProvisioningActivity okActivity = provisioningListener.onStarted(okId);
+        Node slave = TrackedAgent.create(okId, j);
+        provisioningListener.onComplete(okId, slave);
+
+        JenkinsRule.WebClient wc = j.createWebClient();
+        j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
+
+        // Verify JSON API is accessible
+        Page page = wc.goTo("cloud-stats/api/json?depth=2", "application/json");
+        String json = page.getWebResponse().getContentAsString();
+
+        // Verify activities are present
+        assertThat(json, containsString("\"activities\""));
+        assertThat(json, containsString("MyCloud"));
+        assertThat(json, containsString("broken-template"));
+        assertThat(json, containsString("working-template"));
+
+        // Verify phase execution data
+        assertThat(json, containsString("PROVISIONING"));
+        assertThat(json, containsString("FAIL"));
+        assertThat(json, containsString("OK"));
+
+        // Verify exception attachment text is included
+        assertThat(json, containsString("ProvisioningFailed"));
+
+        // Verify XML API is also accessible
+        Page xmlPage = wc.goTo("cloud-stats/api/xml?depth=2", "application/xml");
+        String xml = xmlPage.getWebResponse().getContentAsString();
+        assertThat(xml, containsString("MyCloud"));
+        assertThat(xml, containsString("broken-template"));
+    }
+
     /** inline ${@link hudson.Functions#isWindows()} to avoid remote classloader issues */
     private boolean isWindows() {
         return java.io.File.pathSeparatorChar == ';';
