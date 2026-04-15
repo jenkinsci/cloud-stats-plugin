@@ -29,8 +29,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Util;
 import hudson.model.ModelObject;
 import java.io.Serializable;
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.export.ExportedBean;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -39,6 +37,8 @@ import java.util.Objects;
 import javax.annotation.concurrent.GuardedBy;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Record of provisioning attempt lifecycle.
