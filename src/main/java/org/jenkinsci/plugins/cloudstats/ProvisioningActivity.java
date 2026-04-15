@@ -29,6 +29,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Util;
 import hudson.model.ModelObject;
 import java.io.Serializable;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -43,6 +45,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
  *
  * @author ogondza.
  */
+@ExportedBean
 public final class ProvisioningActivity implements ModelObject, Comparable<ProvisioningActivity> {
 
     public static final String PREMATURE_COMPLETION_DETECTED =
@@ -87,6 +90,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      * <p>Used to a) uniquely identify the activity throughout the lifecycle and b) map
      * Computer/Node/PlannedNode to its cloud/template.
      */
+    @ExportedBean
     public static final class Id implements Serializable {
         private final @NonNull String cloudName;
         private final @CheckForNull String templateName;
@@ -134,6 +138,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
 
         /** Name of the cloud that initiated this activity. */
+        @Exported
         public @NonNull String getCloudName() {
             return cloudName;
         }
@@ -142,6 +147,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
          * Name of the template used to provision this agent. <code>null</code> if no further
          * distinction is needed except for cloud name.
          */
+        @Exported
         public @CheckForNull String getTemplateName() {
             return templateName;
         }
@@ -150,11 +156,13 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
          * Name of the agent to be provisioned by this activity. <code>null</code> if not known
          * ahead.
          */
+        @Exported
         public @CheckForNull String getNodeName() {
             return nodeName;
         }
 
         /** Unique fingerprint of this activity. */
+        @Exported
         public int getFingerprint() {
             return fingerprint;
         }
@@ -228,6 +236,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         this.name = name;
     }
 
+    @Exported
     public @NonNull Id getId() {
         return id;
     }
@@ -238,6 +247,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         }
     }
 
+    @Exported
     public long getStartedTimestamp() {
         synchronized (progress) {
             return progress.get(Phase.PROVISIONING).getStartedTimestamp();
@@ -256,6 +266,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * @return Map of {@link Phase} and nullable {@link PhaseExecution}.
      */
+    @Exported(inline = true)
     public @NonNull Map<Phase, PhaseExecution> getPhaseExecutions() {
         // progress is threadsafe here
         return Collections.unmodifiableMap(progress);
@@ -289,6 +300,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     }
 
     /** Get current {@link Phase}. */
+    @Exported
     public @NonNull Phase getCurrentPhase() {
         return getCurrentPhaseExecution().getPhase();
     }
@@ -298,6 +310,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      *
      * <p>It is the works status of any of the phases, OK by default.
      */
+    @Exported
     public @NonNull Status getStatus() {
         synchronized (progress) {
             Status status = Status.OK;
@@ -378,6 +391,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
         execution.attach(attachment);
     }
 
+    @Exported
     public @CheckForNull String getName() {
         synchronized (id) {
             return name;

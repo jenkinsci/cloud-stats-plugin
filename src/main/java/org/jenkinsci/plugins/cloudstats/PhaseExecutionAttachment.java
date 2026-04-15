@@ -33,8 +33,11 @@ import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.nio.file.NoSuchFileException;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity.Status;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /** Additional information attached to the {@link PhaseExecution}. */
+@ExportedBean
 public class PhaseExecutionAttachment implements Action, Serializable {
 
     private final @NonNull ProvisioningActivity.Status status;
@@ -53,11 +56,13 @@ public class PhaseExecutionAttachment implements Action, Serializable {
      *     or {@link Status#FAIL} in case provisioning failed with this attachment explaining the
      *     cause.
      */
+    @Exported
     public @NonNull ProvisioningActivity.Status getStatus() {
         return status;
     }
 
     /** Single line description of the attachment nature. */
+    @Exported
     public @NonNull String getTitle() {
         return title.replaceAll("\n", " ");
     }
@@ -83,6 +88,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
         return null;
     }
 
+    @ExportedBean
     public static final class ExceptionAttachment extends PhaseExecutionAttachment {
 
         public static final long serialVersionUID = 0;
@@ -146,6 +152,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return throwable;
         }
 
+        @Exported
         public @NonNull String getText() {
             return text;
         }

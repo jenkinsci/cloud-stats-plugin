@@ -31,6 +31,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -50,6 +52,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
  * considered completed as soon as the next phase begins. IOW, despite the fact the agent already
  * started launching, plugin can still append provisioning log.
  */
+@ExportedBean
 public final class PhaseExecution implements ModelObject {
     private final @NonNull List<PhaseExecutionAttachment> attachments = new CopyOnWriteArrayList<>();
     private final long started;
@@ -64,6 +67,7 @@ public final class PhaseExecution implements ModelObject {
         this.phase = phase;
     }
 
+    @Exported
     public @NonNull List<PhaseExecutionAttachment> getAttachments() {
         return Collections.unmodifiableList(attachments);
     }
@@ -78,6 +82,7 @@ public final class PhaseExecution implements ModelObject {
         return out;
     }
 
+    @Exported
     public @NonNull ProvisioningActivity.Status getStatus() {
         ProvisioningActivity.Status status = ProvisioningActivity.Status.OK;
         for (PhaseExecutionAttachment a : getAttachments()) {
@@ -92,10 +97,12 @@ public final class PhaseExecution implements ModelObject {
         return new Date(started);
     }
 
+    @Exported
     public long getStartedTimestamp() {
         return started;
     }
 
+    @Exported
     public @NonNull ProvisioningActivity.Phase getPhase() {
         return phase;
     }
