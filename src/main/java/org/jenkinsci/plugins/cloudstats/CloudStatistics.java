@@ -66,8 +66,11 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.StaplerProxy;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /** Statistics of provisioning activities. */
+@ExportedBean
 @Extension
 public class CloudStatistics extends ManagementLink implements Saveable, StaplerProxy {
 
@@ -218,6 +221,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         return "STATUS";
     }
 
+    @Exported(inline = true)
     public List<ProvisioningActivity> getActivities() {
         synchronized (active) {
             ArrayList<ProvisioningActivity> out = new ArrayList<>(active.size() + log.size());
@@ -225,6 +229,10 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
             out.addAll(active);
             return out;
         }
+    }
+
+    public hudson.model.Api getApi() {
+        return new hudson.model.Api(this);
     }
 
     /**
