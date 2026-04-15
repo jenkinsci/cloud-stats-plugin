@@ -29,6 +29,21 @@ attached states is propagated to the phase execution and activity level. (If
 agent fails to launch, and exception will be attached explaining why the
 launch phase and thus the whole activity has failed).
 
+## Remote API
+
+The plugin now exposes the collected provisioning activities through the
+standard Jenkins remote API from the Cloud Statistics management page.
+
+- JSON: `/manage/cloud-stats/api/json?depth=2`
+- XML: `/manage/cloud-stats/api/xml?depth=2`
+
+The exported data includes provisioning activity identifiers and names,
+timestamps, current phase, overall status, phase execution details, and
+attachments such as provisioning errors and exception stack traces.
+
+Use `depth=2` to include nested phase executions and their attachments in the
+response.
+
 ## Integrating cloud plugin with cloud-stats-plugin
 
 In order for cloud-stats plugin to recognize provisioning activity to track,
