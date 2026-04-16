@@ -268,8 +268,9 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
      */
     @Exported(inline = true)
     public @NonNull Map<Phase, PhaseExecution> getPhaseExecutions() {
-        // progress is threadsafe here
-        return Collections.unmodifiableMap(progress);
+        synchronized (progress) {
+            return new LinkedHashMap<>(progress);
+        }
     }
 
     /** Get current {@link PhaseExecution}. */

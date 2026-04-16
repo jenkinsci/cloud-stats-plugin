@@ -647,7 +647,6 @@ class CloudStatisticsTest {
 
     @Test
     void restApi() throws Exception {
-        CloudStatistics cs = CloudStatistics.get();
         ProvisioningListener provisioningListener = ProvisioningListener.get();
 
         Id failId = new Id("MyCloud", "broken-template", "fail-agent");
@@ -655,36 +654,49 @@ class CloudStatisticsTest {
         provisioningListener.onFailure(failId, new Exception("ProvisioningFailed"));
 
         Id okId = new Id("MyCloud", "working-template", "ok-agent");
-        ProvisioningActivity okActivity = provisioningListener.onStarted(okId);
+        provisioningListener.onStarted(okId);
         Node slave = TrackedAgent.create(okId, j);
         provisioningListener.onComplete(okId, slave);
 
         JenkinsRule.WebClient wc = j.createWebClient();
         j.jenkins.setAuthorizationStrategy(AuthorizationStrategy.UNSECURED);
 
-        // Verify JSON API is accessible
-        Page page = wc.goTo("cloud-stats/api/json?depth=2", "application/json");
-        String json = page.getWebResponse().getContentAsString();
+        // Verify JSON API is accessible at the documented /cloud-stats/api/... route
+        Page page1 = wc.goTo("cloud-stats/api/json?depth=2", "application/json");
+        String json1 = page1.getWebResponse().getContentAsString();
+        // Verify JSON API is accessible at the documented /manage/cloud-stats/api/... route
+        Page page2 = wc.goTo("manage/cloud-stats/api/json?depth=2", "application/json");
+        String json2 = page2.getWebResponse().getContentAsString();
 
         // Verify activities are present
-        assertThat(json, containsString("\"activities\""));
-        assertThat(json, containsString("MyCloud"));
-        assertThat(json, containsString("broken-template"));
-        assertThat(json, containsString("working-template"));
+        assertThat(json1, containsString("\"activities\""));
+        assertThat(json1, containsString("MyCloud"));
+        assertThat(json1, containsString("broken-template"));
+        assertThat(json1, containsString("working-template"));
+        assertThat(json2, containsString("\"activities\""));
+        assertThat(json2, containsString("MyCloud"));
+        assertThat(json2, containsString("broken-template"));
+        assertThat(json2, containsString("working-template"));
 
         // Verify phase execution data
-        assertThat(json, containsString("PROVISIONING"));
-        assertThat(json, containsString("FAIL"));
-        assertThat(json, containsString("OK"));
+        assertThat(json1, containsString("PROVISIONING"));
+        assertThat(json1, containsString("FAIL"));
+        assertThat(json1, containsString("OK"));
 
         // Verify exception attachment text is included
-        assertThat(json, containsString("ProvisioningFailed"));
+        assertThat(json1, containsString("ProvisioningFailed"));
 
-        // Verify XML API is also accessible
-        Page xmlPage = wc.goTo("cloud-stats/api/xml?depth=2", "application/xml");
-        String xml = xmlPage.getWebResponse().getContentAsString();
-        assertThat(xml, containsString("MyCloud"));
-        assertThat(xml, containsString("broken-template"));
+        // Verify XML API is also accessible at the documented /manage/cloud-stats/api/... route
+        Page xmlPage1 = wc.goTo("manage/cloud-stats/api/xml?depth=2", "application/xml");
+        String xml1 = xmlPage1.getWebResponse().getContentAsString();
+        assertThat(xml1, containsString("MyCloud"));
+        assertThat(xml1, containsString("broken-template"));
+
+        // Verify XML API is also accessible at the documented /cloud-stats/api/... route
+        Page xmlPage2 = wc.goTo("cloud-stats/api/xml?depth=2", "application/xml");
+        String xml2 = xmlPage2.getWebResponse().getContentAsString();
+        assertThat(xml2, containsString("MyCloud"));
+        assertThat(xml2, containsString("broken-template"));
     }
 
     /** inline ${@link hudson.Functions#isWindows()} to avoid remote classloader issues */
