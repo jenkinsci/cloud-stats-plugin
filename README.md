@@ -34,8 +34,18 @@ launch phase and thus the whole activity has failed).
 The plugin now exposes the collected provisioning activities through the
 standard Jenkins remote API from the Cloud Statistics management page.
 
-- JSON: `/manage/cloud-stats/api/json?depth=2`
-- XML: `/manage/cloud-stats/api/xml?depth=2`
+The API is available under both of the following URL forms:
+
+- Management page route:
+  - JSON: `/manage/cloud-stats/api/json?depth=2`
+  - XML: `/manage/cloud-stats/api/xml?depth=2`
+- Direct cloud-stats route:
+  - JSON: `/cloud-stats/api/json?depth=2`
+  - XML: `/cloud-stats/api/xml?depth=2`
+
+These routes expose the same data; if you are linking from the Jenkins
+management UI, use the management page route, and if you are querying the
+plugin endpoint directly, use the direct cloud-stats route.
 
 The exported data includes provisioning activity identifiers and names,
 timestamps, current phase, overall status, phase execution details, and
