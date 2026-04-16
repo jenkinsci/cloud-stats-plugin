@@ -64,7 +64,7 @@ public class PhaseExecutionAttachment implements Action, Serializable {
     /** Single line description of the attachment nature. */
     @Exported
     public @NonNull String getTitle() {
-        return title.replaceAll("\n", " ");
+        return title.replace('\n', ' ');
     }
 
     @Override
@@ -152,6 +152,15 @@ public class PhaseExecutionAttachment implements Action, Serializable {
             return throwable;
         }
 
+        /**
+         * Full stack trace of the exception.
+         *
+         * <p>Exported over the remote API at the same {@link hudson.security.Permission} level as
+         * the Cloud Statistics management page ({@link jenkins.model.Jenkins#SYSTEM_READ}), which
+         * already renders this information as HTML. No additional redaction is applied here because
+         * any caller who can reach {@code /manage/cloud-stats/api/} can equally reach the
+         * attachment's own HTML page at the same permission level.
+         */
         @Exported
         public @NonNull String getText() {
             return text;

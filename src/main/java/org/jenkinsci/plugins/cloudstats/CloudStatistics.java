@@ -231,6 +231,15 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
         }
     }
 
+    /**
+     * Exposes provisioning activity data through the standard Jenkins remote API
+     * ({@code /manage/cloud-stats/api/json} and {@code /manage/cloud-stats/api/xml}).
+     *
+     * <p>Access is gated by {@link Jenkins#SYSTEM_READ}, the same permission that guards the
+     * Cloud Statistics management page and its existing HTML views (which already render all
+     * activity data, including exception stack traces). No additional permission is required
+     * because the API surface is intentionally equivalent to what the UI already exposes.
+     */
     public hudson.model.Api getApi() {
         return new hudson.model.Api(this);
     }

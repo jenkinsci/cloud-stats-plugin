@@ -269,7 +269,7 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     @Exported(inline = true)
     public @NonNull Map<Phase, PhaseExecution> getPhaseExecutions() {
         synchronized (progress) {
-            return new LinkedHashMap<>(progress);
+            return Collections.unmodifiableMap(new LinkedHashMap<>(progress));
         }
     }
 
