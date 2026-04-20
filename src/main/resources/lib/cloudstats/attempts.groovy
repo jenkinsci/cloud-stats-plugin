@@ -66,7 +66,6 @@ table(class: "sortable jenkins-table", width: "100%", id: "cloud-stat-grid") {
   tbody {
   acts.reverseEach { ProvisioningActivity activity ->
     def activityStatus = activity.status
-    List<PhaseExecution> executions = new ArrayList<>(activity.phaseExecutions.values())
     tr("class": "status-${activityStatus}") {
       td(activity.id.cloudName)
       td(activity.id.templateName)
@@ -78,10 +77,12 @@ table(class: "sortable jenkins-table", width: "100%", id: "cloud-stat-grid") {
           text(n)
         }
       }
-      td(data: executions[0].startedTimestamp) {
-        text(df.format(executions[0].started))
+      PhaseExecution provisioningExecution = activity.getPhaseExecution(ProvisioningActivity.Phase.PROVISIONING)
+      td(data: provisioningExecution.startedTimestamp) {
+        text(df.format(provisioningExecution.started))
       }
-      for (PhaseExecution execution : executions) {
+      for (ProvisioningActivity.Phase phase : ProvisioningActivity.Phase.values()) {
+        PhaseExecution execution = activity.getPhaseExecution(phase)
         if (execution == null) {
           td() // empty cell
           continue
