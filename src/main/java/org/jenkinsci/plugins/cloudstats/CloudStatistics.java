@@ -235,10 +235,20 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
      * Exposes provisioning activity data through the standard Jenkins remote API
      * ({@code /manage/cloud-stats/api/json} and {@code /manage/cloud-stats/api/xml}).
      *
-     * <p>Access is gated by {@link Jenkins#SYSTEM_READ}, the same permission that guards the
-     * Cloud Statistics management page and its existing HTML views (which already render all
-     * activity data, including exception stack traces). No additional permission is required
-     * because the API surface is intentionally equivalent to what the UI already exposes.
+     * <p><strong>Permission model:</strong> Access is enforced by {@link #getTarget()}, which
+     * checks {@link Jenkins#SYSTEM_READ} before Stapler dispatches any route under this object —
+     * including both the HTML management pages and this API endpoint. {@code SYSTEM_READ} is
+     * therefore the single, consistent gate for everything this class serves.
+     *
+     * <p><strong>Stack-trace exposure:</strong> The exported data includes
+     * {@link PhaseExecutionAttachment.ExceptionAttachment#getText()} (full exception stack traces).
+     * This is intentional and not a new exposure: the identical text is already rendered as HTML
+     * at {@code /manage/cloud-stats/activity/{fingerprint}/phase/{phase}/attachment/exception/}
+     * (see {@code ExceptionAttachment/_index.jelly}) for any caller who holds {@code SYSTEM_READ}.
+     * Requiring a stronger permission for the API endpoint but not for the HTML page would be
+     * inconsistent — the same data would remain accessible by simply navigating the UI.
+     * Organisations that consider {@code SYSTEM_READ} too broad for this data should tighten
+     * that permission grant rather than split the access model between UI and API.
      */
     public hudson.model.Api getApi() {
         return new hudson.model.Api(this);
