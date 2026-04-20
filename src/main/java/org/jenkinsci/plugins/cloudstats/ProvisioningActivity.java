@@ -262,14 +262,23 @@ public final class ProvisioningActivity implements ModelObject, Comparable<Provi
     }
 
     /**
-     * Get sorted mapping of all phase executions.
+     * Get a snapshot of phase executions for phases that have already started.
      *
-     * @return Map of {@link Phase} and nullable {@link PhaseExecution}.
+     * <p>Phases that have not yet been entered are absent from the returned map. The iteration
+     * order follows declaration order of {@link Phase}.
+     *
+     * @return Unmodifiable map of started {@link Phase}s to their (non-null) {@link PhaseExecution}.
      */
     @Exported(inline = true)
     public @NonNull Map<Phase, PhaseExecution> getPhaseExecutions() {
         synchronized (progress) {
-            return Collections.unmodifiableMap(new LinkedHashMap<>(progress));
+            LinkedHashMap<Phase, PhaseExecution> snapshot = new LinkedHashMap<>(progress.size());
+            for (Map.Entry<Phase, PhaseExecution> entry : progress.entrySet()) {
+                if (entry.getValue() != null) {
+                    snapshot.put(entry.getKey(), entry.getValue());
+                }
+            }
+            return Collections.unmodifiableMap(snapshot);
         }
     }
 
