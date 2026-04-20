@@ -699,6 +699,25 @@ class CloudStatisticsTest {
         assertThat(xml2, containsString("broken-template"));
     }
 
+    @Test
+    void restApiDeniedWithoutSystemRead() throws Exception {
+        ProvisioningListener provisioningListener = ProvisioningListener.get();
+        provisioningListener.onStarted(new Id("cloud", "template", "agent"));
+
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to("reader"));
+
+        JenkinsRule.WebClient userWc = j.createWebClient().login("reader", "reader");
+        userWc.setThrowExceptionOnFailingStatusCode(false);
+
+
+        assertEquals(403, userWc.goTo("manage/cloud-stats/api/json").getWebResponse().getStatusCode());
+        assertEquals(403, userWc.goTo("cloud-stats/api/json").getWebResponse().getStatusCode());
+    }
+
     /** inline ${@link hudson.Functions#isWindows()} to avoid remote classloader issues */
     private boolean isWindows() {
         return java.io.File.pathSeparatorChar == ';';
