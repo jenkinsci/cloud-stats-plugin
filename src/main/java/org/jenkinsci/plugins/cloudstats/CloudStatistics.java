@@ -58,10 +58,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.concurrent.GuardedBy;
 import jenkins.model.Jenkins;
 import jenkins.model.NodeListener;
 import jenkins.util.Timer;
+import net.jcip.annotations.GuardedBy;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -202,7 +202,7 @@ public class CloudStatistics extends ManagementLink implements Saveable, Stapler
 
     @Override
     public String getDescription() {
-        return "Report of current and past provisioning activities";
+        return "Report of current and past provisioning activities.";
     }
 
     /**

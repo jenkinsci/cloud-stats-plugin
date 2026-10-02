@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nonnegative;
 import jenkins.util.NonLocalizable;
 
 /**
@@ -117,7 +116,7 @@ public final class Health {
 
         private final float percent;
 
-        public Report(@Nonnegative float percent) {
+        public Report(/* @java.annotation.Nonnegative */ float percent) {
             this.percent = percent;
         }
 
