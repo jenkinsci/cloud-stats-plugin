@@ -52,7 +52,7 @@ style("""
             padding-left: 4em;
         }
 """)
-table(class: "sortable jenkins-table", width: "100%", id: "cloud-stat-grid") {
+table(class: "sortable jenkins-table", id: "cloud-stat-grid") {
   thead {
     tr {
       th("Cloud"); th("Template"); th("Name"); th("Started"); th("Provisioning"); th("Launch"); th("Operation");
